@@ -1,0 +1,520 @@
+/*
+ * PizzaTier Admin Dark Mode
+ * Applied when body has class .pzl-admin-dark
+ * Covers all PizzaTier dashboard pages.
+ */
+
+/* ── CSS variables ────────────────────────────────────────────────── */
+body.pzl-admin-dark {
+	--pzl-bg:          #141719;
+	--pzl-surface:     #1e2227;
+	--pzl-surface-2:   #252b33;
+	--pzl-surface-3:   #2d3440;
+	--pzl-border:      #343d4a;
+	--pzl-border-2:    #2a3240;
+	--pzl-text:        #d8dde6;
+	--pzl-text-muted:  #7a8799;
+	--pzl-text-head:   #f0f4fb;
+	--pzl-accent:      #ff6b35;
+	--pzl-blue:        #4a9fd4;
+	--pzl-green:       #48bb78;
+	--pzl-warn-bg:     #2a2210;
+	--pzl-warn-border: #6b4a10;
+	--pzl-warn-text:   #f0c060;
+	--pzl-info-bg:     #0f1d2e;
+	--pzl-info-border: #1e4068;
+	--pzl-info-text:   #89c4e8;
+	--pzl-error-bg:    #2a0f0f;
+	--pzl-error-border:#6b1414;
+	--pzl-error-text:  #f08080;
+	--pzl-success-bg:  #0f2a1a;
+	--pzl-success-border:#1a5c30;
+	--pzl-success-text:#6ed8a0;
+	--pzl-code-bg:     #0e1318;
+	--pzl-input-bg:    #1a1f26;
+	--pzl-input-border:#3a4455;
+}
+
+/* ── WP admin notices ─────────────────────────────────────────────── */
+body.pzl-admin-dark .wrap .notice,
+body.pzl-admin-dark .wrap .updated,
+body.pzl-admin-dark .wrap .error {
+	background: var(--pzl-surface-2) !important;
+	border-color: var(--pzl-border) !important;
+	color: var(--pzl-text) !important;
+}
+body.pzl-admin-dark .wrap .notice-success { border-left-color: var(--pzl-green) !important; }
+body.pzl-admin-dark .wrap .notice-error   { border-left-color: #f08080 !important; }
+body.pzl-admin-dark .wrap .notice-warning { border-left-color: var(--pzl-warn-text) !important; }
+body.pzl-admin-dark .wrap .notice-info    { border-left-color: var(--pzl-blue) !important; }
+body.pzl-admin-dark .wrap .notice p,
+body.pzl-admin-dark .wrap .updated p,
+body.pzl-admin-dark .wrap .error p { color: var(--pzl-text) !important; }
+body.pzl-admin-dark .wrap .notice-dismiss { color: var(--pzl-text-muted) !important; }
+body.pzl-admin-dark .wrap .notice-dismiss:hover { color: var(--pzl-text) !important; }
+
+/* ── Shared card / panel surfaces ────────────────────────────────── */
+body.pzl-admin-dark .pset-card,
+body.pzl-admin-dark .plch-layout,
+body.pzl-admin-dark .plch-header,
+body.pzl-admin-dark .psg-card,
+body.pzl-admin-dark .pzwiz-sidebar,
+body.pzl-admin-dark .pzwiz-content,
+body.pzl-admin-dark .plhelp-layout,
+body.pzl-admin-dark .pscg-form,
+body.pzl-admin-dark .plim-card,
+body.pzl-admin-dark .pset-info-card,
+body.pzl-admin-dark .plh-card,
+body.pzl-admin-dark .ptc-settings-card,
+body.pzl-admin-dark .ptc-list {
+	background: var(--pzl-surface) !important;
+	border-color: var(--pzl-border) !important;
+	color: var(--pzl-text) !important;
+}
+
+/* ── Card heads ───────────────────────────────────────────────────── */
+body.pzl-admin-dark .pset-card__head,
+body.pzl-admin-dark .psg-card__head,
+body.pzl-admin-dark .plch-rail,
+body.pzl-admin-dark .plh-tabnav,
+body.pzl-admin-dark .plhelp-nav,
+body.pzl-admin-dark .ptc-settings-card__head {
+	background: var(--pzl-surface-2) !important;
+	border-color: var(--pzl-border) !important;
+}
+body.pzl-admin-dark .pset-card__head h2,
+body.pzl-admin-dark .psg-card__head h2,
+body.pzl-admin-dark .pset-card__head h2 .dashicons { color: var(--pzl-text-head) !important; }
+body.pzl-admin-dark .pset-card__head p,
+body.pzl-admin-dark .psg-card__head p,
+body.pzl-admin-dark .ptc-settings-card__head p { color: var(--pzl-text-muted) !important; }
+
+/* ── Field labels / descs ─────────────────────────────────────────── */
+body.pzl-admin-dark .pset-field label,
+body.pzl-admin-dark .pzwiz-field__label,
+body.pzl-admin-dark .ptc-field__label,
+body.pzl-admin-dark .plim-label { color: var(--pzl-text-head) !important; }
+body.pzl-admin-dark .pset-desc,
+body.pzl-admin-dark .pset-hint,
+body.pzl-admin-dark .pzwiz-field__tip,
+body.pzl-admin-dark .ptc-field__desc,
+body.pzl-admin-dark .plch-header__desc { color: var(--pzl-text-muted) !important; }
+
+/* ── Inputs, selects, textareas ───────────────────────────────────── */
+body.pzl-admin-dark .pset-input,
+body.pzl-admin-dark .pset-select,
+body.pzl-admin-dark .pset-textarea,
+body.pzl-admin-dark .pzwiz-input,
+body.pzl-admin-dark .ptc-field__input,
+body.pzl-admin-dark .ptc-field__select,
+body.pzl-admin-dark .ptc-field__textarea,
+body.pzl-admin-dark .plim-select,
+body.pzl-admin-dark .plim-input,
+body.pzl-admin-dark .pscg-input,
+body.pzl-admin-dark .pscg-select,
+body.pzl-admin-dark .pscg-textarea,
+body.pzl-admin-dark .ptc-preview-url-input,
+body.pzl-admin-dark .pset-range__val {
+	background: var(--pzl-input-bg) !important;
+	border-color: var(--pzl-input-border) !important;
+	color: var(--pzl-text) !important;
+}
+body.pzl-admin-dark .pset-input:focus,
+body.pzl-admin-dark .pset-select:focus,
+body.pzl-admin-dark .pset-textarea:focus {
+	border-color: var(--pzl-blue) !important;
+	box-shadow: 0 0 0 2px rgba(74,159,212,.2) !important;
+}
+body.pzl-admin-dark .pset-textarea--code { background: var(--pzl-code-bg) !important; color: #9dd8a0 !important; }
+
+/* ── Toggle switches ──────────────────────────────────────────────── */
+body.pzl-admin-dark .pset-toggle__track,
+body.pzl-admin-dark .ptc-toggle__track { background: var(--pzl-surface-3) !important; }
+body.pzl-admin-dark .pset-toggle__label,
+body.pzl-admin-dark .ptc-toggle__label { color: var(--pzl-text) !important; }
+
+/* ── Inline alerts / nags / notice boxes ────────────────────────── */
+body.pzl-admin-dark .plh-nag {
+	background: var(--pzl-info-bg) !important;
+	border-left-color: var(--pzl-blue) !important;
+	color: var(--pzl-text) !important;
+}
+body.pzl-admin-dark .plh-nag strong { color: var(--pzl-text-head) !important; }
+body.pzl-admin-dark .plh-nag__list a { color: var(--pzl-blue) !important; }
+
+body.pzl-admin-dark .plh-pro-cta {
+	background: rgba(255,255,255,.04) !important;
+	border-color: rgba(255,255,255,.1) !important;
+	color: var(--pzl-text) !important;
+}
+
+body.pzl-admin-dark .pset-pro-notice {
+	background: var(--pzl-warn-bg) !important;
+	border-color: var(--pzl-warn-border) !important;
+	color: var(--pzl-text) !important;
+}
+body.pzl-admin-dark .pset-pro-notice--active {
+	background: var(--pzl-info-bg) !important;
+	border-color: var(--pzl-info-border) !important;
+}
+body.pzl-admin-dark .pset-pro-notice p { color: var(--pzl-text-muted) !important; }
+
+body.pzl-admin-dark .plhelp-alert--warn,
+body.pzl-admin-dark .plhelp-tip,
+body.pzl-admin-dark .plhelp-tip-inline,
+body.pzl-admin-dark .plh-panel__tip {
+	background: var(--pzl-warn-bg) !important;
+	border-left-color: var(--pzl-warn-text) !important;
+	color: var(--pzl-text) !important;
+}
+body.pzl-admin-dark .plhelp-info-box {
+	background: var(--pzl-info-bg) !important;
+	border-color: var(--pzl-info-border) !important;
+	color: var(--pzl-text) !important;
+}
+body.pzl-admin-dark .plhelp-info-box--warn {
+	background: var(--pzl-warn-bg) !important;
+	border-color: var(--pzl-warn-border) !important;
+}
+body.pzl-admin-dark .plhelp-info-box--dev {
+	background: #1a0f2e !important;
+	border-color: #3d2060 !important;
+}
+body.pzl-admin-dark .ptc-notice--info {
+	background: var(--pzl-info-bg) !important;
+	border-color: var(--pzl-info-border) !important;
+	color: var(--pzl-info-text) !important;
+}
+body.pzl-admin-dark .ptc-notice--warn {
+	background: var(--pzl-warn-bg) !important;
+	border-color: var(--pzl-warn-border) !important;
+	color: var(--pzl-warn-text) !important;
+}
+
+/* ── Stats strip ──────────────────────────────────────────────────── */
+body.pzl-admin-dark .plh-stat {
+	background: var(--pzl-surface) !important;
+	border-color: var(--pzl-border) !important;
+}
+body.pzl-admin-dark .plh-stat__number { color: var(--pzl-text-head) !important; }
+body.pzl-admin-dark .plh-stat__label  { color: var(--pzl-text-muted) !important; }
+body.pzl-admin-dark .plh-stat--total  { background: #0e1318 !important; border-color: #0e1318 !important; }
+body.pzl-admin-dark .plh-stat--warn   { background: var(--pzl-warn-bg) !important; border-color: var(--pzl-warn-border) !important; }
+body.pzl-admin-dark .plh-stat__warn-badge { background: var(--pzl-warn-bg) !important; color: var(--pzl-warn-text) !important; }
+
+/* ── Quick nav ────────────────────────────────────────────────────── */
+body.pzl-admin-dark .plh-quicknav__item {
+	background: var(--pzl-surface) !important;
+	border-color: var(--pzl-border) !important;
+	color: var(--pzl-text) !important;
+}
+body.pzl-admin-dark .plh-quicknav__item:hover {
+	border-color: var(--pzl-blue) !important;
+	color: var(--pzl-blue) !important;
+}
+
+/* ── Tab nav (Layer Manager / ContentHub / Wizard) ────────────────── */
+body.pzl-admin-dark .plh-tabnav { border-bottom-color: var(--pzl-border) !important; }
+body.pzl-admin-dark .plh-tab    { color: var(--pzl-text-muted) !important; }
+body.pzl-admin-dark .plh-tab:hover { color: var(--pzl-text) !important; }
+body.pzl-admin-dark .plh-tab--active { color: var(--pzl-blue) !important; border-bottom-color: var(--pzl-blue) !important; }
+body.pzl-admin-dark .plh-tab__count { background: var(--pzl-surface-3) !important; color: var(--pzl-text-muted) !important; }
+body.pzl-admin-dark .plh-tab--active .plh-tab__count { background: var(--pzl-info-bg) !important; color: var(--pzl-blue) !important; }
+
+/* ── Feature cards (bottom row) ──────────────────────────────────── */
+body.pzl-admin-dark .plh-card {
+	background: var(--pzl-surface) !important;
+	border-color: var(--pzl-border) !important;
+}
+body.pzl-admin-dark .plh-card__icon-header {
+	border-bottom-color: var(--pzl-border) !important;
+}
+body.pzl-admin-dark .plh-card__icon-header h3,
+body.pzl-admin-dark .plh-card__title { color: var(--pzl-text-head) !important; }
+body.pzl-admin-dark .plh-card__content,
+body.pzl-admin-dark .plh-card__content p { color: var(--pzl-text) !important; }
+body.pzl-admin-dark .plh-card__content code { background: var(--pzl-code-bg) !important; color: #9dd8a0 !important; }
+body.pzl-admin-dark .plh-panel__body { color: var(--pzl-text) !important; }
+body.pzl-admin-dark .plh-panel__text p { color: var(--pzl-text) !important; }
+body.pzl-admin-dark .plh-panels { background: var(--pzl-surface) !important; }
+
+/* Rotator */
+body.pzl-admin-dark .pz-rotator-slide { color: var(--pzl-text) !important; }
+body.pzl-admin-dark .pz-rotator-slide code { background: var(--pzl-code-bg) !important; color: #9dd8a0 !important; }
+body.pzl-admin-dark .plh-rotator-dot { background: var(--pzl-surface-3) !important; }
+body.pzl-admin-dark .plh-rotator-dot.is-active { background: var(--pzl-blue) !important; }
+
+/* Shortcode reference */
+body.pzl-admin-dark .plh-sc-desc { color: var(--pzl-text-muted) !important; }
+
+/* ── ContentHub rail & header ─────────────────────────────────────── */
+body.pzl-admin-dark .plch-header {
+	background: linear-gradient(135deg,#1a1e23,#2d3748) !important;
+	border-color: transparent !important;
+}
+body.pzl-admin-dark .plch-header__title { color: var(--pzl-text-head) !important; }
+body.pzl-admin-dark .plch-rail {
+	background: var(--pzl-surface-2) !important;
+	border-right-color: var(--pzl-border) !important;
+}
+body.pzl-admin-dark .plch-rail__item { color: var(--pzl-text) !important; }
+body.pzl-admin-dark .plch-rail__item:hover { background: var(--pzl-surface-3) !important; color: var(--pzl-text-head) !important; }
+body.pzl-admin-dark .plch-rail__item--active {
+	background: var(--pzl-surface) !important;
+	color: var(--pzl-blue) !important;
+	border-left-color: var(--pzl-blue) !important;
+}
+body.pzl-admin-dark .plch-rail__icon { background: var(--pzl-surface-3) !important; color: var(--pzl-text-muted) !important; }
+body.pzl-admin-dark .plch-rail__count { background: var(--pzl-surface-3) !important; color: var(--pzl-text-muted) !important; }
+body.pzl-admin-dark .plch-rail__item--active .plch-rail__count { background: var(--pzl-info-bg) !important; color: var(--pzl-blue) !important; }
+body.pzl-admin-dark .plch-rail__count--zero { background: var(--pzl-error-bg) !important; color: var(--pzl-error-text) !important; }
+body.pzl-admin-dark .plch-loading { background: rgba(20,23,25,.85) !important; color: var(--pzl-text-muted) !important; }
+body.pzl-admin-dark .plch-main { background: var(--pzl-surface) !important; }
+
+/* WP list table inside ContentHub */
+body.pzl-admin-dark .plch-main .wp-list-table,
+body.pzl-admin-dark .plch-main .wp-list-table th,
+body.pzl-admin-dark .plch-main .wp-list-table td {
+	background: var(--pzl-surface) !important;
+	border-color: var(--pzl-border) !important;
+	color: var(--pzl-text) !important;
+}
+body.pzl-admin-dark .plch-main .wp-list-table th { background: var(--pzl-surface-2) !important; color: var(--pzl-text-head) !important; }
+body.pzl-admin-dark .plch-main .wp-list-table tr:hover td { background: var(--pzl-surface-2) !important; }
+body.pzl-admin-dark .plch-main .wp-list-table .check-column input { accent-color: var(--pzl-blue); }
+body.pzl-admin-dark .plch-main .tablenav { background: transparent !important; color: var(--pzl-text-muted) !important; }
+body.pzl-admin-dark .plch-main .tablenav select,
+body.pzl-admin-dark .plch-main .search-box input[type="search"] {
+	background: var(--pzl-input-bg) !important;
+	border-color: var(--pzl-input-border) !important;
+	color: var(--pzl-text) !important;
+}
+body.pzl-admin-dark .plch-main .row-actions { color: var(--pzl-text-muted) !important; }
+
+/* ── Help page ────────────────────────────────────────────────────── */
+body.pzl-admin-dark .plhelp-nav { background: var(--pzl-surface-2) !important; border-right-color: var(--pzl-border) !important; }
+body.pzl-admin-dark .plhelp-nav__item { color: var(--pzl-text) !important; }
+body.pzl-admin-dark .plhelp-nav__item:hover { background: var(--pzl-surface-3) !important; color: var(--pzl-text-head) !important; }
+body.pzl-admin-dark .plhelp-nav__item--active { background: var(--pzl-surface) !important; color: var(--pzl-accent) !important; border-left-color: var(--pzl-accent) !important; }
+body.pzl-admin-dark .plhelp-content { background: var(--pzl-surface) !important; color: var(--pzl-text) !important; }
+body.pzl-admin-dark .plhelp-section-title,
+body.pzl-admin-dark .plhelp-content h3,
+body.pzl-admin-dark .plhelp-content h4 { color: var(--pzl-text-head) !important; }
+body.pzl-admin-dark .plhelp-lead,
+body.pzl-admin-dark .plhelp-content p,
+body.pzl-admin-dark .plhelp-step__body p { color: var(--pzl-text) !important; }
+body.pzl-admin-dark .plhelp-step { border-bottom-color: var(--pzl-border) !important; }
+body.pzl-admin-dark .plhelp-checklist label { color: var(--pzl-text) !important; }
+body.pzl-admin-dark .plhelp-code { background: var(--pzl-code-bg) !important; color: #9dd8a0 !important; }
+body.pzl-admin-dark .plhelp-attr-table th { background: var(--pzl-surface-2) !important; color: var(--pzl-text-head) !important; border-bottom-color: var(--pzl-border) !important; }
+body.pzl-admin-dark .plhelp-attr-table td { border-bottom-color: var(--pzl-border) !important; color: var(--pzl-text) !important; }
+body.pzl-admin-dark .plhelp-attr-table code,
+body.pzl-admin-dark .plhelp-fields-table code { background: var(--pzl-code-bg) !important; color: #9dd8a0 !important; }
+body.pzl-admin-dark .plhelp-fields-table th { background: var(--pzl-surface-2) !important; color: var(--pzl-text-head) !important; }
+body.pzl-admin-dark .plhelp-fields-table td { border-bottom-color: var(--pzl-border) !important; color: var(--pzl-text) !important; }
+body.pzl-admin-dark .plhelp-layer-card { border-color: var(--pzl-border) !important; }
+body.pzl-admin-dark .plhelp-layer-card__head { background: var(--pzl-surface-2) !important; border-left-color: var(--pzl-border) !important; }
+body.pzl-admin-dark .plhelp-layer-card__head h3 { color: var(--pzl-text-head) !important; }
+body.pzl-admin-dark .plhelp-layer-card__desc { color: var(--pzl-text) !important; }
+body.pzl-admin-dark .plhelp-stack-diagram { background: var(--pzl-surface-2) !important; border-color: var(--pzl-border) !important; }
+body.pzl-admin-dark .plhelp-stack-diagram__label { color: var(--pzl-text-muted) !important; }
+body.pzl-admin-dark .plhelp-shape-card { background: var(--pzl-surface-2) !important; border-color: var(--pzl-border) !important; color: var(--pzl-text) !important; }
+body.pzl-admin-dark .plhelp-shape-card p { color: var(--pzl-text-muted) !important; }
+body.pzl-admin-dark .plhelp-sc-block { border-color: var(--pzl-border) !important; background: var(--pzl-surface-2) !important; }
+body.pzl-admin-dark .plhelp-sc-name { background: var(--pzl-code-bg) !important; color: #9dd8a0 !important; }
+body.pzl-admin-dark .plhelp-faq__item { border-color: var(--pzl-border) !important; }
+body.pzl-admin-dark .plhelp-faq__q { background: var(--pzl-surface-2) !important; color: var(--pzl-text-head) !important; }
+body.pzl-admin-dark .plhelp-faq__item[open] .plhelp-faq__q { background: var(--pzl-info-bg) !important; color: var(--pzl-blue) !important; }
+body.pzl-admin-dark .plhelp-faq__a { background: var(--pzl-surface) !important; border-top-color: var(--pzl-border) !important; color: var(--pzl-text) !important; }
+body.pzl-admin-dark .plhelp-faq__a code { background: var(--pzl-code-bg) !important; color: #9dd8a0 !important; }
+body.pzl-admin-dark .plhelp-list { color: var(--pzl-text) !important; }
+body.pzl-admin-dark .plhelp-list code { background: var(--pzl-code-bg) !important; color: #9dd8a0 !important; }
+
+/* ── Setup Guide ──────────────────────────────────────────────────── */
+body.pzl-admin-dark .psg-card {
+	background: var(--pzl-surface) !important;
+	border-color: var(--pzl-border) !important;
+}
+body.pzl-admin-dark .psg-card__head { background: var(--pzl-surface-2) !important; border-bottom-color: var(--pzl-border) !important; }
+body.pzl-admin-dark .psg-card__head h2 { color: var(--pzl-text-head) !important; }
+body.pzl-admin-dark .psg-card__head p  { color: var(--pzl-text-muted) !important; }
+body.pzl-admin-dark .psg-checklist__item { border-bottom-color: var(--pzl-border) !important; color: var(--pzl-text) !important; }
+body.pzl-admin-dark .psg-cl-title { color: var(--pzl-text-head) !important; }
+body.pzl-admin-dark .psg-cl-desc  { color: var(--pzl-text-muted) !important; }
+body.pzl-admin-dark .psg-cl-badge { background: var(--pzl-success-bg) !important; color: var(--pzl-success-text) !important; }
+body.pzl-admin-dark .psg-cl-opt-badge { background: var(--pzl-surface-3) !important; color: var(--pzl-text-muted) !important; }
+body.pzl-admin-dark .psg-checklist__item--done .psg-cl-title { color: var(--pzl-text-muted) !important; }
+body.pzl-admin-dark .psg-progress-bar-wrap { background: var(--pzl-surface-3) !important; }
+body.pzl-admin-dark .psg-pct { color: var(--pzl-text-muted) !important; }
+body.pzl-admin-dark .psg-tab { color: var(--pzl-text-muted) !important; }
+body.pzl-admin-dark .psg-tab--active { color: var(--pzl-blue) !important; border-bottom-color: var(--pzl-blue) !important; }
+body.pzl-admin-dark .psg-tabnav { background: var(--pzl-surface-2) !important; border-bottom-color: var(--pzl-border) !important; }
+body.pzl-admin-dark .psg-panel__text { color: var(--pzl-text) !important; }
+body.pzl-admin-dark .psg-panel__tip  { background: var(--pzl-warn-bg) !important; border-left-color: var(--pzl-warn-text) !important; color: var(--pzl-text) !important; }
+body.pzl-admin-dark .psg-quickstart-cta { background: linear-gradient(135deg,#0f1d2e,#1a3050) !important; border-color: var(--pzl-info-border) !important; }
+
+/* ── Shortcode Generator ──────────────────────────────────────────── */
+body.pzl-admin-dark .pscg-form {
+	background: var(--pzl-surface) !important;
+	border-color: var(--pzl-border) !important;
+}
+body.pzl-admin-dark .pscg-type-tab {
+	background: var(--pzl-surface) !important;
+	border-color: var(--pzl-border) !important;
+	color: var(--pzl-text) !important;
+}
+body.pzl-admin-dark .pscg-type-tab--active {
+	background: var(--pzl-info-bg) !important;
+	border-color: var(--pzl-blue) !important;
+	color: var(--pzl-blue) !important;
+}
+body.pzl-admin-dark .pscg-section { border-bottom-color: var(--pzl-border) !important; }
+body.pzl-admin-dark .pscg-label { color: var(--pzl-text-head) !important; }
+body.pzl-admin-dark .pscg-desc  { color: var(--pzl-text-muted) !important; }
+body.pzl-admin-dark .pscg-output {
+	background: var(--pzl-code-bg) !important;
+	border-color: var(--pzl-border) !important;
+	color: #9dd8a0 !important;
+}
+body.pzl-admin-dark .pscg-output-wrap { border-color: var(--pzl-border) !important; background: var(--pzl-surface-2) !important; }
+body.pzl-admin-dark .pscg-checkbox-label { color: var(--pzl-text) !important; }
+
+/* ── Settings Wizard ──────────────────────────────────────────────── */
+body.pzl-admin-dark .pzwiz-sidebar { background: var(--pzl-surface) !important; border-color: var(--pzl-border) !important; }
+body.pzl-admin-dark .pzwiz-step-link { color: var(--pzl-text) !important; border-bottom-color: var(--pzl-border) !important; }
+body.pzl-admin-dark .pzwiz-step-link:hover { background: var(--pzl-surface-2) !important; color: var(--pzl-text-head) !important; }
+body.pzl-admin-dark .pzwiz-step-link--active { background: var(--pzl-info-bg) !important; color: var(--pzl-blue) !important; border-left-color: var(--pzl-blue) !important; }
+body.pzl-admin-dark .pzwiz-step-link--done { color: var(--pzl-green) !important; }
+body.pzl-admin-dark .pzwiz-step-num { background: var(--pzl-surface-3) !important; color: var(--pzl-text-muted) !important; }
+body.pzl-admin-dark .pzwiz-step-link--active .pzwiz-step-num { background: var(--pzl-blue) !important; color: #fff !important; }
+body.pzl-admin-dark .pzwiz-step-link--done .pzwiz-step-num   { background: var(--pzl-green) !important; color: #fff !important; }
+body.pzl-admin-dark .pzwiz-content { background: var(--pzl-surface) !important; border-color: var(--pzl-border) !important; }
+body.pzl-admin-dark .pzwiz-step-header { border-bottom-color: var(--pzl-border) !important; }
+body.pzl-admin-dark .pzwiz-step-header__title { color: var(--pzl-text-head) !important; }
+body.pzl-admin-dark .pzwiz-step-header__desc  { color: var(--pzl-text-muted) !important; }
+body.pzl-admin-dark .pzwiz-field { border-bottom-color: var(--pzl-border) !important; }
+body.pzl-admin-dark .pzwiz-field__label { color: var(--pzl-text-head) !important; }
+body.pzl-admin-dark .pzwiz-field__tip   { color: var(--pzl-text-muted) !important; }
+body.pzl-admin-dark .pzwiz-done-banner  { background: var(--pzl-success-bg) !important; border-color: var(--pzl-success-border) !important; color: var(--pzl-success-text) !important; }
+body.pzl-admin-dark .pzwiz-progress-wrap { background: var(--pzl-surface-3) !important; }
+body.pzl-admin-dark .pzwiz-progress-label { color: var(--pzl-text-muted) !important; }
+body.pzl-admin-dark .pzwiz-opt-tag { background: var(--pzl-surface-3) !important; color: var(--pzl-text-muted) !important; }
+body.pzl-admin-dark .pzwiz-step-badge--done { background: var(--pzl-success-bg) !important; color: var(--pzl-success-text) !important; }
+body.pzl-admin-dark .pzwiz-step-badge--opt  { background: var(--pzl-surface-3) !important; color: var(--pzl-text-muted) !important; }
+
+/* ── Layer Image Maker ────────────────────────────────────────────── */
+body.pzl-admin-dark .plim-card {
+	background: var(--pzl-surface) !important;
+	border-color: var(--pzl-border) !important;
+}
+body.pzl-admin-dark .plim-card-h { color: var(--pzl-text-head) !important; }
+body.pzl-admin-dark .plim-label  { color: var(--pzl-text) !important; }
+body.pzl-admin-dark .plim-intro  { color: var(--pzl-text-muted) !important; }
+body.pzl-admin-dark .plim-drop-zone {
+	background: var(--pzl-surface-2) !important;
+	border-color: var(--pzl-input-border) !important;
+	color: var(--pzl-text-muted) !important;
+}
+body.pzl-admin-dark .plim-drop-zone:hover { border-color: var(--pzl-blue) !important; }
+body.pzl-admin-dark .plim-desc  { color: var(--pzl-text-muted) !important; }
+body.pzl-admin-dark .plim-canvas-area { background: var(--pzl-surface-2) !important; border-color: var(--pzl-border) !important; }
+body.pzl-admin-dark .plim-tip   { background: var(--pzl-warn-bg) !important; border-color: var(--pzl-warn-border) !important; color: var(--pzl-warn-text) !important; }
+
+/* ── Settings page cards / quick-jump ────────────────────────────── */
+body.pzl-admin-dark .pset-quickjump {
+	background: var(--pzl-surface) !important;
+	border-color: var(--pzl-border) !important;
+	box-shadow: 0 2px 8px rgba(0,0,0,.3) !important;
+}
+body.pzl-admin-dark .pset-quickjump__pill {
+	background: var(--pzl-surface-2) !important;
+	border-color: var(--pzl-border) !important;
+	color: var(--pzl-text) !important;
+}
+body.pzl-admin-dark .pset-quickjump__pill:hover { background: var(--pzl-info-bg) !important; border-color: var(--pzl-blue) !important; color: var(--pzl-blue) !important; }
+body.pzl-admin-dark .pset-card__body { background: var(--pzl-surface) !important; }
+body.pzl-admin-dark .pset-card--template .pset-card__head { background: #1a1230 !important; border-bottom-color: #2d1f50 !important; }
+body.pzl-admin-dark .pset-modal__box { background: var(--pzl-surface) !important; }
+body.pzl-admin-dark .pset-modal__head { border-bottom-color: var(--pzl-border) !important; }
+body.pzl-admin-dark .pset-modal__title { color: var(--pzl-text-head) !important; }
+body.pzl-admin-dark .pset-modal__foot { border-top-color: var(--pzl-border) !important; }
+body.pzl-admin-dark .pset-modal__grid { background: var(--pzl-surface) !important; }
+body.pzl-admin-dark .pset-modal__item { background: var(--pzl-surface-2) !important; border-color: var(--pzl-border) !important; }
+body.pzl-admin-dark .pset-modal__item:hover { background: var(--pzl-info-bg) !important; border-color: var(--pzl-blue) !important; }
+body.pzl-admin-dark .pset-modal__item__name { color: var(--pzl-text) !important; }
+body.pzl-admin-dark .pset-modal__search { background: var(--pzl-input-bg) !important; border-color: var(--pzl-input-border) !important; color: var(--pzl-text) !important; }
+body.pzl-admin-dark .pset-layer-trigger { background: var(--pzl-surface-2) !important; border-color: var(--pzl-input-border) !important; }
+body.pzl-admin-dark .pset-layer-trigger--has-value { background: var(--pzl-surface) !important; }
+body.pzl-admin-dark .pset-layer-trigger__name { color: var(--pzl-text) !important; }
+body.pzl-admin-dark .pset-portion-box { background: var(--pzl-surface-2) !important; border-color: var(--pzl-border) !important; }
+body.pzl-admin-dark .pset-portion-box__label { color: var(--pzl-text) !important; }
+body.pzl-admin-dark .pset-portion-box--on { background: var(--pzl-info-bg) !important; border-color: var(--pzl-blue) !important; }
+body.pzl-admin-dark .pset-portion-box--on .pset-portion-box__label { color: var(--pzl-blue) !important; }
+body.pzl-admin-dark .pset-logo-picker__preview { background: var(--pzl-surface-2) !important; border-color: var(--pzl-border) !important; }
+body.pzl-admin-dark .pset-logo-picker__placeholder { color: var(--pzl-text-muted) !important; }
+body.pzl-admin-dark .pset-info-card { background: var(--pzl-surface) !important; border-color: var(--pzl-border) !important; }
+body.pzl-admin-dark .pset-info-card h3 { color: var(--pzl-text-head) !important; }
+body.pzl-admin-dark .pset-info-card li { border-bottom-color: var(--pzl-border) !important; }
+body.pzl-admin-dark .pset-info-card--tip { background: var(--pzl-warn-bg) !important; border-color: var(--pzl-warn-border) !important; }
+body.pzl-admin-dark .pset-info-card--tip p { color: var(--pzl-text) !important; }
+body.pzl-admin-dark .pset-save-card { background: #0d2a4a !important; }
+
+/* Colour palette presets row */
+body.pzl-admin-dark .pset-palette-presets,
+body.pzl-admin-dark .pset-scheme-row {
+	background: #150f25 !important;
+	border-color: #2d1f50 !important;
+}
+body.pzl-admin-dark .pset-palette-presets__label,
+body.pzl-admin-dark .pset-scheme-label { color: #a78bfa !important; }
+body.pzl-admin-dark .pset-palette-chip,
+body.pzl-admin-dark .pset-scheme-chip  { background: var(--pzl-surface-2) !important; border-color: #3d2880 !important; color: #c4b5fd !important; }
+
+/* ── Template Choice page ─────────────────────────────────────────── */
+body.pzl-admin-dark .ptc-list { background: var(--pzl-surface-2) !important; }
+body.pzl-admin-dark .ptc-item { border-bottom-color: var(--pzl-border) !important; }
+body.pzl-admin-dark .ptc-item--active,
+body.pzl-admin-dark .ptc-item--previewing { background: var(--pzl-surface) !important; }
+body.pzl-admin-dark .ptc-item__name  { color: var(--pzl-text-head) !important; }
+body.pzl-admin-dark .ptc-item__desc  { color: var(--pzl-text-muted) !important; }
+body.pzl-admin-dark .ptc-item__tag   { background: var(--pzl-surface-3) !important; color: var(--pzl-text-muted) !important; }
+body.pzl-admin-dark .ptc-item__thumb { border-color: var(--pzl-border) !important; }
+body.pzl-admin-dark .ptc-preview-bar { background: #0e1318 !important; border-bottom-color: var(--pzl-border) !important; }
+body.pzl-admin-dark .ptc-preview-bar__url { background: var(--pzl-surface-2) !important; border-color: var(--pzl-border) !important; color: var(--pzl-text-muted) !important; }
+body.pzl-admin-dark .ptc-preview-bar__btn { color: var(--pzl-text-muted) !important; }
+body.pzl-admin-dark .ptc-preview-bar__btn:hover { background: var(--pzl-surface-3) !important; }
+body.pzl-admin-dark .ptc-list__devcard { background: #0e1318 !important; border-top-color: var(--pzl-border) !important; color: var(--pzl-text-muted) !important; }
+body.pzl-admin-dark .ptc-list__devcard code { background: var(--pzl-surface-2) !important; color: var(--pzl-text-muted) !important; }
+body.pzl-admin-dark .ptc-settings-card { background: var(--pzl-surface) !important; border-color: var(--pzl-border) !important; }
+body.pzl-admin-dark .ptc-settings-card__head { border-bottom-color: var(--pzl-border) !important; }
+body.pzl-admin-dark .ptc-settings-card__head h2 { color: var(--pzl-text-head) !important; }
+body.pzl-admin-dark .ptc-settings-form { background: var(--pzl-surface) !important; }
+body.pzl-admin-dark .ptc-settings-save-row { border-top-color: var(--pzl-border) !important; }
+body.pzl-admin-dark .ptc-modal__box { background: var(--pzl-surface) !important; color: var(--pzl-text) !important; }
+body.pzl-admin-dark .ptc-modal__header,
+body.pzl-admin-dark .ptc-modal__footer { border-color: var(--pzl-border) !important; }
+body.pzl-admin-dark .ptc-modal__title { color: var(--pzl-text-head) !important; }
+body.pzl-admin-dark .ptc-modal__body p { color: var(--pzl-text) !important; }
+body.pzl-admin-dark .ptc-modal__note  { background: var(--pzl-surface-2) !important; color: var(--pzl-text-muted) !important; }
+body.pzl-admin-dark .ptc-scheme-row { background: #150f25 !important; border-color: #2d1f50 !important; }
+body.pzl-admin-dark .ptc-scheme-label { color: #a78bfa !important; }
+body.pzl-admin-dark .ptc-scheme-chip  { background: var(--pzl-surface-2) !important; border-color: #3d2880 !important; color: #c4b5fd !important; }
+body.pzl-admin-dark .ptc-color-swatch { border-color: var(--pzl-border) !important; }
+body.pzl-admin-dark .ptc-color-revert { border-color: var(--pzl-border) !important; color: var(--pzl-text-muted) !important; }
+body.pzl-admin-dark .ptc-color-revert:hover { background: var(--pzl-surface-3) !important; }
+body.pzl-admin-dark .ptc-settings-grid .ptc-field__input,
+body.pzl-admin-dark .ptc-settings-grid .ptc-field__select,
+body.pzl-admin-dark .ptc-settings-grid .ptc-field__textarea {
+	background: var(--pzl-input-bg) !important;
+	border-color: var(--pzl-input-border) !important;
+	color: var(--pzl-text) !important;
+}
+body.pzl-admin-dark .ptc-range__val { color: var(--pzl-blue) !important; }
+body.pzl-admin-dark .ptc-radio-label { color: var(--pzl-text) !important; }
+
+/* ── Credits / misc text ──────────────────────────────────────────── */
+body.pzl-admin-dark .plh-credits,
+body.pzl-admin-dark .plh-credits a { color: #4a5568 !important; }
+body.pzl-admin-dark .plh-credits a:hover { color: var(--pzl-blue) !important; }
+body.pzl-admin-dark .pzwiz-progress-label,
+body.pzl-admin-dark .pzwiz-reset-link { color: var(--pzl-text-muted) !important; }

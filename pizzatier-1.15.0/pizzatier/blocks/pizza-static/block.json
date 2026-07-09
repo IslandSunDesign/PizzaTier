@@ -1,0 +1,55 @@
+{
+    "$schema": "https://schemas.wp.org/trunk/block.json",
+    "apiVersion": 3,
+    "name": "pizzatier/pizza-static",
+    "version": "1.0.0",
+    "title": "Pizza Static",
+    "category": "media",
+    "icon": "food",
+    "description": "Displays a non-interactive pizza image built from layer slugs or a saved preset. Great for menus, landing pages, and product displays.",
+    "keywords": ["pizza", "static", "image", "preset", "menu"],
+    "textdomain": "pizzatier",
+    "editorScript": "file:./block.js",
+    "scriptDependencies": ["wp-blocks", "wp-element", "wp-components", "wp-block-editor", "wp-i18n", "wp-server-side-render"],
+    "supports": {
+        "html": false,
+        "align": ["left", "center", "right", "wide", "full"],
+        "spacing": {
+            "margin": true,
+            "padding": true
+        }
+    },
+    "attributes": {
+        "preset": {
+            "type": "string",
+            "default": ""
+        },
+        "crust": {
+            "type": "string",
+            "default": ""
+        },
+        "sauce": {
+            "type": "string",
+            "default": ""
+        },
+        "cheese": {
+            "type": "string",
+            "default": ""
+        },
+        "toppings": {
+            "type": "string",
+            "default": ""
+        },
+        "drizzle": {
+            "type": "string",
+            "default": ""
+        },
+        "cut": {
+            "type": "string",
+            "default": ""
+        }
+    },
+    "example": {
+        "attributes": {}
+    }
+}

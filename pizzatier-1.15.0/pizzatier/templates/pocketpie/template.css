@@ -1,0 +1,1478 @@
+/* ══════════════════════════════════════════════════════════════════════
+   PIZZATIER — PocketPie Template
+   A compact, mobile-first builder that stays in its own footprint.
+   ══════════════════════════════════════════════════════════════════════
+
+   Colour system:
+   --pp-bg      base background
+   --pp-bg-2    card / panel background
+   --pp-bg-3    elevated / overlay background
+   --pp-border  subtle dividers
+   --pp-text    primary text
+   --pp-muted   secondary / hint text
+   --pp-accent  brand orange/amber
+   --pp-accent2 secondary accent (warm coral)
+   --pp-success confirmed / selected state
+   ══════════════════════════════════════════════════════════════════════ */
+
+/* ─── Root + tokens ──────────────────────────────────────────────────── */
+.pp-root {
+    --pp-bg:        #1a1008;
+    --pp-bg-2:      #251808;
+    --pp-bg-3:      #2e1e0a;
+    --pp-border:    rgba(255,190,80,0.13);
+    --pp-text:      #f5e8cc;
+    --pp-muted:     #a08060;
+    --pp-accent:    #ff9a1a;
+    --pp-accent2:   #e05c28;
+    --pp-success:   #5bcf80;
+    --pp-radius:    10px;
+    --pp-radius-sm: 6px;
+    --pp-shadow:    0 4px 24px rgba(0,0,0,0.55);
+    --pp-font:      'Georgia', 'Palatino Linotype', serif;
+    --pp-mono:      'Courier New', monospace;
+    --pp-trans:     0.22s cubic-bezier(0.4,0,0.2,1);
+    --pp-trans-spring: 0.35s cubic-bezier(0.34,1.56,0.64,1);
+
+    font-family: var(--pp-font);
+    background: var(--pp-bg);
+    color: var(--pp-text);
+    border-radius: var(--pp-radius);
+    overflow: hidden;
+    position: relative;
+    box-sizing: border-box;
+    /* Contain all overlays / drawers within the widget footprint */
+    contain: layout;
+}
+
+.pp-root *,
+.pp-root *::before,
+.pp-root *::after {
+    box-sizing: border-box;
+}
+
+/* ─── Pizza stage (shared) ───────────────────────────────────────────── */
+.pp-pizza-stage-wrap {
+    position: relative;
+    width: 100%;
+    overflow: hidden;
+    border-radius: 50%; /* default round */
+}
+
+.pp-root[data-pizza-shape="square"]    .pp-pizza-stage-wrap { border-radius: var(--pp-radius); }
+.pp-root[data-pizza-shape="rectangle"] .pp-pizza-stage-wrap { border-radius: var(--pp-radius); aspect-ratio: 4/3 !important; }
+.pp-root[data-pizza-shape="custom"]    .pp-pizza-stage-wrap { border-radius: var(--pp-radius); }
+
+.pp-pizza-stage {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+}
+
+.pp-layer-div {
+    position: absolute;
+    inset: 0;
+}
+
+.pp-layer-div img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+/* ─── Shared buttons ─────────────────────────────────────────────────── */
+.pp-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 7px 14px;
+    border-radius: var(--pp-radius-sm);
+    border: none;
+    font-family: var(--pp-font);
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background var(--pp-trans), color var(--pp-trans), transform 0.12s;
+    background: var(--pp-accent);
+    color: #1a1008;
+    text-decoration: none;
+}
+.pp-btn:hover { background: #ffb44a; transform: translateY(-1px); }
+.pp-btn:active { transform: scale(0.97); }
+
+.pp-btn--ghost {
+    background: transparent;
+    border: 1px solid var(--pp-border);
+    color: var(--pp-muted);
+}
+.pp-btn--ghost:hover { background: var(--pp-bg-3); color: var(--pp-text); border-color: var(--pp-accent); }
+
+.pp-btn--sm { padding: 5px 10px; font-size: 12px; }
+
+/* ─── Chips (shared selection items) ────────────────────────────────── */
+.pp-chips-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 10px 0;
+}
+
+.pp-chips-grid--toppings .pp-chip { width: calc(50% - 4px); }
+
+.pp-chip {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    padding: 8px 6px 6px;
+    background: var(--pp-bg-3);
+    border: 1px solid var(--pp-border);
+    border-radius: var(--pp-radius-sm);
+    cursor: pointer;
+    width: calc(33.33% - 6px);
+    min-width: 70px;
+    transition: border-color var(--pp-trans), background var(--pp-trans), transform var(--pp-trans-spring);
+    user-select: none;
+    overflow: hidden;
+}
+
+.pp-chip:hover { border-color: var(--pp-accent); background: #3a2510; transform: translateY(-2px); }
+
+.pp-chip--selected {
+    border-color: var(--pp-success);
+    background: #1a3022;
+    transform: scale(1.03);
+}
+
+.pp-chip__img {
+    width: 52px;
+    height: 52px;
+    object-fit: cover;
+    border-radius: 50%;
+    display: block;
+    background: var(--pp-bg-2);
+}
+
+.pp-chip__img--placeholder {
+    width: 52px;
+    height: 52px;
+    border-radius: 50%;
+    background: var(--pp-bg-2);
+    border: 1px dashed var(--pp-border);
+}
+
+.pp-chip__name {
+    font-size: 11px;
+    text-align: center;
+    color: var(--pp-text);
+    line-height: 1.2;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.pp-chip__check {
+    position: absolute;
+    top: 4px;
+    right: 4px;
+    width: 16px;
+    height: 16px;
+    background: var(--pp-success);
+    border-radius: 50%;
+    font-size: 10px;
+    line-height: 16px;
+    text-align: center;
+    color: #0a2015;
+    font-weight: 700;
+    display: none;
+    z-index: 2;
+}
+
+.pp-chip--selected .pp-chip__check { display: block; }
+
+/* Add control: a full-chip invisible overlay so tapping anywhere on the chip
+   adds the topping. Only present while the chip is unselected (JS hides it on
+   select), so it never sits over the coverage buttons. */
+.pp-chip__add-btn {
+    position: absolute;
+    inset: 0;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    padding: 0;
+    z-index: 3;
+}
+
+/* Remove control: a small corner badge. Previously this shared the full-chip
+   `inset:0` overlay with the add button, which (a) painted the ✕ on top of the
+   thumbnail and (b) covered the coverage buttons so they couldn't be clicked
+   once a topping was selected. */
+.pp-chip__remove-btn {
+    position: absolute;
+    top: 4px;
+    left: 4px;
+    width: 18px;
+    height: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    border: none;
+    border-radius: 50%;
+    background: var(--pp-accent2);
+    color: #1a1008;
+    font-size: 11px;
+    line-height: 1;
+    cursor: pointer;
+    z-index: 6;
+    transition: background var(--pp-trans), transform var(--pp-trans);
+}
+.pp-chip__remove-btn:hover  { background: var(--pp-accent); transform: scale(1.08); }
+.pp-chip__remove-btn:active { transform: scale(0.94); }
+
+.pp-chip__add-btn:hover  ~ .pp-chip__img,
+.pp-chip__add-btn:focus  ~ .pp-chip__img { opacity: 0.75; }
+
+.pp-chip__add-label,
+.pp-chip__remove-label { display: none; } /* invisible — just triggers JS */
+
+/* Coverage picker (toppings) — sits in its own stacking context above the
+   add overlay so the buttons are always clickable when a topping is selected. */
+.pp-coverage {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 3px;
+    justify-content: center;
+    margin-top: 2px;
+    position: relative;
+    z-index: 5;
+}
+
+.pp-cov-btn {
+    position: relative;
+    z-index: 5;
+    padding: 2px 5px;
+    border: 1px solid var(--pp-border);
+    border-radius: 3px;
+    background: var(--pp-bg-2);
+    color: var(--pp-muted);
+    font-size: 10px;
+    cursor: pointer;
+    transition: background var(--pp-trans), color var(--pp-trans);
+}
+
+.pp-cov-btn:hover,
+.pp-cov-btn--active {
+    background: var(--pp-accent);
+    color: #1a1008;
+    border-color: var(--pp-accent);
+}
+
+.pp-empty {
+    color: var(--pp-muted);
+    font-size: 13px;
+    text-align: center;
+    padding: 16px;
+    width: 100%;
+}
+
+/* ─── Count flash animation ──────────────────────────────────────────── */
+@keyframes pp-count-flash {
+    0%,100% { color: var(--pp-text); }
+    50% { color: var(--pp-accent2); transform: scale(1.25); }
+}
+.pp-count--flash { animation: pp-count-flash 0.6s ease; }
+
+/* Progress dot shared */
+.pp-dot--active { background: var(--pp-accent) !important; }
+
+/* ═══════════════════════════════════════════════════════════════════════
+   LAYOUT 1 — CORNER QUAD
+   Pizza centred with four corner panels that expand inward.
+═══════════════════════════════════════════════════════════════════════ */
+
+.pp-layout--corner-quad .pp-cq-wrap {
+    position: relative;
+    width: 100%;
+    /* Maintain a square-ish aspect — pizza in centre */
+    aspect-ratio: 1 / 1;
+    max-width: 540px;
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    grid-template-rows: auto 1fr auto;
+}
+
+/* Pizza centred */
+.pp-layout--corner-quad .pp-cq-pizza {
+    grid-column: 2;
+    grid-row: 2;
+    position: relative;
+    z-index: 5;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 4px;
+}
+
+.pp-layout--corner-quad .pp-cq-pizza .pp-pizza-stage-wrap {
+    width: 300px;
+    height: 300px;
+    aspect-ratio: 1/1;
+    flex-shrink: 0;
+    box-shadow: 0 0 48px rgba(255,130,20,0.28), 0 0 0 2px var(--pp-border);
+}
+
+.pp-cq-pizza__controls {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    justify-content: center;
+}
+
+.pp-cq-reset {
+    background: var(--pp-bg-3);
+    border: 1px solid var(--pp-border);
+    color: var(--pp-muted);
+    border-radius: var(--pp-radius-sm);
+    width: 32px;
+    height: 32px;
+    font-size: 15px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: background var(--pp-trans), color var(--pp-trans);
+}
+.pp-cq-reset:hover { background: var(--pp-accent); color: #1a1008; border-color: var(--pp-accent); }
+
+/* Corners */
+.pp-cq-corner {
+    position: relative;
+    z-index: 10;
+}
+.pp-cq-corner--tl { grid-column:1; grid-row:1; justify-self:start; align-self:start; }
+.pp-cq-corner--tr { grid-column:3; grid-row:1; justify-self:end;   align-self:start; }
+.pp-cq-corner--bl { grid-column:1; grid-row:3; justify-self:start; align-self:end; }
+.pp-cq-corner--br { grid-column:3; grid-row:3; justify-self:end;   align-self:end; }
+
+.pp-cq-trigger {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 3px;
+    padding: 10px 8px 8px;
+    background: var(--pp-bg-2);
+    border: 1px solid var(--pp-border);
+    color: var(--pp-text);
+    cursor: pointer;
+    transition: background var(--pp-trans), border-color var(--pp-trans), transform var(--pp-trans-spring);
+    font-family: var(--pp-font);
+    width: 72px;
+    z-index: 2;
+}
+
+.pp-cq-corner--tl .pp-cq-trigger { border-radius: 0 0 var(--pp-radius) 0; }
+.pp-cq-corner--tr .pp-cq-trigger { border-radius: 0 0 0 var(--pp-radius); }
+.pp-cq-corner--bl .pp-cq-trigger { border-radius: 0 var(--pp-radius) 0 0; }
+.pp-cq-corner--br .pp-cq-trigger { border-radius: var(--pp-radius) 0 0 0; }
+
+.pp-cq-trigger:hover { background: var(--pp-bg-3); border-color: var(--pp-accent); }
+.pp-cq-trigger:active { transform: scale(0.96); }
+
+.pp-cq-trigger__icon { font-size: 20px; line-height: 1; }
+.pp-cq-trigger__label { font-size: 10px; letter-spacing: 0.04em; color: var(--pp-muted); }
+.pp-cq-trigger__badge {
+    position: absolute;
+    top: 4px;
+    right: 4px;
+    width: 14px;
+    height: 14px;
+    background: var(--pp-success);
+    color: #0a2015;
+    border-radius: 50%;
+    font-size: 9px;
+    line-height: 14px;
+    text-align: center;
+    font-weight: 700;
+    display: none;
+}
+.pp-cq-trigger__badge:not(:empty) { display: block; }
+
+/* Corner-quad corners now open the shared full-screen modal
+   (see .pp-modal* below) — the old inward-expanding panels were removed. */
+
+
+/* Actions row — overflow categories (Size / Drizzle / Slicing) + Review */
+.pp-cq-overflow-bar {
+    grid-column: 1 / 4;
+    grid-row: 4; /* intentionally outside grid — collapses */
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 10px;
+    background: var(--pp-bg-2);
+    border-top: 1px solid var(--pp-border);
+}
+
+.pp-cq-overflow-bar__cats {
+    display: flex;
+    gap: 6px;
+    flex: 1;
+    min-width: 0;
+    overflow-x: auto;
+    scrollbar-width: thin;
+    scrollbar-color: var(--pp-accent) transparent;
+}
+
+.pp-cq-overflow-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    padding: 6px 10px;
+    background: var(--pp-bg-3);
+    border: 1px solid var(--pp-border);
+    border-radius: var(--pp-radius-sm);
+    color: var(--pp-text);
+    font-family: var(--pp-font);
+    font-size: 11px;
+    cursor: pointer;
+    white-space: nowrap;
+    flex-shrink: 0;
+    transition: background var(--pp-trans), border-color var(--pp-trans);
+}
+.pp-cq-overflow-btn:hover { background: var(--pp-accent); color: #1a1008; border-color: var(--pp-accent); }
+
+/* Review — right-aligned, prominent button */
+.pp-cq-review-btn {
+    margin-left: auto;
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 9px 18px;
+    background: var(--pp-accent);
+    color: #1a1008;
+    border: 1px solid var(--pp-accent);
+    border-radius: var(--pp-radius-sm);
+    font-family: var(--pp-font);
+    font-weight: 700;
+    font-size: 13px;
+    letter-spacing: 0.02em;
+    cursor: pointer;
+    box-shadow: 0 2px 10px rgba(255,154,26,0.25);
+    transition: background var(--pp-trans), transform 0.12s, box-shadow var(--pp-trans);
+}
+.pp-cq-review-btn:hover { background: #ffb44a; transform: translateY(-1px); box-shadow: 0 4px 16px rgba(255,154,26,0.35); }
+.pp-cq-review-btn:active { transform: scale(0.97); }
+.pp-cq-review-btn__icon { font-size: 15px; line-height: 1; }
+
+/* ═══════════════════════════════════════════════════════════════════════
+   LAYOUT 2 — LAYER DECK
+   Pizza dominant on top, thumbnail strip below, expanded card fills box.
+═══════════════════════════════════════════════════════════════════════ */
+
+.pp-layout--layer-deck .pp-ld-wrap {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+}
+
+/* Pizza zone */
+.pp-ld-pizza-zone {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    max-height: 320px;
+    background: var(--pp-bg-2);
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.pp-ld-pizza-zone .pp-pizza-stage-wrap {
+    width: 80%;
+    aspect-ratio: 1/1;
+    max-width: 260px;
+}
+
+.pp-ld-topping-badge {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    background: rgba(26,16,8,0.8);
+    border: 1px solid var(--pp-accent);
+    color: var(--pp-accent);
+    border-radius: 20px;
+    padding: 2px 10px;
+    font-size: 12px;
+    font-weight: 700;
+    backdrop-filter: blur(6px);
+}
+
+/* Deck strip */
+.pp-ld-deck {
+    display: flex;
+    overflow-x: auto;
+    gap: 2px;
+    padding: 0;
+    background: var(--pp-bg-2);
+    border-top: 1px solid var(--pp-border);
+    scrollbar-width: none;
+}
+.pp-ld-deck::-webkit-scrollbar { display: none; }
+
+.pp-ld-deck-thumb {
+    flex: 0 0 auto;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 3px;
+    padding: 10px 10px 8px;
+    background: transparent;
+    border: none;
+    border-bottom: 3px solid transparent;
+    color: var(--pp-muted);
+    font-family: var(--pp-font);
+    font-size: 11px;
+    cursor: pointer;
+    transition: color var(--pp-trans), border-color var(--pp-trans), background var(--pp-trans);
+    white-space: nowrap;
+    min-width: 60px;
+}
+
+.pp-ld-deck-thumb:hover { color: var(--pp-text); background: var(--pp-bg-3); }
+.pp-ld-deck-thumb--active { color: var(--pp-accent); border-bottom-color: var(--pp-accent); background: var(--pp-bg-3); }
+.pp-ld-deck-thumb--summary { color: var(--pp-accent2); }
+.pp-ld-deck-thumb--summary:hover { color: var(--pp-accent); border-bottom-color: var(--pp-accent); }
+
+.pp-ld-deck-thumb__icon { font-size: 18px; line-height: 1; }
+.pp-ld-deck-thumb__label { font-size: 10px; }
+
+.pp-ld-deck-thumb__sel {
+    font-size: 9px;
+    color: var(--pp-success);
+    font-weight: 700;
+    display: block;
+    max-width: 70px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* Expanded card (slides up from deck, fills the widget area above deck) */
+.pp-ld-expand {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0; /* sits above the deck strip */
+    background: var(--pp-bg-2);
+    border-top: 1px solid var(--pp-accent);
+    z-index: 30;
+    display: flex;
+    flex-direction: column;
+    max-height: 85%;
+    transform: translateY(100%);
+    transition: transform 0.32s cubic-bezier(0.22,1,0.36,1);
+    box-shadow: 0 -8px 32px rgba(0,0,0,0.5);
+}
+
+.pp-ld-expand--open { transform: translateY(0); }
+
+.pp-ld-expand__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--pp-border);
+    flex-shrink: 0;
+}
+
+.pp-ld-expand__title {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--pp-accent);
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+
+.pp-ld-expand__close {
+    background: none;
+    border: 1px solid var(--pp-border);
+    color: var(--pp-muted);
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    font-size: 12px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background var(--pp-trans), color var(--pp-trans);
+}
+.pp-ld-expand__close:hover { background: var(--pp-accent2); color: white; border-color: var(--pp-accent2); }
+
+/* Selected layer big-image preview area */
+.pp-ld-expand__preview-img {
+    position: relative;
+    height: 90px;
+    background: var(--pp-bg-3);
+    border-bottom: 1px solid var(--pp-border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    flex-shrink: 0;
+}
+
+.pp-ld-expand__preview-img img {
+    height: 100%;
+    width: 100%;
+    object-fit: contain;
+    transition: opacity 0.2s;
+}
+
+.pp-ld-expand__preview-img-empty {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--pp-muted);
+    font-size: 12px;
+    font-style: italic;
+}
+
+/* Chips panel inside expanded */
+.pp-ld-expand__chips { overflow-y: auto; padding: 10px 12px; flex: 1; }
+.pp-ld-expand__chips .pp-chips-grid { padding: 0; }
+
+/* Controls */
+.pp-ld-controls {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    background: var(--pp-bg-2);
+    border-top: 1px solid var(--pp-border);
+    justify-content: flex-end;
+    flex-shrink: 0;
+}
+
+/* Offset the expand above the deck strip */
+.pp-layout--layer-deck .pp-ld-wrap { position: relative; }
+
+/* Deck strip height to use as bottom offset for expand */
+.pp-ld-expand { bottom: calc(42px + 3px); } /* deck height ~42px */
+
+/* ═══════════════════════════════════════════════════════════════════════
+   LAYOUT 3 — SLIDE DRAWER
+   Pizza top half, pill bar overlaid at its bottom, drawer slides up.
+═══════════════════════════════════════════════════════════════════════ */
+
+.pp-layout--slide-drawer .pp-sd-wrap {
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    overflow: hidden;
+}
+
+/* Pizza zone */
+.pp-sd-pizza-zone {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 4 / 3;
+    max-height: 280px;
+    background: var(--pp-bg-2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    overflow: hidden;
+}
+
+.pp-sd-pizza-zone .pp-pizza-stage-wrap {
+    width: 65%;
+    aspect-ratio: 1/1;
+    max-width: 220px;
+}
+
+/* Pills overlaid at bottom of pizza zone */
+.pp-sd-pills {
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    display: flex;
+    gap: 0;
+    overflow-x: auto;
+    scrollbar-width: none;
+    background: linear-gradient(transparent, rgba(26,16,8,0.92) 60%);
+    padding: 20px 8px 6px;
+}
+.pp-sd-pills::-webkit-scrollbar { display: none; }
+
+.pp-sd-pill {
+    flex: 0 0 auto;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 5px 10px;
+    background: rgba(37,24,8,0.85);
+    border: 1px solid var(--pp-border);
+    border-radius: 20px;
+    color: var(--pp-muted);
+    font-family: var(--pp-font);
+    font-size: 11px;
+    cursor: pointer;
+    margin-right: 5px;
+    transition: background var(--pp-trans), color var(--pp-trans), border-color var(--pp-trans);
+    backdrop-filter: blur(4px);
+    white-space: nowrap;
+}
+.pp-sd-pill:hover { background: var(--pp-bg-3); color: var(--pp-text); border-color: var(--pp-accent); }
+.pp-sd-pill--active { background: var(--pp-accent); color: #1a1008; border-color: var(--pp-accent); font-weight: 700; }
+.pp-sd-pill--summary { border-color: var(--pp-accent2); color: var(--pp-accent2); }
+.pp-sd-pill--summary:hover { background: var(--pp-accent2); color: white; }
+
+.pp-sd-pill__dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: transparent;
+    border: 1px solid var(--pp-muted);
+    flex-shrink: 0;
+    transition: background var(--pp-trans);
+}
+.pp-sd-pill__dot.pp-dot--active { background: var(--pp-success); border-color: var(--pp-success); }
+
+/* Top-right pizza controls */
+.pp-sd-pizza-controls {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.pp-sd-count {
+    background: rgba(26,16,8,0.8);
+    border: 1px solid var(--pp-border);
+    color: var(--pp-text);
+    border-radius: 20px;
+    padding: 2px 8px;
+    font-size: 11px;
+    backdrop-filter: blur(4px);
+}
+
+.pp-sd-reset {
+    background: rgba(37,24,8,0.85);
+    border: 1px solid var(--pp-border);
+    color: var(--pp-muted);
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    font-size: 14px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background var(--pp-trans), color var(--pp-trans);
+    backdrop-filter: blur(4px);
+}
+.pp-sd-reset:hover { background: var(--pp-accent); color: #1a1008; border-color: var(--pp-accent); }
+
+/* Drawer */
+.pp-sd-drawer {
+    background: var(--pp-bg-2);
+    border-top: 2px solid var(--pp-accent);
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.35s cubic-bezier(0.22,1,0.36,1);
+    position: relative;
+    z-index: 25;
+}
+
+.pp-sd-drawer--open { max-height: 320px; }
+
+.pp-sd-drawer__handle {
+    width: 36px;
+    height: 4px;
+    background: var(--pp-muted);
+    border-radius: 2px;
+    margin: 8px auto 0;
+    opacity: 0.5;
+    cursor: grab;
+}
+
+.pp-sd-drawer__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 6px 14px 6px;
+    border-bottom: 1px solid var(--pp-border);
+}
+
+.pp-sd-drawer__title {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--pp-accent);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+}
+
+.pp-sd-drawer__close {
+    background: none;
+    border: 1px solid var(--pp-border);
+    color: var(--pp-muted);
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    font-size: 11px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.pp-sd-drawer__close:hover { background: var(--pp-accent2); color: white; border-color: var(--pp-accent2); }
+
+.pp-sd-drawer__panel { padding: 10px 12px; overflow-y: auto; max-height: 230px; }
+
+/* ═══════════════════════════════════════════════════════════════════════
+   LAYOUT 4 — STACK PANEL
+   Mini pizza + progress bar; bottom-sheet slides up per step.
+═══════════════════════════════════════════════════════════════════════ */
+
+.pp-layout--stack-panel .pp-sp-wrap {
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    overflow: hidden;
+}
+
+/* Top row: mini pizza + step dots */
+.pp-sp-top {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px;
+    background: var(--pp-bg-2);
+    border-bottom: 1px solid var(--pp-border);
+}
+
+.pp-sp-pizza-mini {
+    position: relative;
+    width: 90px;
+    height: 90px;
+    flex-shrink: 0;
+}
+
+.pp-sp-pizza-mini .pp-pizza-stage-wrap {
+    width: 90px;
+    height: 90px;
+    aspect-ratio: 1/1;
+    border-radius: 50%;
+    overflow: hidden;
+}
+
+.pp-sp-step-info {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.pp-sp-step-dots {
+    display: flex;
+    gap: 5px;
+    flex-wrap: wrap;
+}
+
+.pp-sp-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--pp-bg-3);
+    border: 1px solid var(--pp-border);
+    transition: background var(--pp-trans), border-color var(--pp-trans);
+}
+.pp-sp-dot.pp-dot--active { background: var(--pp-accent); border-color: var(--pp-accent); }
+
+.pp-sp-step-label {
+    font-size: 12px;
+    color: var(--pp-muted);
+    font-style: italic;
+    min-height: 16px;
+}
+
+/* Step nav bar (horizontal scroll row of step buttons) */
+.pp-sp-stepbar {
+    display: flex;
+    overflow-x: auto;
+    scrollbar-width: none;
+    background: var(--pp-bg);
+    border-bottom: 1px solid var(--pp-border);
+}
+.pp-sp-stepbar::-webkit-scrollbar { display: none; }
+
+.pp-sp-step {
+    flex: 0 0 auto;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    padding: 8px 12px 6px;
+    background: transparent;
+    border: none;
+    border-bottom: 3px solid transparent;
+    color: var(--pp-muted);
+    font-family: var(--pp-font);
+    font-size: 10px;
+    cursor: pointer;
+    transition: color var(--pp-trans), border-color var(--pp-trans), background var(--pp-trans);
+    position: relative;
+    min-width: 52px;
+}
+.pp-sp-step:hover { color: var(--pp-text); background: var(--pp-bg-3); }
+.pp-sp-step--active { color: var(--pp-accent); border-bottom-color: var(--pp-accent); }
+.pp-sp-step--summary { color: var(--pp-accent2); }
+
+.pp-sp-step__icon { font-size: 16px; line-height: 1; }
+.pp-sp-step__label { font-size: 9px; letter-spacing: 0.03em; }
+
+.pp-sp-step__dot {
+    width: 5px; height: 5px;
+    border-radius: 50%;
+    background: transparent;
+    border: 1px solid var(--pp-muted);
+    transition: background var(--pp-trans);
+}
+.pp-sp-step__dot.pp-dot--active { background: var(--pp-success); border-color: var(--pp-success); }
+
+/* Bottom sheet */
+.pp-sp-sheet {
+    background: var(--pp-bg-2);
+    border-top: 2px solid var(--pp-accent);
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.35s cubic-bezier(0.22,1,0.36,1);
+    z-index: 25;
+}
+
+.pp-sp-sheet--open { max-height: 380px; }
+
+.pp-sp-sheet__grip {
+    width: 36px;
+    height: 4px;
+    background: var(--pp-muted);
+    border-radius: 2px;
+    margin: 8px auto 0;
+    opacity: 0.5;
+    cursor: grab;
+}
+
+.pp-sp-sheet__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 6px 14px 6px;
+    border-bottom: 1px solid var(--pp-border);
+}
+
+.pp-sp-sheet__title {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--pp-accent);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+}
+
+.pp-sp-sheet__close {
+    background: none;
+    border: 1px solid var(--pp-border);
+    color: var(--pp-muted);
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    font-size: 11px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.pp-sp-sheet__close:hover { background: var(--pp-accent2); color: white; border-color: var(--pp-accent2); }
+
+.pp-sp-sheet__panel { padding: 10px 12px; overflow-y: auto; max-height: 240px; }
+
+.pp-sp-topping-count {
+    font-size: 11px;
+    color: var(--pp-muted);
+    text-align: right;
+    padding: 4px 0 0;
+    border-top: 1px solid var(--pp-border);
+    margin-top: 6px;
+}
+
+.pp-sp-sheet__actions {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    padding: 8px 12px;
+    border-top: 1px solid var(--pp-border);
+    gap: 8px;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   SHARED MODAL (all layouts — summary + overflow tabs)
+═══════════════════════════════════════════════════════════════════════ */
+
+.pp-modal-overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(10,6,2,0.65);
+    z-index: 40;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity var(--pp-trans);
+    backdrop-filter: blur(3px);
+}
+
+.pp-modal-overlay--open {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.pp-modal {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%) scale(0.88);
+    z-index: 50;
+    background: var(--pp-bg-2);
+    border: 1px solid var(--pp-accent);
+    border-radius: var(--pp-radius);
+    width: calc(100% - 24px);
+    max-width: 380px;
+    max-height: 80%;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 12px 48px rgba(0,0,0,0.7), 0 0 0 1px rgba(255,154,26,0.15);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity var(--pp-trans), transform var(--pp-trans-spring);
+}
+
+.pp-modal--open {
+    opacity: 1;
+    pointer-events: auto;
+    transform: translate(-50%, -50%) scale(1);
+}
+
+.pp-modal__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--pp-border);
+    flex-shrink: 0;
+    background: var(--pp-bg-3);
+}
+
+.pp-modal__title {
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--pp-accent);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+}
+
+.pp-modal__close {
+    background: none;
+    border: 1px solid var(--pp-border);
+    color: var(--pp-muted);
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    font-size: 13px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background var(--pp-trans), color var(--pp-trans);
+}
+.pp-modal__close:hover { background: var(--pp-accent2); color: white; border-color: var(--pp-accent2); }
+
+.pp-modal__body { overflow: hidden; flex: 1; display: flex; flex-direction: column; }
+.pp-modal__tab-panel { padding: 12px; overflow-y: auto; flex: 1; }
+
+/* Summary panel */
+.pp-modal__summary {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    padding: 4px 0;
+    overflow-y: auto;
+    flex: 1;
+}
+
+.pp-summary-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 9px 16px;
+    border-bottom: 1px solid var(--pp-border);
+    transition: background var(--pp-trans);
+}
+.pp-summary-row:hover { background: var(--pp-bg-3); }
+
+.pp-summary-row__icon { font-size: 16px; flex-shrink: 0; width: 22px; text-align: center; }
+
+.pp-summary-row__label {
+    font-size: 12px;
+    color: var(--pp-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    min-width: 62px;
+    flex-shrink: 0;
+}
+
+.pp-summary-row__val {
+    flex: 1;
+    font-size: 13px;
+    color: var(--pp-text);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.pp-summary-row__val--empty { color: var(--pp-muted); font-style: italic; font-size: 12px; }
+
+.pp-yp-set { color: var(--pp-text); font-weight: 600; }
+
+.pp-modal__summary-actions {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    padding: 10px 16px;
+    border-top: 1px solid var(--pp-border);
+    gap: 8px;
+    flex-shrink: 0;
+    background: var(--pp-bg-3);
+}
+
+/* ─── Scrollbar styling ───────────────────────────────────────────────── */
+.pp-root *::-webkit-scrollbar { width: 4px; height: 4px; }
+.pp-root *::-webkit-scrollbar-track { background: var(--pp-bg); }
+.pp-root *::-webkit-scrollbar-thumb { background: var(--pp-border); border-radius: 2px; }
+.pp-root *::-webkit-scrollbar-thumb:hover { background: var(--pp-accent); }
+
+/* ─── Grain overlay ───────────────────────────────────────────────────── */
+.pp-root::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.035'/%3E%3C/svg%3E");
+    z-index: 999;
+    border-radius: inherit;
+    opacity: 0.6;
+}
+
+/* ─── WooCommerce action bar hook ─────────────────────────────────────── */
+.pp-root .pizzatier-action-bar { padding: 10px 12px; border-top: 1px solid var(--pp-border); }
+
+/* ─── Responsive tweaks ───────────────────────────────────────────────── */
+@media (max-width: 340px) {
+    .pp-chip { width: calc(50% - 4px); }
+    .pp-cq-trigger { width: 54px; font-size: 9px; }
+    .pp-layout--corner-quad .pp-cq-pizza .pp-pizza-stage-wrap { width: 58vw; height: 58vw; }
+}
+
+/* ── Responsive — standard phone (≤ 600px) ─────────────────────────── */
+@media (max-width: 600px) {
+    .pp-root { border-radius: 0; }
+    .pp-chips-grid--toppings .pp-chip { width: calc(50% - 4px); }
+    .pp-layout--corner-quad .pp-cq-pizza .pp-pizza-stage-wrap {
+        width: min(62vw, 300px);
+        height: min(62vw, 300px);
+    }
+}
+
+/* ══════════════════════════════════════════════════════════════
+   POCKETPIE — TABLET RESPONSIVE (341px – 768px)
+   ══════════════════════════════════════════════════════════════ */
+@media (min-width: 341px) and (max-width: 768px) {
+    /* Corner quad: large central pizza on mid-size devices */
+    .pp-layout--corner-quad .pp-cq-wrap { max-width: 500px; }
+    .pp-layout--corner-quad .pp-cq-pizza .pp-pizza-stage-wrap {
+        width: min(64vw, 300px);
+        height: min(64vw, 300px);
+    }
+    .pp-cq-trigger { width: 66px; }
+
+    /* Layer deck: constrain pizza zone height on tablet */
+    .pp-ld-pizza-zone { max-height: 260px; }
+    .pp-ld-pizza-zone .pp-pizza-stage-wrap { max-width: 220px; }
+
+    /* Slide drawer pizza zone */
+    .pp-sd-pizza-zone { max-height: 240px; }
+
+    /* Chips: 3-column on tablet */
+    .pp-chip { width: calc(33.33% - 6px); }
+    .pp-chips-grid--toppings .pp-chip { width: calc(33.33% - 6px); }
+
+    /* Stack panel mini pizza */
+    .pp-sp-pizza-mini,
+    .pp-sp-pizza-mini .pp-pizza-stage-wrap { width: 80px; height: 80px; }
+}
+
+@media (min-width: 601px) and (max-width: 900px) {
+    /* Corner quad wider on tablet — allow more pizza space */
+    .pp-layout--corner-quad .pp-cq-wrap { max-width: 540px; }
+    .pp-layout--corner-quad .pp-cq-pizza .pp-pizza-stage-wrap {
+        width: 320px;
+        height: 320px;
+    }
+}
+
+/* ══════════════════════════════════════════════════════════════
+   POCKETPIE — CHECKOUT BAR RESPONSIVE
+   ══════════════════════════════════════════════════════════════ */
+@media (max-width: 540px) {
+    .pztpro-checkout-bar--pocketpie .pztpro-pp-bar__actions {
+        flex-wrap: wrap;
+    }
+    .pztpro-checkout-bar--pocketpie .pztpro-bar-row__btn {
+        width: 100%;
+        justify-content: center;
+    }
+}
+
+
+/* ══════════════════════════════════════════════════════════════
+   POCKETPIE — ISSUE FIXES & ENHANCEMENTS
+   ══════════════════════════════════════════════════════════════ */
+
+/* 1. Size selection row — matches PocketPie's own layer-card visual language */
+.pp-size-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 14px;
+    background: var(--pp-bg-2, #251808);
+    border: 1px solid var(--pp-border, rgba(255,190,80,0.15));
+    border-radius: var(--pp-radius, 10px);
+    margin-bottom: 10px;
+    flex-wrap: wrap;
+}
+.pp-size-row__label {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--pp-muted, #a08060);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    flex-shrink: 0;
+}
+.pp-size-row__icon {
+    color: var(--pp-accent, #ff9a1a);
+    font-size: 10px;
+}
+.pp-size-row__options {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    flex: 1;
+}
+.pp-size-chip {
+    display: inline-flex;
+    align-items: center;
+    padding: 8px 16px;
+    background: var(--pp-bg-3, #2e1e0a);
+    border: 2px solid var(--pp-border, rgba(255,190,80,0.15));
+    border-radius: var(--pp-radius, 10px);
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--pp-text, #f5e8cc);
+    font-family: var(--pp-font, Georgia, serif);
+    transition: all 0.16s;
+}
+.pp-size-chip input[type="radio"] { display: none; }
+.pp-size-chip:hover,
+.pp-size-chip.pp-size-chip--active,
+.pp-size-chip.pztpro-size-option--active {
+    border-color: var(--pp-accent, #ff9a1a);
+    background: rgba(255,154,26,0.14);
+    color: var(--pp-accent, #ff9a1a);
+    box-shadow: 0 0 0 1px var(--pp-accent, #ff9a1a);
+}
+.pp-size-chip__name {
+    line-height: 1;
+}
+
+/* 2. Custom checkout bar — PocketPie edition */
+.pztpro-checkout-bar--pocketpie {
+    margin-top: 10px;
+}
+
+/* 3. Size selector inside the shared modal (moved out of the old size row) */
+.pp-modal__tab-panel--size .pp-chips-grid {
+    gap: 10px;
+    padding: 14px 4px;
+    justify-content: center;
+}
+.pp-modal__tab-panel--size .pp-size-chip {
+    flex: 0 0 auto;
+    padding: 12px 22px;
+    font-size: 15px;
+}
+
+/* 4. Toppings counter shown inside the modal panel */
+.pp-modal__topping-count {
+    font-size: 11px;
+    color: var(--pp-muted);
+    text-align: center;
+    padding: 8px 0 2px;
+    border-top: 1px solid var(--pp-border);
+    margin-top: 6px;
+}
+
+/* ══════════════════════════════════════════════════════════════
+   POCKETPIE — "ADD TO CART" CTA (template-owned styling)
+   Pro renders checkout-bar.php inside .pp-root; all visual styling
+   for the CTA lives here in the template stylesheet.
+   ══════════════════════════════════════════════════════════════ */
+.pp-root .pztpro-checkout-bar--pocketpie {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 12px 14px;
+    background: var(--pp-bg-2);
+    border: 1px solid var(--pp-border);
+    border-radius: var(--pp-radius);
+}
+
+.pp-root .pztpro-checkout-bar--pocketpie .pztpro-pp-bar__meta {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 10px;
+}
+.pp-root .pztpro-checkout-bar--pocketpie .pztpro-bar-row__size-label {
+    font-size: 12px;
+    color: var(--pp-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+.pp-root .pztpro-checkout-bar--pocketpie .pztpro-bar-row__price {
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--pp-accent);
+    font-family: var(--pp-font);
+}
+
+.pp-root .pztpro-checkout-bar--pocketpie .pztpro-pp-bar__actions {
+    display: flex;
+    align-items: stretch;
+    gap: 10px;
+}
+
+/* Quantity stepper */
+.pp-root .pztpro-checkout-bar--pocketpie .pztpro-bar-qty {
+    display: inline-flex;
+    align-items: center;
+    gap: 2px;
+    background: var(--pp-bg-3);
+    border: 1px solid var(--pp-border);
+    border-radius: var(--pp-radius-sm);
+    padding: 2px;
+    flex-shrink: 0;
+}
+.pp-root .pztpro-checkout-bar--pocketpie .pztpro-qty-btn {
+    width: 34px;
+    height: 38px;
+    border: none;
+    background: transparent;
+    color: var(--pp-text);
+    font-size: 20px;
+    line-height: 1;
+    cursor: pointer;
+    border-radius: var(--pp-radius-sm);
+    transition: background var(--pp-trans), color var(--pp-trans);
+}
+.pp-root .pztpro-checkout-bar--pocketpie .pztpro-qty-btn:hover:not(:disabled) { background: var(--pp-accent); color: #1a1008; }
+.pp-root .pztpro-checkout-bar--pocketpie .pztpro-qty-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+.pp-root .pztpro-checkout-bar--pocketpie .pztpro-qty-value {
+    min-width: 28px;
+    text-align: center;
+    font-weight: 700;
+    font-size: 15px;
+    color: var(--pp-text);
+}
+
+/* The CTA itself — prominent amber gradient, full-width */
+.pp-root .pztpro-checkout-bar--pocketpie .pztpro-add-to-cart-btn,
+.pp-root .pztpro-checkout-bar--pocketpie .pztpro-bar-row__btn {
+    flex: 1 1 auto;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    min-height: 48px;
+    padding: 12px 20px;
+    border: none;
+    border-radius: var(--pp-radius-sm);
+    background: linear-gradient(135deg, var(--pp-accent) 0%, var(--pp-accent2) 100%);
+    color: #1a1008;
+    font-family: var(--pp-font);
+    font-weight: 800;
+    font-size: 15px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    cursor: pointer;
+    box-shadow: 0 4px 18px rgba(255,130,20,0.35);
+    transition: transform 0.12s ease, box-shadow var(--pp-trans), filter var(--pp-trans);
+}
+.pp-root .pztpro-checkout-bar--pocketpie .pztpro-add-to-cart-btn:hover {
+    transform: translateY(-1px);
+    filter: brightness(1.05);
+    box-shadow: 0 6px 24px rgba(255,130,20,0.45);
+}
+.pp-root .pztpro-checkout-bar--pocketpie .pztpro-add-to-cart-btn:active { transform: scale(0.98); }
+.pp-root .pztpro-checkout-bar--pocketpie .pztpro-add-to-cart-btn:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+    box-shadow: none;
+    filter: grayscale(0.3);
+}
+.pp-root .pztpro-checkout-bar--pocketpie .pztpro-add-to-cart-btn svg {
+    width: 20px;
+    height: 20px;
+    flex-shrink: 0;
+}
+
+/* Order-note input */
+.pp-root .pztpro-checkout-bar--pocketpie .pztpro-bar-notes__input {
+    width: 100%;
+    resize: vertical;
+    background: var(--pp-bg-3);
+    border: 1px solid var(--pp-border);
+    border-radius: var(--pp-radius-sm);
+    color: var(--pp-text);
+    font-family: var(--pp-font);
+    font-size: 13px;
+    padding: 8px 10px;
+}
+.pp-root .pztpro-checkout-bar--pocketpie .pztpro-bar-notes__input:focus {
+    outline: none;
+    border-color: var(--pp-accent);
+}

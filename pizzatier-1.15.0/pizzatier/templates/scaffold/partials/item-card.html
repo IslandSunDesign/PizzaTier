@@ -1,0 +1,65 @@
+<!--
+  SCAFFOLD PARTIAL: item-card.html
+  ──────────────────────────────────────────────────────────────────────────────
+  Single selectable item card for base layers (crust, sauce, cheese, drizzle,
+  slicing). For toppings use item-card-topping.html instead.
+
+  This partial is NOT included directly via PHP's include — it is rendered by
+  the pzt_scaffold_render_item_card() helper in pztp-containers-menu.php,
+  which calls ob_start() and then echoes this HTML structure.
+
+  VARIABLES injected by the helper:
+    $post         — WP_Post object
+    $layer_type   — 'crust' | 'sauce' | 'cheese' | 'drizzle' | 'slicing'
+    $sc_var       — JS namespace string
+    $thumb_url    — thumbnail image URL (may be empty string)
+    $layer_url    — full pizza-layer image URL
+    $title        — item display name (already escaped by helper)
+    $slug         — sanitized slug
+
+  CUSTOMISE:
+    • Add price display: use get_field('price', $post->ID) or WC helpers.
+    • Add description: get_field('description', $post->ID).
+    • Change the card shape, size, or thumbnail style via .sc-card CSS.
+  ──────────────────────────────────────────────────────────────────────────────
+-->
+
+<div
+  class="sc-card sc-card--exclusive"
+  data-layer="<?php echo esc_attr( $layer_type ); ?>"
+  data-slug="<?php echo esc_attr( $slug ); ?>"
+  data-title="<?php echo esc_attr( $title ); ?>"
+  data-layer-img="<?php echo esc_attr( (string) $layer_url ); ?>"
+  data-thumb="<?php echo esc_attr( (string) $thumb_url ); ?>"
+>
+
+  <!-- Thumbnail -->
+  <div class="sc-card__thumb">
+    <?php if ( $thumb_url ) : ?>
+      <img
+        src="<?php echo esc_url( (string) $thumb_url ); ?>"
+        alt="<?php echo esc_attr( $title ); ?>"
+        loading="lazy"
+      />
+    <?php else : ?>
+      <span class="sc-card__thumb--no-image"></span>
+    <?php endif; ?>
+  </div>
+
+  <!-- Label -->
+  <span class="sc-card__label"><?php echo esc_html( $title ); ?></span>
+
+  <!-- Selected indicator — shown/hidden via JS -->
+  <span class="sc-card__selected-mark" aria-hidden="true">&#10003;</span>
+
+  <!-- Select / deselect button -->
+  <button
+    type="button"
+    class="sc-card__btn sc-card__btn--select"
+    aria-label="<?php echo esc_attr( sprintf( __( 'Select %s', 'pizzatier' ), $title ) ); ?>"
+    onclick="<?php echo esc_attr( "window['{$sc_var}']&&window['{$sc_var}'].swapBase('{$layer_type}','{$slug}','{$title}','" . esc_js( (string) $layer_url ) . "',this)" ); ?>"
+  >
+    <?php esc_html_e( 'Select', 'pizzatier' ); ?>
+  </button>
+
+</div>

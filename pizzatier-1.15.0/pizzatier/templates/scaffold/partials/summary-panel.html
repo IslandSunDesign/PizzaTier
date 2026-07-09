@@ -1,0 +1,65 @@
+<!--
+  SCAFFOLD PARTIAL: summary-panel.html
+  ──────────────────────────────────────────────────────────────────────────────
+  "Your Pizza" summary panel. Lists every selected layer/topping with their
+  chosen coverage. JS populates and updates this block reactively.
+
+  VARIABLES:
+    $instance_id      — builder instance ID
+    $sc_var           — JS namespace
+    $summary_title    — translated heading text (settable in template options)
+
+  JS TARGETS (do not rename these IDs or classes):
+    #<instance_id>-summary-rows   — JS writes <li> rows here
+    .sc-summary__empty            — shown when nothing is selected
+    .sc-summary__reset-btn        — fires window[sc_var].resetAll()
+
+  CUSTOMISE:
+    • Add a "Add to Cart" / WooCommerce button after the list.
+    • Replace the <ul> with a styled receipt/ticket layout.
+    • Move this panel into a modal overlay instead of an inline panel.
+  ──────────────────────────────────────────────────────────────────────────────
+-->
+<?php do_action( 'pizzatier_before_summary_panel', $instance_id ); ?>
+
+<div
+  id="<?php echo esc_attr( $instance_id ); ?>-panel-yourpizza"
+  class="sc-panel sc-panel--summary"
+  role="tabpanel"
+  data-panel="yourpizza"
+  data-instance="<?php echo esc_attr( $instance_id ); ?>"
+  aria-labelledby="<?php echo esc_attr( $instance_id ); ?>-tab-yourpizza"
+  hidden
+>
+
+  <h3 class="sc-summary__heading"><?php echo esc_html( $summary_title ); ?></h3>
+
+  <?php do_action( 'pizzatier_before_summary_list', $instance_id ); ?>
+
+  <p class="sc-summary__empty"><?php esc_html_e( 'Nothing selected yet.', 'pizzatier' ); ?></p>
+
+  <ul
+    id="<?php echo esc_attr( $instance_id ); ?>-summary-rows"
+    class="sc-summary__list"
+    aria-live="polite"
+    aria-label="<?php esc_attr_e( 'Selected pizza layers', 'pizzatier' ); ?>"
+  >
+    <!-- JS renders <li class="sc-summary__row"> items here -->
+  </ul>
+
+  <?php do_action( 'pizzatier_after_summary_list', $instance_id ); ?>
+
+  <div class="sc-summary__actions">
+    <button
+      type="button"
+      class="sc-summary__reset-btn"
+      onclick="window['<?php echo esc_attr( $sc_var ); ?>']&&window['<?php echo esc_attr( $sc_var ); ?>'].resetAll()"
+      aria-label="<?php esc_attr_e( 'Reset all choices', 'pizzatier' ); ?>"
+    ><?php esc_html_e( 'Reset', 'pizzatier' ); ?></button>
+
+    <?php do_action( 'pizzatier_summary_extra_actions', $instance_id ); ?>
+  </div>
+
+</div>
+
+<?php do_action( 'pizzatier_after_summary_panel', $instance_id ); ?>

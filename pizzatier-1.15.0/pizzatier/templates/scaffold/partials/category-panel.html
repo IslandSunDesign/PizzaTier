@@ -1,0 +1,47 @@
+<!--
+  SCAFFOLD PARTIAL: category-panel.html
+  ──────────────────────────────────────────────────────────────────────────────
+  Wrapper panel for a single category's item grid. One panel is rendered per
+  visible tab. JS shows/hides panels when the corresponding tab is activated.
+
+  VARIABLES:
+    $instance_id  — builder instance ID
+    $tab_slug     — current category slug, e.g. 'crust'
+    $panel_html   — pre-rendered HTML of all item cards for this category
+                    (see item-card.html / item-card-topping.html)
+    $empty_msg    — translated fallback message if $panel_html is empty
+    $sc_var       — JS namespace
+
+  CUSTOMISE:
+    • Add a search/filter input before .sc-panel__grid for large item sets.
+    • Add a category description above the grid.
+    • Wrap in a <details>/<summary> element for accordion behaviour.
+  ──────────────────────────────────────────────────────────────────────────────
+-->
+<?php do_action( 'pizzatier_before_category_panel', $tab_slug, $instance_id ); ?>
+
+<div
+  id="<?php echo esc_attr( $instance_id ); ?>-panel-<?php echo esc_attr( $tab_slug ); ?>"
+  class="sc-panel"
+  role="tabpanel"
+  data-panel="<?php echo esc_attr( $tab_slug ); ?>"
+  data-instance="<?php echo esc_attr( $instance_id ); ?>"
+  aria-labelledby="<?php echo esc_attr( $instance_id ); ?>-tab-<?php echo esc_attr( $tab_slug ); ?>"
+  <?php if ( empty( $sc_is_first ) ) : ?>hidden<?php endif; ?>
+>
+
+  <?php do_action( 'pizzatier_before_panel_grid', $tab_slug, $instance_id ); ?>
+
+  <div class="sc-panel__grid">
+    <?php if ( $panel_html ) : ?>
+      <?php echo $panel_html; // phpcs:ignore — already escaped in card helpers ?>
+    <?php else : ?>
+      <p class="sc-panel__empty"><?php echo esc_html( $empty_msg ); ?></p>
+    <?php endif; ?>
+  </div>
+
+  <?php do_action( 'pizzatier_after_panel_grid', $tab_slug, $instance_id ); ?>
+
+</div>
+
+<?php do_action( 'pizzatier_after_category_panel', $tab_slug, $instance_id ); ?>

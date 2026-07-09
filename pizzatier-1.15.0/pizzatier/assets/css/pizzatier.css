@@ -1,0 +1,236 @@
+/* main shell */
+
+.pizzatier-ui-container{padding:0px;margin:5px auto;clear:both;}
+.pizzatier-pizza-static{padding:10px;margin:5px auto;clear:both;}
+
+#pizzatier-pizza{
+object-fit: contain;width:600px !important;height:600px !important;padding:0;margin:20px auto;background-size:contain !important;max-width:100%;max-height:100%;z-index:100;}
+
+.pizzatier-pizza-dynamic,.pizzatier-pizza-static{position: relative;width: 100%;padding-top: 100%; /* 16:9 Aspect Ratio */}
+
+#pizzatier-visualizer-pizza-container{position:relative;height:auto;padding:5%;background:#e6e6e6;}
+
+.pizzatier-crust,.pizzatier-sauce,.pizzatier-cheese,.pizzatier-toppings-wrapper,.pizzatier-cut,.pizzatier-drizzle{background-size:contain !important;background-repeat:no-repeat;margin:auto;}
+
+.pizzatier-cut{z-index:900;width:96%;height:96%;padding:2%;overflow:hidden;}
+.pizzatier-crust{z-index:100;width:96%;height:96%;padding:2%;overflow:hidden;}
+.pizzatier-sauce{z-index:200;width:99%;height:99%;padding:.5%;overflow:hidden;}
+.pizzatier-cheese{z-index:300;width:100%;height:100%;padding:0;margin:0;overflow:hidden;}
+.pizzatier-drizzle{z-index:900;width:100%;height:100%;padding:0;margin:0;overflow:hidden;}
+.pizzatier-topping-cut{z-index:950;background-position: center center;position:relative;top:-100%;}
+
+.pizzatier-toppings-wrapper{width:100%;height:100%;position:relative;border-radius:50%;padding:0;margin:auto auto -100% auto;}
+body .pizzatier-toppings-wrapper.pizzatier-toppings-wrapper-static{margin:auto;}
+.pizzatier-toppings-wrapper .pizzatier-topping{width:1200px;height:1200px;max-width:100%;max-height:100%;padding:0 !important;overflow:hidden;vertical-align:middle;text-align:center;position:relative;}
+.pizzatier-toppings-wrapper .pizzatier-topping div{width:100%;clear:both;}
+.pizzatier-toppings-wrapper .pizzatier-topping img{margin:0 !important;padding:0;}
+.pizzatier-visualizer .pizzatier-toppings-wrapper div:first-child{margin-top:100%;}
+.pizzatier-toppings-wrapper div:not(:first-child){margin-top:-100%;}
+
+/* ── PizzaTier Stack System ───────────────────────────────────────────────
+   Base rules for .np-pizza-stage-wrap / .np-pizza-stage / .np-layer-div.
+   Required by the static shortcode ([pizza_static]) and the dynamic builder
+   scaffold (build_dynamic). Templates can extend or override these rules.
+   ─────────────────────────────────────────────────────────────────────────── */
+
+.pizzatier-static-wrap {
+    display:   block;
+    max-width: 500px;
+    margin:    0 auto;
+}
+
+.np-pizza-stage-wrap {
+    position:     relative;
+    width:        100%;
+    aspect-ratio: 1;
+    overflow:     hidden;
+}
+
+.np-pizza-stage {
+    position: absolute;
+    inset:    0;
+    width:    100%;
+    height:   100%;
+}
+
+.np-layer-div {
+    position:       absolute;
+    inset:          0;
+    pointer-events: none;
+}
+
+.np-layer-div img {
+    position:   absolute;
+    inset:      0;
+    width:      100%;
+    height:     100%;
+    object-fit: contain;
+    display:    block;
+}
+
+/* basic UI framework - some templates may override these elements */
+
+.pizzatier-ui{border:solid 1px #e6e6e6;margin:15px;padding:20px;}
+
+.pizzatier-alert{background:rgba(0,0,0,.5);padding:6px 12px;color:white;font-weight:bold;border:solid 1px rgba(255,255,255,.2);display:none;}
+.pizzatier-alert #pizzatier-alert-content{display:inline;}
+
+.pizzatier-ui-menu-col-alert{background:rgba(0,0,0,.5) !important;color:white;font-size:16px;}
+
+/* halves */
+.pizzatier-topping.tcg-half-left,.pizzatier-topping.tcg-half-right{width:50%;height:100%;}
+.pizzatier-topping.tcg-half-left img{width:50%;height:100%;position:absolute;left:0;object-fit: cover; object-position: 50% 0;}
+.pizzatier-topping.tcg-half-right img{width:50%;height:100%;position:absolute;right:0;object-fit: cover; object-position: 50% 0;}
+
+/* quarters */
+.pizzatier-topping.tcg-quarter-top-left,
+.pizzatier-topping.tcg-quarter-top-right,
+.pizzatier-topping.tcg-quarter-bottom-left,
+.pizzatier-topping.tcg-quarter-bottom-right{width:48%;height:48%;border:solid 1% blue !important;}
+.pizzatier-topping.tcg-quarter-top-left img{width:50%;height:50%;position:absolute;left:0;top:0;object-fit: cover; object-position: top left;}
+.pizzatier-topping.tcg-quarter-top-right img{width:50%;height:50%;position:absolute;right:0;top:0;object-fit: cover; object-position: top right;}
+.pizzatier-topping.tcg-quarter-bottom-left img{width:50%;height:50%;position:absolute;left:0;top:50%;object-fit: cover; object-position: bottom left;}
+.pizzatier-topping.tcg-quarter-bottom-right img{width:50%;height:50%;position:absolute;right:0;top:50%;object-fit: cover; object-position: bottom right;}
+
+
+/* UI Controls */
+.pizzatier-control-nextprev{padding:6px;}
+.pizzatier-control-nextprev a{border:solid 1px rgba(255,255,255,.6);padding:6px 12px;}
+.pizzatier-control-nextprev a:hover{}
+.pizzatier-control-nextprev .fa{font-size:28px;color:white;}
+.pizzlayer-control-next{float:right;}
+
+
+/* Idle Animation */
+
+@keyframes jump {
+  0% { transform: translateY(0); }
+  30% { transform: translateY(-20px); }
+  60% { transform: translateY(0); }
+}
+
+.jump {
+  animation: jump 0.5s ease;
+}
+
+/* Loading Animation / Background Rotation */
+
+.bg-rotate-wrapper {
+  position: relative;
+  overflow: hidden;
+}
+
+.bg-rotate-wrapper::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  background-image: url('your-icon.png');
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
+  animation: bg-spin 10s linear infinite;
+  z-index: 0;
+  pointer-events: none;
+}
+
+/* ══════════════════════════════════════════════════════════════
+   PZTPRO CHECKOUT BAR — SHARED RESPONSIVE RULES
+   These complement the per-template rules in template.css files.
+   ══════════════════════════════════════════════════════════════ */
+
+/* Qty selector: always inline-flex, shrinks gracefully */
+.pztpro-bar-qty {
+    display:     flex;
+    align-items: center;
+    gap:         4px;
+    flex-shrink: 0;
+}
+
+/* Ensure price text doesn't overflow on narrow screens */
+.pztpro-bar-row__price {
+    white-space: nowrap;
+    overflow:    hidden;
+    text-overflow: ellipsis;
+    max-width:   120px;
+}
+
+/* On phones (<= 480px): qty selector takes a fixed row */
+@media (max-width: 480px) {
+    .pztpro-bar-qty {
+        width: 100%;
+        justify-content: center;
+        order: 2;
+    }
+    .pztpro-bar-row__summary { order: 1; width: 100%; }
+    .pztpro-bar-row__btn     { order: 3; width: 100%; justify-content: center; }
+}
+
+/* ══════════════════════════════════════════════════════════════
+   GLOBAL CHROME — Announcement bar + Help panel
+   Driven by Settings → Plugin Settings; rendered by
+   BuilderShortcode::wrap_global_chrome() for every template.
+   ══════════════════════════════════════════════════════════════ */
+
+.pzl-announce {
+    display:       flex;
+    align-items:   center;
+    gap:           10px;
+    margin:        0 0 16px;
+    padding:       12px 18px;
+    border-radius: 8px;
+    background:    linear-gradient(135deg, #ff8c42, #ff6b35);
+    color:         #fff;
+    font-size:     14px;
+    font-weight:   600;
+    line-height:   1.45;
+    box-shadow:    0 2px 10px rgba(255, 107, 53, 0.28);
+}
+.pzl-announce__icon {
+    flex-shrink: 0;
+    font-size:   16px;
+    line-height: 1;
+}
+
+.pzl-help {
+    margin:        18px 0 0;
+    border:        1px solid #e0e3e7;
+    border-radius: 8px;
+    background:    #fafbfc;
+    overflow:      hidden;
+}
+.pzl-help__summary {
+    display:     flex;
+    align-items: center;
+    gap:         9px;
+    padding:     11px 16px;
+    cursor:      pointer;
+    font-size:   13px;
+    font-weight: 600;
+    color:       #3c434a;
+    list-style:  none;
+    user-select: none;
+}
+.pzl-help__summary::-webkit-details-marker { display: none; }
+.pzl-help__summary:hover { background: #f0f2f4; }
+.pzl-help__icon {
+    display:         inline-flex;
+    align-items:     center;
+    justify-content: center;
+    width:           20px;
+    height:          20px;
+    border-radius:   50%;
+    background:      #ff6b35;
+    color:           #fff;
+    font-size:       12px;
+    font-weight:     700;
+    flex-shrink:     0;
+}
+.pzl-help__body {
+    padding:    4px 16px 14px;
+    font-size:  13px;
+    line-height: 1.6;
+    color:      #50575e;
+    border-top: 1px solid #eceef0;
+}
+.pzl-help__body p { margin: 8px 0; }

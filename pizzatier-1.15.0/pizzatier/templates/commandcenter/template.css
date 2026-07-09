@@ -1,0 +1,1008 @@
+/* ══════════════════════════════════════════════════════════════════
+   COMMAND CENTER TEMPLATE — template.css
+   Dark navy UI, numbered step wizard, sidebar order summary.
+   Red accent (#e94560) on deep navy (#0f1629 / #16213e).
+   ══════════════════════════════════════════════════════════════════ */
+
+/* ── Design Tokens ───────────────────────────────────────────────── */
+.cc-root {
+    --cc-bg:            #0b1120;
+    --cc-surface:       #16213e;
+    --cc-surface-2:     #1e2d4f;
+    --cc-surface-3:     #253460;
+    --cc-surface-hover: #1f2f54;
+
+    --cc-text:          #e8eaf6;
+    --cc-text-muted:    #8892b0;
+    --cc-text-faint:    #4a5568;
+
+    --cc-border:        rgba(255,255,255,0.07);
+    --cc-border-hover:  rgba(255,255,255,0.14);
+    --cc-border-active: rgba(233,69,96,0.5);
+
+    --cc-accent:        #e94560;
+    --cc-accent-dim:    rgba(233,69,96,0.18);
+    --cc-accent-hover:  #ff5572;
+    --cc-accent-glow:   0 0 20px rgba(233,69,96,0.35);
+
+    /* Add to Cart CTA (settings-driven; defaults to the accent) */
+    --cc-cta:           #e94560;
+    --cc-cta-hover:     #ff5572;
+    --cc-cta-glow:      0 0 18px rgba(233,69,96,0.4);
+
+    --cc-step-done:     #3dd68c;
+    --cc-step-done-dim: rgba(61,214,140,0.15);
+
+    /* Per-tab accent palette. Each builder step gets its own colour so the
+       wizard reads as a guided, colourful flow rather than one flat red.
+       The settings injector can re-tint or collapse these to the accent. */
+    --cc-tab-size:      #6c8cff;
+    --cc-tab-crust:     #e0a458;
+    --cc-tab-sauce:     #e0544e;
+    --cc-tab-cheese:    #f2c14e;
+    --cc-tab-toppings:  #3dd68c;
+    --cc-tab-drizzle:   #c178e9;
+    --cc-tab-slicing:   #46c6d9;
+
+    --cc-radius:        12px;
+    --cc-radius-sm:     8px;
+    --cc-radius-lg:     16px;
+
+    --cc-transition:    0.2s ease;
+
+    /* checkout bar (Pro) */
+    --cc-bar-bg:        #0e1929;
+    --cc-bar-border:    rgba(233,69,96,0.25);
+}
+
+/* ── Scoped reset ────────────────────────────────────────────────── */
+.cc-root,
+.cc-root * { box-sizing: border-box; }
+
+.cc-root {
+    font-family:   -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+    font-size:     15px;
+    line-height:   1.6;
+    color:         var(--cc-text);
+    background:    var(--cc-bg);
+    border-radius: var(--cc-radius-lg);
+    overflow:      visible;
+}
+
+.cc-root h2 { margin: 0; font-size: 17px; font-weight: 600; color: var(--cc-text); line-height: 1.3; }
+.cc-root p  { margin: 0; }
+.cc-root button { font-family: inherit; cursor: pointer; }
+
+/* ══════════════════════════════════════════════════════════════════
+   WIZARD HEADER — numbered step bar
+   ══════════════════════════════════════════════════════════════════ */
+
+.cc-wizard-header {
+    background:    var(--cc-surface);
+    border-bottom: 1px solid var(--cc-border);
+    padding:       0 20px;
+    position:      relative;
+}
+
+.cc-wizard-steps {
+    display:         flex;
+    align-items:     flex-start;
+    gap:             0;
+    overflow-x:      auto;
+    scrollbar-width: none;
+    padding:         16px 0 12px;
+}
+.cc-wizard-steps::-webkit-scrollbar { display: none; }
+
+/* Step item */
+.cc-step {
+    display:        flex;
+    flex-direction: column;
+    align-items:    center;
+    gap:            6px;
+    flex:           1;
+    min-width:      52px;
+    cursor:         pointer;
+    position:       relative;
+    padding:        0 4px;
+    outline:        none;
+}
+
+/* Connector line between steps */
+.cc-step:not(:last-child)::after {
+    content:    '';
+    position:   absolute;
+    top:        18px;
+    left:       calc(50% + 16px);
+    right:      calc(-50% + 16px);
+    height:     2px;
+    background: var(--cc-border);
+    transition: background var(--cc-transition);
+}
+.cc-step.cc-step--done:not(:last-child)::after {
+    background: var(--cc-step-done);
+}
+
+/* Bubble */
+.cc-step__bubble {
+    width:           36px;
+    height:          36px;
+    border-radius:   50%;
+    background:      var(--cc-surface-2);
+    border:          2px solid var(--cc-border);
+    display:         flex;
+    align-items:     center;
+    justify-content: center;
+    transition:      border-color var(--cc-transition), background var(--cc-transition), box-shadow var(--cc-transition);
+    flex-shrink:     0;
+    position:        relative;
+}
+.cc-step__bubble--review {
+    background: var(--cc-surface-2);
+}
+.cc-step__bubble--review svg {
+    width: 16px; height: 16px; stroke: var(--cc-text-muted); flex-shrink: 0;
+}
+
+.cc-step__num  { font-size: 13px; font-weight: 700; color: var(--cc-text-muted); }
+.cc-step__check { display: none; }
+.cc-step__check svg { width: 14px; height: 14px; stroke: #fff; }
+
+.cc-step__label {
+    font-size:   10px;
+    font-weight: 500;
+    color:       var(--cc-text-faint);
+    text-align:  center;
+    white-space: nowrap;
+    transition:  color var(--cc-transition);
+}
+
+/* Per-tab colour assignment (collapses to accent when colourful tabs are off) */
+.cc-step[data-tab="size"]      { --cc-tab: var(--cc-tab-size); }
+.cc-step[data-tab="crust"]     { --cc-tab: var(--cc-tab-crust); }
+.cc-step[data-tab="sauce"]     { --cc-tab: var(--cc-tab-sauce); }
+.cc-step[data-tab="cheese"]    { --cc-tab: var(--cc-tab-cheese); }
+.cc-step[data-tab="toppings"]  { --cc-tab: var(--cc-tab-toppings); }
+.cc-step[data-tab="drizzle"]   { --cc-tab: var(--cc-tab-drizzle); }
+.cc-step[data-tab="slicing"]   { --cc-tab: var(--cc-tab-slicing); }
+.cc-step[data-tab="yourpizza"] { --cc-tab: var(--cc-accent); }
+
+/* Active step */
+.cc-step.cc-step--active .cc-step__bubble {
+    background:   var(--cc-tab, var(--cc-accent));
+    border-color: var(--cc-tab, var(--cc-accent));
+    box-shadow:   var(--cc-accent-glow);
+}
+.cc-step.cc-step--active .cc-step__num  { color: #fff; }
+.cc-step.cc-step--active .cc-step__label { color: var(--cc-tab, var(--cc-accent)); }
+.cc-step.cc-step--active .cc-step__bubble--review svg { stroke: #fff; }
+
+/* Done step */
+.cc-step.cc-step--done .cc-step__bubble {
+    background:   var(--cc-step-done-dim);
+    border-color: var(--cc-step-done);
+}
+.cc-step.cc-step--done .cc-step__num   { display: none; }
+.cc-step.cc-step--done .cc-step__check { display: flex; }
+.cc-step.cc-step--done .cc-step__check svg { stroke: var(--cc-step-done); }
+.cc-step.cc-step--done .cc-step__label { color: var(--cc-step-done); }
+
+/* Hover (not active/done) */
+.cc-step:not(.cc-step--active):not(.cc-step--done):hover .cc-step__bubble {
+    border-color: var(--cc-border-hover);
+    background:   var(--cc-surface-hover);
+}
+.cc-step:not(.cc-step--active):not(.cc-step--done):hover .cc-step__label {
+    color: var(--cc-text-muted);
+}
+
+/* Idle steps carry a subtle tint of their own colour so every step reads as
+   its category at a glance (progressive enhancement; falls back to the neutral
+   number/border where color-mix is unsupported). */
+.cc-step:not(.cc-step--active):not(.cc-step--done) .cc-step__num {
+    color: var(--cc-tab, var(--cc-text-muted));
+}
+.cc-step:not(.cc-step--active):not(.cc-step--done) .cc-step__bubble {
+    border-color: color-mix(in srgb, var(--cc-tab, var(--cc-border)) 40%, transparent);
+}
+
+/* Progress track */
+.cc-wizard-progress-track {
+    height:        3px;
+    background:    var(--cc-border);
+    border-radius: 2px;
+    margin:        0 -20px;
+    overflow:      hidden;
+}
+.cc-wizard-progress-fill {
+    height:           100%;
+    width:            0%;
+    background:       var(--cc-accent);
+    border-radius:    2px;
+    transition:       width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   LAYOUT — panels + sidebar
+   Mobile: single column. Desktop: main + fixed-width sidebar.
+   ══════════════════════════════════════════════════════════════════ */
+
+.cc-layout {
+    display:        flex;
+    flex-direction: column;
+    min-height:     520px;
+}
+
+@media (min-width: 860px) {
+    .cc-layout {
+        flex-direction: row;
+        align-items:    stretch;
+        min-height:     600px;
+    }
+}
+
+/* Main column */
+.cc-main-col {
+    flex:         1 1 0;
+    min-width:    0;
+    display:      flex;
+    flex-direction: column;
+}
+
+/* ── Pizza canvas ────────────────────────────────────────────────── */
+.cc-canvas-wrap {
+    display:         flex;
+    flex-direction:  column;
+    align-items:     center;
+    gap:             10px;
+    padding:         20px 20px 0;
+    background:      var(--cc-bg);
+    border-bottom:   1px solid var(--cc-border);
+}
+
+.cc-canvas {
+    position:     relative;
+    width:        100%;
+    max-width:    200px;
+    aspect-ratio: 1 / 1;
+    border-radius: 50%;
+    background:   radial-gradient(circle at 44% 40%, #3a2e1a 0%, #251e0e 45%, #161006 100%);
+    box-shadow:
+        0 0 0 4px rgba(255,255,255,0.04),
+        0 0 0 8px rgba(0,0,0,0.5),
+        0 12px 40px rgba(0,0,0,0.8),
+        inset 0 2px 12px rgba(0,0,0,0.6);
+    overflow: hidden;
+    flex-shrink: 0;
+}
+
+/* Layer positioning inside canvas
+   Selectors cover every stage/layer classname variant that can appear here:
+   - .cb-*  / .pzl-*           legacy Colorbox + shared PizzaTier classes
+   - .np-*                     emitted by PizzaBuilder::build_dynamic (initial scaffold)
+   - .cc-pizza-stage / .cc-layer-div  created at runtime by Command Center custom.js
+   Without the .cc-* and .np-* rules below, JS-created layers have no box and
+   don't paint, which is the "selected layers not adding to live preview" bug. */
+.cc-canvas .cb-pizza-stage-wrap,
+.cc-canvas .pzl-pizza-stage-wrap,
+.cc-canvas .np-pizza-stage-wrap {
+    position: absolute; inset: 0; width: 100%; height: 100%;
+}
+.cc-canvas .cb-pizza-stage,
+.cc-canvas .pzl-pizza-stage,
+.cc-canvas .np-pizza-stage,
+.cc-canvas .cc-pizza-stage {
+    position: absolute; inset: 0; width: 100%; height: 100%; background: transparent;
+}
+.cc-canvas .cb-layer-div,
+.cc-canvas .pzl-layer-div,
+.cc-canvas .cc-layer-div {
+    position: absolute; inset: 0; pointer-events: none;
+}
+.cc-canvas .cb-layer-div img,
+.cc-canvas .pzl-layer-div img,
+.cc-canvas .cc-layer-div img {
+    position: absolute; inset: 0; width: 100%; height: 100%;
+    object-fit: contain; display: block;
+    transition: opacity 0.3s ease, clip-path 0.25s ease;
+}
+
+.cc-canvas-reset {
+    display:         flex;
+    align-items:     center;
+    justify-content: space-between;
+    width:           100%;
+    max-width:       200px;
+    padding-bottom:  14px;
+}
+
+.cc-topping-count {
+    font-size:  11px;
+    color:      var(--cc-text-faint);
+}
+.cc-topping-count strong { color: var(--cc-text-muted); }
+
+@media (min-width: 860px) {
+    .cc-canvas-wrap {
+        flex-direction: row;
+        align-items:    center;
+        justify-content: center;
+        gap:            20px;
+        padding:        20px 28px;
+        max-height:     none;
+    }
+    .cc-canvas      { max-width: 180px; }
+    .cc-canvas-reset {
+        max-width: none;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+        padding-bottom: 0;
+    }
+}
+
+/* ── Panels ──────────────────────────────────────────────────────── */
+.cc-panels { flex: 1 1 auto; overflow: visible; }
+
+.cc-panel {
+    display:  none;
+    padding:  24px 20px 20px;
+    animation: ccFadeIn 0.18s ease;
+}
+.cc-panel--active { display: block; }
+
+@keyframes ccFadeIn {
+    from { opacity: 0; transform: translateY(6px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+/* Panel header */
+.cc-panel__header {
+    display:       flex;
+    align-items:   flex-start;
+    gap:           14px;
+    margin-bottom: 18px;
+}
+.cc-panel__header--review {
+    align-items: center;
+}
+
+.cc-panel__step-badge {
+    width:           32px;
+    height:          32px;
+    border-radius:   50%;
+    background:      var(--cc-accent);
+    color:           #fff;
+    font-size:       14px;
+    font-weight:     700;
+    display:         flex;
+    align-items:     center;
+    justify-content: center;
+    flex-shrink:     0;
+    box-shadow:      var(--cc-accent-glow);
+}
+/* Per-tab badge colour, matched to the wizard-header step colours. */
+[id$="-panel-size"]     .cc-panel__step-badge { background: var(--cc-tab-size); }
+[id$="-panel-crust"]    .cc-panel__step-badge { background: var(--cc-tab-crust); }
+[id$="-panel-sauce"]    .cc-panel__step-badge { background: var(--cc-tab-sauce); }
+[id$="-panel-cheese"]   .cc-panel__step-badge { background: var(--cc-tab-cheese); }
+[id$="-panel-toppings"] .cc-panel__step-badge { background: var(--cc-tab-toppings); }
+[id$="-panel-drizzle"]  .cc-panel__step-badge { background: var(--cc-tab-drizzle); }
+[id$="-panel-slicing"]  .cc-panel__step-badge { background: var(--cc-tab-slicing); }
+
+.cc-panel__review-icon {
+    width:           40px;
+    height:          40px;
+    border-radius:   var(--cc-radius-sm);
+    background:      var(--cc-accent-dim);
+    border:          1px solid var(--cc-border-active);
+    display:         flex;
+    align-items:     center;
+    justify-content: center;
+    flex-shrink:     0;
+}
+.cc-panel__review-icon svg { width: 18px; height: 18px; stroke: var(--cc-accent); }
+
+.cc-panel__title { color: var(--cc-text); margin-bottom: 2px; }
+.cc-panel__hint  { font-size: 13px; color: var(--cc-text-muted); }
+
+/* Panel nav (prev/next) */
+.cc-panel__nav {
+    display:         flex;
+    align-items:     center;
+    justify-content: space-between;
+    margin-top:      22px;
+    padding-top:     16px;
+    border-top:      1px solid var(--cc-border);
+    gap:             10px;
+}
+
+/* Nav buttons */
+.cc-nav-btn {
+    display:        inline-flex;
+    align-items:    center;
+    gap:            6px;
+    padding:        9px 18px;
+    border-radius:  var(--cc-radius-sm);
+    font-size:      13px;
+    font-weight:    600;
+    border:         1px solid var(--cc-border);
+    background:     var(--cc-surface-2);
+    color:          var(--cc-text);
+    transition:     background var(--cc-transition), border-color var(--cc-transition), transform 0.1s;
+    cursor:         pointer;
+    white-space:    nowrap;
+}
+.cc-nav-btn svg { width: 14px; height: 14px; flex-shrink: 0; }
+.cc-nav-btn:hover { background: var(--cc-surface-3); border-color: var(--cc-border-hover); }
+.cc-nav-btn:active { transform: scale(0.97); }
+
+.cc-nav-btn--next {
+    background:   var(--cc-surface-3);
+    border-color: var(--cc-border-hover);
+    color:        var(--cc-text);
+}
+.cc-nav-btn--cta {
+    background:  var(--cc-cta, var(--cc-accent));
+    border-color: var(--cc-cta, var(--cc-accent));
+    color:        #fff;
+    box-shadow:   var(--cc-cta-glow, var(--cc-accent-glow));
+}
+.cc-nav-btn--cta:hover { background: var(--cc-cta-hover, var(--cc-accent-hover)); border-color: var(--cc-cta-hover, var(--cc-accent-hover)); }
+
+/* Ghost button (reset / start over) */
+.cc-ghost-btn {
+    display:      inline-flex;
+    align-items:  center;
+    gap:          6px;
+    padding:      6px 12px;
+    border-radius: var(--cc-radius-sm);
+    font-size:    12px;
+    font-weight:  500;
+    background:   transparent;
+    border:       1px solid var(--cc-border);
+    color:        var(--cc-text-muted);
+    cursor:       pointer;
+    transition:   color var(--cc-transition), border-color var(--cc-transition);
+}
+.cc-ghost-btn svg { width: 13px; height: 13px; flex-shrink: 0; }
+.cc-ghost-btn:hover { color: var(--cc-text); border-color: var(--cc-border-hover); }
+
+/* ── Card grid ────────────────────────────────────────────────────── */
+.cc-cards-grid {
+    display:               grid;
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+    gap:                   10px;
+}
+.cc-cards-grid--toppings {
+    grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+}
+
+@media (min-width: 540px) {
+    .cc-cards-grid { grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); }
+}
+
+/* ── Individual card ──────────────────────────────────────────────── */
+.cc-card {
+    background:    var(--cc-surface);
+    border:        1px solid var(--cc-border);
+    border-radius: var(--cc-radius);
+    overflow:      hidden;
+    transition:    border-color var(--cc-transition), background var(--cc-transition), transform 0.12s;
+    cursor:        default;
+    display:       flex;
+    flex-direction: column;
+}
+.cc-card:hover { border-color: var(--cc-border-hover); background: var(--cc-surface-hover); }
+
+/* Selected state */
+.cc-card.cc-card--selected {
+    border-color: var(--cc-accent);
+    background:   var(--cc-accent-dim);
+    box-shadow:   0 0 0 1px var(--cc-accent);
+}
+
+/* Card media */
+.cc-card__media {
+    position:        relative;
+    aspect-ratio:    1 / 1;
+    background:      var(--cc-surface-2);
+    overflow:        hidden;
+    display:         flex;
+    align-items:     center;
+    justify-content: center;
+}
+.cc-card__img {
+    width: 100%; height: 100%; object-fit: cover; display: block;
+    transition: transform 0.2s ease;
+}
+.cc-card:hover .cc-card__img { transform: scale(1.04); }
+
+.cc-card__img--placeholder {
+    width: 100%; height: 100%;
+    background: linear-gradient(135deg, var(--cc-surface-2) 0%, var(--cc-surface-3) 100%);
+}
+
+/* Checkmark overlay */
+.cc-card__check {
+    position:        absolute;
+    top:             6px;
+    right:           6px;
+    width:           22px;
+    height:          22px;
+    border-radius:   50%;
+    background:      var(--cc-accent);
+    display:         flex;
+    align-items:     center;
+    justify-content: center;
+    opacity:         0;
+    transition:      opacity var(--cc-transition), transform var(--cc-transition);
+    transform:       scale(0.6);
+    box-shadow:      0 2px 8px rgba(0,0,0,0.4);
+}
+.cc-card__check svg { width: 12px; height: 12px; stroke: #fff; }
+.cc-card.cc-card--selected .cc-card__check { opacity: 1; transform: scale(1); }
+
+/* Card body */
+.cc-card__body {
+    padding: 8px 10px;
+    flex: 1;
+}
+.cc-card__name {
+    font-size:   13px;
+    font-weight: 600;
+    color:       var(--cc-text);
+    display:     block;
+    line-height: 1.3;
+}
+
+/* Card actions */
+.cc-card__actions {
+    padding:    0 8px 8px;
+    display:    flex;
+    gap:        6px;
+}
+.cc-btn {
+    display:      inline-flex;
+    align-items:  center;
+    gap:          5px;
+    padding:      5px 10px;
+    border-radius: 6px;
+    font-size:    12px;
+    font-weight:  600;
+    cursor:       pointer;
+    transition:   background var(--cc-transition), border-color var(--cc-transition);
+    border:       1px solid transparent;
+    white-space:  nowrap;
+    flex:         1;
+    justify-content: center;
+}
+.cc-btn svg { width: 11px; height: 11px; flex-shrink: 0; }
+.cc-btn--add {
+    background:   var(--cc-accent);
+    color:        #fff;
+    border-color: var(--cc-accent);
+}
+.cc-btn--add:hover { background: var(--cc-accent-hover); border-color: var(--cc-accent-hover); }
+
+.cc-btn--remove {
+    background:   var(--cc-surface-3);
+    color:        var(--cc-text-muted);
+    border-color: var(--cc-border);
+}
+.cc-btn--remove:hover { background: rgba(233,69,96,0.15); color: var(--cc-accent); border-color: var(--cc-border-active); }
+
+/* ── Coverage buttons ─────────────────────────────────────────────── */
+.cc-coverage {
+    margin-top: 6px;
+    padding-top: 6px;
+    border-top: 1px solid var(--cc-border);
+}
+.cc-coverage__label {
+    font-size: 10px;
+    color: var(--cc-text-faint);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    display: block;
+    margin-bottom: 4px;
+}
+.cc-coverage__btns { display: flex; flex-wrap: wrap; gap: 4px; }
+.cc-cov-btn {
+    padding:       3px 7px;
+    border-radius: 4px;
+    font-size:     11px;
+    font-weight:   500;
+    background:    var(--cc-surface-2);
+    border:        1px solid var(--cc-border);
+    color:         var(--cc-text-muted);
+    cursor:        pointer;
+    transition:    background var(--cc-transition), border-color var(--cc-transition);
+}
+.cc-cov-btn:hover          { background: var(--cc-surface-3); color: var(--cc-text); }
+.cc-cov-btn.cc-cov-btn--active {
+    background:   var(--cc-accent-dim);
+    border-color: var(--cc-border-active);
+    color:        var(--cc-accent);
+}
+
+/* ── Empty state ──────────────────────────────────────────────────── */
+.cc-empty {
+    grid-column: 1 / -1;
+    color:       var(--cc-text-muted);
+    font-size:   14px;
+    padding:     20px;
+    text-align:  center;
+    background:  var(--cc-surface);
+    border-radius: var(--cc-radius);
+    border:      1px dashed var(--cc-border);
+}
+
+/* ── Review panel ─────────────────────────────────────────────────── */
+.cc-review-grid {
+    background:    var(--cc-surface);
+    border:        1px solid var(--cc-border);
+    border-radius: var(--cc-radius);
+    overflow:      hidden;
+}
+.cc-review-row {
+    display:       flex;
+    align-items:   center;
+    gap:           12px;
+    padding:       11px 16px;
+    border-bottom: 1px solid var(--cc-border);
+}
+.cc-review-row:last-child { border-bottom: none; }
+
+.cc-review-row__label {
+    font-size:  12px;
+    font-weight: 600;
+    color:      var(--cc-text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    min-width:  70px;
+    flex-shrink: 0;
+}
+.cc-review-row__value {
+    flex:       1;
+    font-size:  14px;
+    color:      var(--cc-text);
+    font-weight: 500;
+}
+.cc-review-row__value--empty em { color: var(--cc-text-faint); font-style: normal; font-weight: 400; }
+
+.cc-review-edit {
+    display:      inline-flex;
+    align-items:  center;
+    gap:          4px;
+    padding:      4px 10px;
+    border-radius: 5px;
+    font-size:    12px;
+    font-weight:  500;
+    background:   var(--cc-surface-2);
+    border:       1px solid var(--cc-border);
+    color:        var(--cc-text-muted);
+    cursor:       pointer;
+    flex-shrink:  0;
+    transition:   background var(--cc-transition), color var(--cc-transition);
+}
+.cc-review-edit svg { width: 11px; height: 11px; }
+.cc-review-edit:hover { background: var(--cc-surface-3); color: var(--cc-text); }
+
+/* Special instructions */
+.cc-special-instructions { margin-top: 16px; }
+.cc-special-instructions__label {
+    display:      block;
+    font-size:    13px;
+    font-weight:  600;
+    color:        var(--cc-text-muted);
+    margin-bottom: 6px;
+}
+.cc-special-instructions__input {
+    width:         100%;
+    background:    var(--cc-surface);
+    border:        1px solid var(--cc-border);
+    border-radius: var(--cc-radius-sm);
+    color:         var(--cc-text);
+    font-size:     14px;
+    font-family:   inherit;
+    padding:       10px 12px;
+    resize:        vertical;
+    transition:    border-color var(--cc-transition);
+}
+.cc-special-instructions__input::placeholder { color: var(--cc-text-faint); }
+.cc-special-instructions__input:focus {
+    outline:      none;
+    border-color: var(--cc-accent);
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   SIDEBAR — persistent order summary
+   ══════════════════════════════════════════════════════════════════ */
+
+.cc-sidebar {
+    background:  var(--cc-surface);
+    border-top:  1px solid var(--cc-border);
+}
+
+@media (min-width: 860px) {
+    .cc-sidebar {
+        flex:        0 0 220px;
+        width:       220px;
+        border-top:  none;
+        border-left: 1px solid var(--cc-border);
+        position:    sticky;
+        top:         0;
+        align-self:  flex-start;
+        max-height:  100vh;
+        overflow-y:  auto;
+    }
+}
+
+.cc-sidebar__inner { padding: 16px; }
+
+.cc-sidebar__header {
+    display:       flex;
+    align-items:   center;
+    gap:           8px;
+    font-size:     11px;
+    font-weight:   700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color:         var(--cc-text-muted);
+    margin-bottom: 14px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--cc-border);
+}
+.cc-sidebar__icon { width: 14px; height: 14px; stroke: var(--cc-accent); flex-shrink: 0; }
+
+.cc-sidebar__rows { display: flex; flex-direction: column; gap: 0; }
+
+.cc-sidebar__row {
+    display:       flex;
+    flex-direction: column;
+    gap:           2px;
+    padding:       8px 0;
+    border-bottom: 1px solid var(--cc-border);
+}
+.cc-sidebar__row:last-child { border-bottom: none; }
+
+.cc-sidebar__row-label {
+    font-size:     10px;
+    font-weight:   700;
+    color:         var(--cc-text-faint);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+.cc-sidebar__row-value {
+    font-size:   13px;
+    font-weight: 600;
+    color:       var(--cc-text);
+    line-height: 1.3;
+    word-break:  break-word;
+}
+.cc-sidebar__row-value--empty {
+    color:       var(--cc-text-faint);
+    font-weight: 400;
+    font-size:   12px;
+    font-style:  italic;
+}
+
+.cc-sidebar__footer {
+    margin-top:  14px;
+    padding-top: 12px;
+    border-top:  1px solid var(--cc-border);
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   SIZE SELECTOR (PizzaTierPro)
+   ══════════════════════════════════════════════════════════════════ */
+
+.cc-size-selector {
+    margin-bottom: 8px;
+}
+.cc-size-selector__heading {
+    font-size:    13px;
+    font-weight:  600;
+    color:        var(--cc-text-muted);
+    margin-bottom: 10px;
+}
+.cc-size-selector__options {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+.cc-size-option {
+    display:       flex;
+    align-items:   center;
+    gap:           8px;
+    padding:       10px 16px;
+    background:    var(--cc-surface);
+    border:        1px solid var(--cc-border);
+    border-radius: var(--cc-radius-sm);
+    cursor:        pointer;
+    transition:    border-color var(--cc-transition), background var(--cc-transition);
+}
+.cc-size-option input[type="radio"] { display: none; }
+.cc-size-option__name {
+    font-size:   14px;
+    font-weight: 600;
+    color:       var(--cc-text);
+}
+.cc-size-option:hover { border-color: var(--cc-border-hover); background: var(--cc-surface-hover); }
+.cc-size-option.pztpro-size-option--active,
+.cc-size-option:has(input:checked) {
+    border-color: var(--cc-accent);
+    background:   var(--cc-accent-dim);
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   CHECKOUT BAR (PizzaTierPro)
+   ══════════════════════════════════════════════════════════════════ */
+
+/* Always-present, full-width dock that hosts the Pro Add to Cart bar.
+   Renders independently of the optional order-summary sidebar. It stays empty
+   (and collapses) on sites without PizzaTierPro active. */
+.cc-checkout-dock {
+    border-top: 1px solid var(--cc-border);
+}
+.cc-checkout-dock:empty { display: none; }
+
+.pztpro-checkout-bar--commandcenter {
+    background:  var(--cc-bar-bg, #0e1929);
+    border-top:  none;
+    padding:     16px 20px;
+    border-bottom-left-radius:  var(--cc-radius-lg);
+    border-bottom-right-radius: var(--cc-radius-lg);
+}
+
+.pztpro-checkout-bar--commandcenter .pztpro-bar-notes {
+    margin-bottom: 10px;
+}
+.pztpro-checkout-bar--commandcenter .pztpro-bar-notes__label {
+    display:     flex;
+    align-items: center;
+    gap:         6px;
+    font-size:   12px;
+    font-weight: 600;
+    color:       var(--cc-text-muted, #8892b0);
+    margin-bottom: 4px;
+}
+.pztpro-checkout-bar--commandcenter .pztpro-bar-notes__label svg { width: 14px; height: 14px; }
+.pztpro-checkout-bar--commandcenter .pztpro-bar-notes__input {
+    width:         100%;
+    background:    var(--cc-surface, #16213e);
+    border:        1px solid var(--cc-border, rgba(255,255,255,0.07));
+    border-radius: var(--cc-radius-sm, 8px);
+    color:         var(--cc-text, #e8eaf6);
+    font-size:     13px;
+    font-family:   inherit;
+    padding:       8px 10px;
+    resize:        vertical;
+}
+.pztpro-checkout-bar--commandcenter .pztpro-bar-notes__input:focus {
+    outline: none;
+    border-color: var(--cc-accent, #e94560);
+}
+
+.pztpro-checkout-bar--commandcenter .pztpro-bar-row {
+    display:     flex;
+    align-items: center;
+    gap:         14px;
+    flex-wrap:   wrap;
+}
+.pztpro-checkout-bar--commandcenter .pztpro-bar-row__summary {
+    display:        flex;
+    flex-direction: column;
+    gap:            2px;
+    flex:           1;
+}
+.pztpro-checkout-bar--commandcenter .pztpro-bar-row__size-label {
+    font-size: 11px;
+    color:     var(--cc-text-muted, #8892b0);
+}
+.pztpro-checkout-bar--commandcenter .pztpro-bar-row__price {
+    font-size:   20px;
+    font-weight: 700;
+    color:       var(--cc-cta, var(--cc-accent));
+    font-variant-numeric: tabular-nums;
+}
+.pztpro-checkout-bar--commandcenter .pztpro-bar-row__currency { margin-right: 1px; }
+
+.pztpro-checkout-bar--commandcenter .pztpro-bar-qty {
+    display:     flex;
+    align-items: center;
+    gap:         0;
+    border:      1px solid var(--cc-border, rgba(255,255,255,0.07));
+    border-radius: var(--cc-radius-sm, 8px);
+    overflow:    hidden;
+    flex-shrink: 0;
+}
+.pztpro-checkout-bar--commandcenter .pztpro-qty-btn {
+    width:      34px;
+    height:     38px;
+    background: var(--cc-surface-2, #1e2d4f);
+    border:     none;
+    color:      var(--cc-text, #e8eaf6);
+    font-size:  18px;
+    cursor:     pointer;
+    transition: background 0.15s;
+    display:    flex;
+    align-items: center;
+    justify-content: center;
+}
+.pztpro-checkout-bar--commandcenter .pztpro-qty-btn:hover:not(:disabled) { background: var(--cc-surface-3, #253460); }
+.pztpro-checkout-bar--commandcenter .pztpro-qty-btn:disabled { opacity: 0.4; cursor: default; }
+.pztpro-checkout-bar--commandcenter .pztpro-qty-value {
+    min-width:  34px;
+    text-align: center;
+    font-size:  15px;
+    font-weight: 700;
+    color:      var(--cc-text, #e8eaf6);
+    padding:    0 4px;
+}
+
+.pztpro-checkout-bar--commandcenter .pztpro-bar-row__btn {
+    display:      inline-flex;
+    align-items:  center;
+    justify-content: center;
+    gap:          8px;
+    padding:      13px 26px;
+    background:   var(--cc-cta, var(--cc-accent));
+    border:       none;
+    border-radius: var(--cc-radius-sm, 8px);
+    color:        #fff;
+    font-size:    15px;
+    font-weight:  700;
+    cursor:       pointer;
+    transition:   background 0.15s, box-shadow 0.15s, transform 0.1s;
+    white-space:  nowrap;
+    box-shadow:   var(--cc-cta-glow, 0 0 18px rgba(233,69,96,0.4));
+    flex:         0 1 auto;
+    min-width:    180px;
+}
+.pztpro-checkout-bar--commandcenter .pztpro-bar-row__btn svg { width: 18px; height: 18px; flex-shrink: 0; }
+.pztpro-checkout-bar--commandcenter .pztpro-bar-row__btn:hover {
+    background: var(--cc-cta-hover, var(--cc-accent-hover));
+    box-shadow: var(--cc-cta-glow, 0 0 24px rgba(233,69,96,0.6));
+}
+.pztpro-checkout-bar--commandcenter .pztpro-bar-row__btn:active { transform: scale(0.98); }
+.pztpro-checkout-bar--commandcenter .pztpro-bar-row__btn:disabled { opacity: 0.55; cursor: default; box-shadow: none; }
+
+/* ══════════════════════════════════════════════════════════════════
+   MOBILE TWEAKS
+   ══════════════════════════════════════════════════════════════════ */
+
+@media (max-width: 540px) {
+    .cc-wizard-steps { gap: 0; padding: 12px 0 8px; }
+    .cc-step__label  { display: none; }
+    .cc-step__bubble { width: 32px; height: 32px; }
+    .cc-step__num    { font-size: 12px; }
+    .cc-canvas       { max-width: 160px; }
+    .cc-cards-grid   { grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 8px; }
+    .cc-panel        { padding: 18px 14px 16px; }
+    .cc-panel__header { gap: 10px; }
+    .cc-panel__step-badge { width: 28px; height: 28px; font-size: 13px; }
+    .pztpro-checkout-bar--commandcenter .pztpro-bar-row__summary { flex: 1 0 100%; }
+    .pztpro-checkout-bar--commandcenter .pztpro-bar-row__btn { flex: 1 0 100%; width: 100%; }
+}
+
+@media (max-width: 859px) {
+    .cc-sidebar { padding: 12px 16px; }
+    .cc-sidebar__rows {
+        display:               grid;
+        grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+        gap:                   8px;
+    }
+    .cc-sidebar__row {
+        border:        1px solid var(--cc-border);
+        border-radius: var(--cc-radius-sm);
+        padding:       8px 10px;
+        border-bottom: 1px solid var(--cc-border);
+    }
+    .cc-sidebar__inner { padding: 12px 16px; }
+    .cc-sidebar__header { margin-bottom: 10px; padding-bottom: 8px; }
+}
+
+/* ── Fly-to container (shared PizzaTier feature) ────────────────── */
+#cc-fly-container,
+[id$="-fly-container"] { position: fixed; pointer-events: none; z-index: 9999; }

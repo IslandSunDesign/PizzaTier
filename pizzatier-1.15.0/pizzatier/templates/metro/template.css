@@ -1,0 +1,1940 @@
+/* ══════════════════════════════════════════════════════════════
+   METRO TEMPLATE — template.css
+   Single-scroll pizza builder. Light base, bold accents.
+   No Bootstrap dependency — self-contained flexbox/grid.
+   ══════════════════════════════════════════════════════════════ */
+
+/* ── Design Tokens ─────────────────────────────────────────── */
+:root {
+	--mt-bg:             #f7f7f5;
+	--mt-ui-bg:          #ffffff;
+	--mt-surface:        #ffffff;
+	--mt-surface-2:      #f0f0ee;
+	--mt-card-bg:        #ffffff;
+	--mt-card-text:      #1a1a1a;
+	--mt-title:          #1a1a1a;
+	--mt-border:         #e4e4e0;
+	--mt-border-hover:   #c8c8c0;
+	--mt-accent:         #e63946;
+	--mt-accent-dim:     rgba(230,57,70,0.10);
+	--mt-accent-hover:   #c1121f;
+	--mt-text:           #1a1a1a;
+	--mt-text-mid:       #555550;
+	--mt-text-muted:     #8a8a82;
+	--mt-shadow-sm:      0 1px 4px rgba(0,0,0,0.07);
+	--mt-shadow:         0 4px 20px rgba(0,0,0,0.09);
+	--mt-shadow-lg:      0 8px 40px rgba(0,0,0,0.13);
+	--mt-radius-sm:      8px;
+	--mt-radius:         14px;
+	--mt-radius-lg:      20px;
+	--mt-radius-pill:    999px;
+	--mt-transition:     0.18s ease;
+	--mt-font:           system-ui, -apple-system, 'Segoe UI', Roboto, Arial, sans-serif;
+	--mt-hero-pizza-size: min(340px, 80vw);
+	--mt-orb-pizza-size:  56px;
+	--mt-card-w:         160px;
+	--mt-card-img-h:     120px;
+	--mt-tray-h:         64px;
+	--mt-nav-h:          52px;
+}
+
+/* ── Scoped reset ───────────────────────────────────────────── */
+.mt-root,
+.mt-root * {
+	box-sizing: border-box;
+}
+.mt-root {
+	font-family:   var(--mt-font);
+	font-size:     15px;
+	line-height:   1.5;
+	color:         var(--mt-text);
+	background:    var(--mt-bg);
+	position:      relative;
+	/* Page background frames the UI container on all sides; bottom keeps the
+	   summary-tray clearance. */
+	padding:       16px 16px var(--mt-tray-h);
+}
+
+/* ══════════════════════════════════════════════════════════════
+   HERO — centered pizza stage
+   ══════════════════════════════════════════════════════════════ */
+.mt-hero {
+	display:         flex;
+	flex-direction:  column;
+	align-items:     center;
+	padding:         48px 24px 32px;
+	background:      var(--mt-ui-bg);
+	border-bottom:   1px solid var(--mt-border);
+	position:        relative;
+}
+
+.mt-hero__inner {
+	display:         flex;
+	flex-direction:  column;
+	align-items:     center;
+	gap:             24px;
+	width:           100%;
+	max-width:       560px;
+}
+
+/* Pizza stage wrapper */
+.mt-hero__pizza-wrap {
+	width:           var(--mt-hero-pizza-size);
+	height:          var(--mt-hero-pizza-size);
+	position:        relative;
+	flex-shrink:     0;
+	filter:          drop-shadow(0 8px 32px rgba(0,0,0,0.18));
+	transition:      transform 0.4s cubic-bezier(0.34,1.2,0.64,1);
+}
+.mt-hero__pizza-wrap:hover {
+	transform: scale(1.025) rotate(1deg);
+}
+
+.mt-hero__canvas {
+	width:    100%;
+	height:   100%;
+	position: relative;
+}
+
+/* Pizza stage internal (set by PizzaBuilder output).
+   .np-pizza-stage-wrap is the outermost wrapper build_dynamic() emits —
+   it must fill the canvas, otherwise height:100% on children resolves to 0. */
+.mt-root .np-pizza-stage-wrap {
+	width:    100%;
+	height:   100%;
+	display:  block;
+}
+.mt-root .np-pizza-stage,
+.mt-root .pizzatier-pizza-dynamic {
+	width:     100% !important;
+	height:    100% !important;
+	position:  relative !important;
+}
+/* Layer divs inside the stage must be absolute so they stack */
+.mt-root .np-pizza-stage .np-layer-div img {
+	width:       100%;
+	height:      100%;
+	object-fit:  cover;
+	display:     block;
+}
+
+/* Layer offsets — set via JS from shortcode data-layer-offsets attr.
+   Each layer type can be inset by a percentage, creating visible gaps
+   between layers (e.g. sauce smaller than crust, cheese smaller than sauce). */
+.mt-root .np-pizza-stage .np-layer-div[data-layer-id="layer-crust"]   { --mt-offset: var(--mt-offset-crust,   0%); }
+.mt-root .np-pizza-stage .np-layer-div[data-layer-id="layer-sauce"]   { --mt-offset: var(--mt-offset-sauce,   0%); }
+.mt-root .np-pizza-stage .np-layer-div[data-layer-id="layer-cheese"]  { --mt-offset: var(--mt-offset-cheese,  0%); }
+.mt-root .np-pizza-stage .np-layer-div[data-layer-id="layer-drizzle"] { --mt-offset: var(--mt-offset-drizzle, 0%); }
+.mt-root .np-pizza-stage .np-layer-div[data-layer-id="layer-cut"]     { --mt-offset: var(--mt-offset-cut,     0%); }
+/* Toppings use a shared topping offset */
+.mt-root .np-pizza-stage .np-layer-div[data-layer-id^="layer-topping-"] { --mt-offset: var(--mt-offset-topping, 0%); }
+
+.mt-root .np-pizza-stage .np-layer-div {
+	position: absolute;
+	inset:    var(--mt-offset, 0%);
+}
+
+/* Meta row under pizza */
+.mt-hero__meta {
+	display:         flex;
+	align-items:     center;
+	justify-content: space-between;
+	width:           100%;
+	gap:             16px;
+}
+
+.mt-hero__count-wrap {
+	display:     flex;
+	align-items: baseline;
+	gap:         4px;
+	font-size:   14px;
+	color:       var(--mt-text-muted);
+}
+.mt-hero__count {
+	font-size:   22px;
+	font-weight: 700;
+	color:       var(--mt-accent);
+	line-height: 1;
+}
+.mt-hero__count-max {
+	font-size:   14px;
+	color:       var(--mt-text-muted);
+}
+.mt-hero__count-word {
+	font-size:   13px;
+}
+.mt-hero__count-label {
+	margin-right: 2px;
+}
+
+/* Reset button */
+.mt-reset-btn {
+	display:         flex;
+	align-items:     center;
+	gap:             6px;
+	padding:         8px 16px;
+	background:      transparent;
+	border:          1px solid var(--mt-border);
+	border-radius:   var(--mt-radius-pill);
+	color:           var(--mt-text-muted);
+	font-size:       13px;
+	font-family:     var(--mt-font);
+	cursor:          pointer;
+	transition:      var(--mt-transition);
+}
+.mt-reset-btn:hover {
+	border-color:  var(--mt-border-hover);
+	color:         var(--mt-text);
+	background:    var(--mt-surface-2);
+}
+
+/* Scroll hint */
+.mt-hero__scroll-hint {
+	display:         flex;
+	flex-direction:  column;
+	align-items:     center;
+	gap:             4px;
+	margin-top:      24px;
+	color:           var(--mt-text-muted);
+	font-size:       12px;
+	letter-spacing:  0.05em;
+	text-transform:  uppercase;
+	animation:       mt-bounce 2s ease-in-out infinite;
+	opacity:         0.7;
+}
+@keyframes mt-bounce {
+	0%, 100% { transform: translateY(0); }
+	50%       { transform: translateY(5px); }
+}
+
+/* ══════════════════════════════════════════════════════════════
+   ORB — compact sticky preview that appears after hero scrolls away
+   ══════════════════════════════════════════════════════════════ */
+.mt-orb {
+	position:    fixed;
+	top:         16px;
+	right:       16px;
+	z-index:     200;
+	display:     flex;
+	align-items: center;
+	gap:         10px;
+	padding:     8px 14px 8px 8px;
+	background:  var(--mt-surface);
+	border:      1px solid var(--mt-border);
+	border-radius: var(--mt-radius-pill);
+	box-shadow:  var(--mt-shadow-lg);
+	opacity:     0;
+	pointer-events: none;
+	transform:   translateY(-8px) scale(0.96);
+	transition:  opacity 0.25s ease, transform 0.25s ease;
+}
+.mt-orb.is-visible {
+	opacity:        1;
+	pointer-events: auto;
+	transform:      translateY(0) scale(1);
+}
+
+.mt-orb__pizza {
+	width:         var(--mt-orb-pizza-size);
+	height:        var(--mt-orb-pizza-size);
+	border-radius: 50%;
+	overflow:      hidden;
+	flex-shrink:   0;
+	background:    var(--mt-surface-2);
+	position:      relative;
+}
+.mt-orb__pizza .np-pizza-stage,
+.mt-orb__pizza .pizzatier-pizza-dynamic {
+	width:    100% !important;
+	height:   100% !important;
+	position: relative !important;
+}
+
+.mt-orb__info {
+	display:        flex;
+	flex-direction: column;
+	line-height:    1.2;
+}
+.mt-orb__label {
+	font-size:   11px;
+	color:       var(--mt-text-muted);
+	font-weight: 500;
+	text-transform: uppercase;
+	letter-spacing: 0.05em;
+}
+.mt-orb__count {
+	font-size:   13px;
+	font-weight: 700;
+	color:       var(--mt-text);
+}
+
+.mt-orb__back {
+	background:  transparent;
+	border:      none;
+	cursor:      pointer;
+	color:       var(--mt-text-muted);
+	font-size:   13px;
+	padding:     4px 6px;
+	border-radius: var(--mt-radius-sm);
+	transition:  var(--mt-transition);
+}
+.mt-orb__back:hover {
+	color:       var(--mt-accent);
+	background:  var(--mt-accent-dim);
+}
+
+/* ══════════════════════════════════════════════════════════════
+   SECTION NAV — sticky top bar
+   ══════════════════════════════════════════════════════════════ */
+.mt-section-nav {
+	display:         flex;
+	align-items:     center;
+	justify-content: space-between;
+	gap:             8px;
+	padding:         0 16px 0 24px;
+	height:          var(--mt-nav-h);
+	background:      var(--mt-surface);
+	border-bottom:   1px solid var(--mt-border);
+	position:        sticky;
+	top:             0;
+	z-index:         100;
+}
+
+.mt-section-nav__links {
+	display:         flex;
+	align-items:     center;
+	gap:             4px;
+	overflow-x:      auto;
+	scrollbar-width: none;
+	flex:            1;
+	min-width:       0;
+}
+.mt-section-nav__links::-webkit-scrollbar { display: none; }
+
+.mt-section-nav__item {
+	display:         flex;
+	align-items:     center;
+	gap:             6px;
+	padding:         6px 14px;
+	border-radius:   var(--mt-radius-pill);
+	color:           var(--mt-text-muted);
+	font-size:       13px;
+	font-weight:     500;
+	text-decoration: none;
+	white-space:     nowrap;
+	transition:      var(--mt-transition);
+	flex-shrink:     0;
+}
+.mt-section-nav__item:hover {
+	background: var(--mt-surface-2);
+	color:      var(--mt-text);
+}
+.mt-section-nav__item.is-active {
+	background:  var(--mt-accent-dim);
+	color:       var(--mt-accent);
+	font-weight: 600;
+}
+.mt-section-nav__item .fa {
+	font-size: 13px;
+}
+
+/* Mode toggle button */
+.mt-mode-toggle {
+	display:         flex;
+	align-items:     center;
+	gap:             6px;
+	flex-shrink:     0;
+	padding:         7px 14px;
+	background:      var(--mt-surface-2);
+	border:          1px solid var(--mt-border);
+	border-radius:   var(--mt-radius-pill);
+	color:           var(--mt-text-muted);
+	font-size:       12px;
+	font-weight:     600;
+	font-family:     var(--mt-font);
+	cursor:          pointer;
+	transition:      var(--mt-transition);
+	white-space:     nowrap;
+	letter-spacing:  0.02em;
+	text-transform:  uppercase;
+}
+.mt-mode-toggle:hover {
+	border-color: var(--mt-accent);
+	color:        var(--mt-accent);
+	background:   var(--mt-accent-dim);
+}
+.mt-root.is-step-mode .mt-mode-toggle {
+	background:   var(--mt-accent);
+	border-color: var(--mt-accent);
+	color:        #fff;
+}
+
+/* ── Step-mode nav bar ──────────────────────────────────────── */
+.mt-step-nav {
+	display:         none; /* shown in step mode */
+	align-items:     center;
+	justify-content: space-between;
+	padding:         12px 24px;
+	background:      var(--mt-surface);
+	border-bottom:   1px solid var(--mt-border);
+	position:        sticky;
+	top:             var(--mt-nav-h);
+	z-index:         99;
+}
+.mt-root.is-step-mode .mt-step-nav {
+	display: flex;
+}
+
+.mt-step-nav__prev,
+.mt-step-nav__next {
+	display:         flex;
+	align-items:     center;
+	gap:             6px;
+	padding:         8px 18px;
+	border:          1px solid var(--mt-border);
+	border-radius:   var(--mt-radius-pill);
+	background:      var(--mt-surface);
+	color:           var(--mt-text);
+	font-size:       13px;
+	font-weight:     600;
+	font-family:     var(--mt-font);
+	cursor:          pointer;
+	transition:      var(--mt-transition);
+}
+.mt-step-nav__prev:hover:not(:disabled),
+.mt-step-nav__next:hover:not(:disabled) {
+	background:   var(--mt-accent);
+	border-color: var(--mt-accent);
+	color:        #fff;
+}
+.mt-step-nav__prev:disabled,
+.mt-step-nav__next:disabled {
+	opacity: 0.35;
+	cursor:  not-allowed;
+}
+.mt-step-nav__indicator {
+	font-size:   13px;
+	font-weight: 600;
+	color:       var(--mt-text-muted);
+}
+.mt-step-nav__current {
+	color:       var(--mt-text);
+	font-size:   16px;
+}
+
+/* ── Step mode: hide all sections except active ─────────────── */
+.mt-root.is-step-mode .mt-section {
+	display: none;
+}
+.mt-root.is-step-mode .mt-section.is-step-active {
+	display: block;
+}
+/* Hide scroll-mode scroll hint and section nav links */
+.mt-root.is-step-mode .mt-hero__scroll-hint {
+	display: none;
+}
+.mt-root.is-step-mode .mt-section-nav__links {
+	display: none;
+}
+
+/* ══════════════════════════════════════════════════════════════
+   BUILDER SECTIONS
+   ══════════════════════════════════════════════════════════════ */
+.mt-section {
+	padding:       40px 24px 32px;
+	background:    var(--mt-ui-bg);
+	border-bottom: 1px solid var(--mt-border);
+}
+.mt-section:last-of-type {
+	border-bottom: none;
+}
+
+/* Section header */
+.mt-section__header {
+	display:         flex;
+	align-items:     center;
+	justify-content: space-between;
+	flex-wrap:       wrap;
+	gap:             12px;
+	margin-bottom:   24px;
+}
+.mt-section__header-inner {
+	display:     flex;
+	align-items: center;
+	gap:         10px;
+}
+.mt-section__icon {
+	display:         flex;
+	align-items:     center;
+	justify-content: center;
+	width:           36px;
+	height:          36px;
+	border-radius:   var(--mt-radius-sm);
+	background:      var(--mt-accent-dim);
+	color:           var(--mt-accent);
+	font-size:       16px;
+	flex-shrink:     0;
+}
+.mt-section__title {
+	margin:      0;
+	font-size:   20px;
+	font-weight: 700;
+	line-height: 1.2;
+	color:       var(--mt-title);
+}
+
+.mt-section__badge {
+	display:         inline-flex;
+	align-items:     center;
+	justify-content: center;
+	min-width:       22px;
+	height:          22px;
+	padding:         0 6px;
+	background:      var(--mt-accent);
+	color:           #fff;
+	border-radius:   var(--mt-radius-pill);
+	font-size:       12px;
+	font-weight:     700;
+}
+.mt-section__badge[data-count="0"] {
+	background:  var(--mt-border);
+	color:       var(--mt-text-muted);
+}
+
+/* Topping search */
+.mt-section__search-wrap {
+	position:   relative;
+	flex-shrink: 0;
+}
+.mt-section__search-icon {
+	position:  absolute;
+	left:      12px;
+	top:       50%;
+	transform: translateY(-50%);
+	color:     var(--mt-text-muted);
+	font-size: 13px;
+	pointer-events: none;
+}
+.mt-section__search {
+	padding:       8px 12px 8px 34px;
+	border:        1px solid var(--mt-border);
+	border-radius: var(--mt-radius-pill);
+	font-size:     13px;
+	font-family:   var(--mt-font);
+	color:         var(--mt-text);
+	background:    var(--mt-surface);
+	outline:       none;
+	transition:    var(--mt-transition);
+	width:         200px;
+}
+.mt-section__search:focus {
+	border-color: var(--mt-accent);
+	box-shadow:   0 0 0 3px var(--mt-accent-dim);
+}
+
+/* ══════════════════════════════════════════════════════════════
+   CARD GRID
+   ══════════════════════════════════════════════════════════════ */
+.mt-cards-grid {
+	display:               grid;
+	grid-template-columns: repeat(auto-fill, minmax(var(--mt-card-w), 1fr));
+	gap:                   14px;
+}
+
+/* ══════════════════════════════════════════════════════════════
+   CARD
+   ══════════════════════════════════════════════════════════════ */
+.mt-card {
+	background:    var(--mt-card-bg);
+	border:        2px solid var(--mt-border);
+	border-radius: var(--mt-radius);
+	overflow:      hidden;
+	cursor:        pointer;
+	transition:    border-color var(--mt-transition), box-shadow var(--mt-transition), transform var(--mt-transition);
+	position:      relative;
+}
+.mt-card:hover {
+	border-color: var(--mt-border-hover);
+	box-shadow:   var(--mt-shadow);
+	transform:    translateY(-2px);
+}
+.mt-card.is-selected {
+	border-color: var(--mt-accent);
+	box-shadow:   0 0 0 3px var(--mt-accent-dim), var(--mt-shadow);
+}
+.mt-card.is-hidden {
+	display: none;
+}
+
+/* Image area */
+.mt-card__img-wrap {
+	position:        relative;
+	width:           100%;
+	height:          var(--mt-card-img-h);
+	overflow:        hidden;
+	background:      var(--mt-card-bg);
+}
+.mt-card__img {
+	width:       100%;
+	height:      100%;
+	object-fit:  cover;
+	display:     block;
+	transition:  transform 0.3s ease;
+}
+.mt-card:hover .mt-card__img {
+	transform: scale(1.05);
+}
+.mt-card__img--placeholder {
+	background: linear-gradient(135deg, var(--mt-surface-2) 0%, var(--mt-border) 100%);
+}
+
+/* Card footer — two rows: title, then actions */
+.mt-card__footer {
+	display:        flex;
+	flex-direction: column;
+	padding:        8px 10px 10px;
+	gap:            6px;
+}
+
+.mt-card__footer-row {
+	display:     flex;
+	align-items: center;
+}
+
+.mt-card__footer-row--title {
+	width: 100%;
+}
+
+.mt-card__name {
+	width:         100%;
+	font-size:     13px;
+	font-weight:   600;
+	color:         var(--mt-card-text);
+	white-space:   nowrap;
+	overflow:      hidden;
+	text-overflow: ellipsis;
+}
+
+.mt-card__footer-row--actions {
+	gap:        6px;
+	flex-wrap:  wrap;
+}
+
+/* Add / Remove / Coverage buttons */
+.mt-card__btn {
+	flex-shrink:     0;
+	width:           30px;
+	height:          30px;
+	border-radius:   50%;
+	border:          none;
+	cursor:          pointer;
+	display:         flex;
+	align-items:     center;
+	justify-content: center;
+	font-size:       13px;
+	transition:      var(--mt-transition);
+}
+.mt-card__btn--add {
+	background: var(--mt-accent);
+	color:      #fff;
+}
+.mt-card__btn--add:hover {
+	background: var(--mt-accent-hover);
+	transform:  scale(1.1);
+}
+
+/* Remove button: shows as a filled-accent circle with a + rotated to × */
+.mt-card__btn--remove {
+	background: var(--mt-accent);
+	color:      #fff;
+}
+.mt-card__btn--remove:hover {
+	background: var(--mt-accent-hover);
+}
+/* The + icon rotates 45° to form an × on the remove button */
+.mt-card__btn--remove .mt-card__icon-selected {
+	display:    inline-block;
+	transform:  rotate(45deg);
+	transition: transform 0.2s ease;
+	font-style: normal;
+}
+
+/* Coverage button */
+.mt-card__btn--coverage {
+	background:  var(--mt-surface-2);
+	color:       var(--mt-text-muted);
+	border:      1px solid var(--mt-border);
+	font-size:   12px;
+}
+.mt-card__btn--coverage:hover {
+	background:   var(--mt-accent-dim);
+	border-color: var(--mt-accent);
+	color:        var(--mt-accent);
+}
+
+/* ══════════════════════════════════════════════════════════════
+   COVERAGE MODAL
+   ══════════════════════════════════════════════════════════════ */
+.mt-cov-modal {
+	display: none;
+}
+.mt-cov-modal.is-open {
+	display: block;
+}
+
+.mt-cov-modal__backdrop {
+	position:   fixed;
+	inset:      0;
+	background: rgba(0,0,0,0.45);
+	z-index:    400;
+	cursor:     pointer;
+	animation:  mt-fade-in 0.18s ease;
+}
+
+.mt-cov-modal__panel {
+	position:      fixed;
+	bottom:        0;
+	left:          0;
+	right:         0;
+	z-index:       401;
+	background:    var(--mt-surface);
+	border-radius: var(--mt-radius-lg) var(--mt-radius-lg) 0 0;
+	padding:       24px 24px calc(24px + env(safe-area-inset-bottom));
+	box-shadow:    var(--mt-shadow-lg);
+	animation:     mt-slide-up 0.22s cubic-bezier(0.22,1,0.36,1);
+	max-width:     520px;
+	margin:        0 auto;
+}
+
+@keyframes mt-fade-in  { from { opacity: 0; } to { opacity: 1; } }
+@keyframes mt-slide-up { from { transform: translateY(32px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+
+.mt-cov-modal__header {
+	display:     flex;
+	align-items: center;
+	gap:         12px;
+	margin-bottom: 20px;
+}
+.mt-cov-modal__thumb-wrap {
+	width:         48px;
+	height:        48px;
+	border-radius: var(--mt-radius-sm);
+	overflow:      hidden;
+	flex-shrink:   0;
+	background:    var(--mt-surface-2);
+}
+.mt-cov-modal__thumb {
+	width:      100%;
+	height:     100%;
+	object-fit: cover;
+	display:    block;
+}
+.mt-cov-modal__label {
+	margin:    0 0 2px;
+	font-size: 11px;
+	color:     var(--mt-text-muted);
+	text-transform: uppercase;
+	letter-spacing: 0.05em;
+}
+.mt-cov-modal__name {
+	font-size:   15px;
+	font-weight: 700;
+	color:       var(--mt-text);
+}
+.mt-cov-modal__close {
+	margin-left:   auto;
+	background:    var(--mt-surface-2);
+	border:        none;
+	border-radius: 50%;
+	width:         32px;
+	height:        32px;
+	display:       flex;
+	align-items:   center;
+	justify-content: center;
+	cursor:        pointer;
+	color:         var(--mt-text-muted);
+	font-size:     13px;
+	transition:    var(--mt-transition);
+}
+.mt-cov-modal__close:hover {
+	background: var(--mt-accent-dim);
+	color:      var(--mt-accent);
+}
+
+.mt-cov-modal__btns {
+	display:               grid;
+	grid-template-columns: repeat(4, 1fr);
+	gap:                   8px;
+	margin-bottom:         20px;
+}
+
+.mt-cov-modal__btn {
+	display:         flex;
+	flex-direction:  column;
+	align-items:     center;
+	justify-content: center;
+	gap:             6px;
+	padding:         12px 8px;
+	border:          2px solid var(--mt-border);
+	border-radius:   var(--mt-radius);
+	background:      var(--mt-surface-2);
+	cursor:          pointer;
+	font-size:       12px;
+	font-weight:     600;
+	font-family:     var(--mt-font);
+	color:           var(--mt-text-mid);
+	transition:      var(--mt-transition);
+}
+.mt-cov-modal__btn:hover {
+	border-color: var(--mt-accent);
+	color:        var(--mt-accent);
+	background:   var(--mt-accent-dim);
+}
+.mt-cov-modal__btn.is-active {
+	background:   var(--mt-accent);
+	border-color: var(--mt-accent);
+	color:        #fff;
+}
+.mt-cov-modal__btn .fa {
+	font-size: 20px;
+}
+/* Half-stroke mirror for right half */
+.mt-cov--hr .fa-circle-half-stroke {
+	transform: scaleX(-1);
+}
+/* Quarter rotations */
+.mt-cov--q2 .fa-circle-quarter-stroke { transform: rotate(90deg);  }
+.mt-cov--q3 .fa-circle-quarter-stroke { transform: rotate(180deg); }
+.mt-cov--q4 .fa-circle-quarter-stroke { transform: rotate(270deg); }
+
+.mt-cov-modal__footer {
+	display: flex;
+	justify-content: stretch;
+}
+.mt-cov-modal__done {
+	flex:          1;
+	padding:       12px;
+	background:    var(--mt-accent);
+	border:        none;
+	border-radius: var(--mt-radius);
+	color:         #fff;
+	font-size:     15px;
+	font-weight:   700;
+	font-family:   var(--mt-font);
+	cursor:        pointer;
+	transition:    var(--mt-transition);
+}
+.mt-cov-modal__done:hover {
+	background: var(--mt-accent-hover);
+}
+
+/* ══════════════════════════════════════════════════════════════
+   ACTION BAR (at bottom of slicing section, for Pro WC button)
+   ══════════════════════════════════════════════════════════════ */
+.mt-action-bar {
+	margin-top: 24px;
+	display:    flex;
+	justify-content: flex-end;
+}
+
+/* ══════════════════════════════════════════════════════════════
+   SUMMARY TRAY — persistent bottom bar
+   ══════════════════════════════════════════════════════════════ */
+.mt-tray {
+	position:   fixed;
+	bottom:     0;
+	left:       0;
+	right:      0;
+	z-index:    150;
+	background: var(--mt-surface);
+	border-top: 1px solid var(--mt-border);
+	box-shadow: 0 -4px 24px rgba(0,0,0,0.08);
+	height:     var(--mt-tray-h);
+}
+.mt-tray__inner {
+	display:     flex;
+	align-items: center;
+	gap:         12px;
+	height:      100%;
+	padding:     0 20px;
+	max-width:   900px;
+	margin:      0 auto;
+}
+
+/* Mini pizza thumbnail in tray */
+.mt-tray__pizza-thumb {
+	width:         44px;
+	height:        44px;
+	border-radius: 50%;
+	overflow:      hidden;
+	flex-shrink:   0;
+	background:    var(--mt-surface-2);
+	border:        2px solid var(--mt-border);
+	position:      relative;
+}
+.mt-tray__pizza-thumb .np-pizza-stage,
+.mt-tray__pizza-thumb .pizzatier-pizza-dynamic {
+	width:    100% !important;
+	height:   100% !important;
+	position: relative !important;
+}
+
+/* Chips row */
+.mt-tray__chips {
+	flex:        1;
+	display:     flex;
+	align-items: center;
+	gap:         6px;
+	overflow-x:  auto;
+	scrollbar-width: none;
+}
+.mt-tray__chips::-webkit-scrollbar { display: none; }
+
+.mt-tray__empty {
+	font-size:  13px;
+	color:      var(--mt-text-muted);
+	white-space: nowrap;
+}
+
+/* Individual selection chips */
+.mt-chip {
+	display:      flex;
+	align-items:  center;
+	gap:          5px;
+	padding:      4px 10px 4px 6px;
+	background:   var(--mt-surface-2);
+	border:       1px solid var(--mt-border);
+	border-radius: var(--mt-radius-pill);
+	font-size:    12px;
+	font-weight:  500;
+	color:        var(--mt-text);
+	white-space:  nowrap;
+	flex-shrink:  0;
+}
+.mt-chip img {
+	width:         20px;
+	height:        20px;
+	border-radius: 50%;
+	object-fit:    cover;
+}
+.mt-chip__remove {
+	background:  none;
+	border:      none;
+	cursor:      pointer;
+	color:       var(--mt-text-muted);
+	padding:     0;
+	font-size:   11px;
+	line-height: 1;
+	margin-left: 2px;
+	transition:  var(--mt-transition);
+}
+.mt-chip__remove:hover {
+	color: var(--mt-accent);
+}
+
+/* Reset in tray */
+.mt-tray__reset {
+	flex-shrink:     0;
+	background:      transparent;
+	border:          1px solid var(--mt-border);
+	border-radius:   var(--mt-radius-pill);
+	padding:         6px 12px;
+	font-size:       13px;
+	color:           var(--mt-text-muted);
+	font-family:     var(--mt-font);
+	cursor:          pointer;
+	transition:      var(--mt-transition);
+}
+.mt-tray__reset:hover {
+	border-color: var(--mt-accent);
+	color:        var(--mt-accent);
+}
+
+/* ══════════════════════════════════════════════════════════════
+   EMPTY + TOAST
+   ══════════════════════════════════════════════════════════════ */
+.mt-empty {
+	color:     var(--mt-text-muted);
+	font-size: 14px;
+	padding:   24px 0;
+	text-align: center;
+}
+
+.mt-toast {
+	position:      fixed;
+	bottom:        calc(var(--mt-tray-h) + 12px);
+	left:          50%;
+	transform:     translateX(-50%) translateY(8px);
+	background:    #1a1a1a;
+	color:         #fff;
+	padding:       10px 20px;
+	border-radius: var(--mt-radius-pill);
+	font-size:     13px;
+	font-weight:   500;
+	opacity:       0;
+	pointer-events: none;
+	transition:    opacity 0.25s ease, transform 0.25s ease;
+	z-index:       300;
+	white-space:   nowrap;
+}
+.mt-toast.is-visible {
+	opacity:   1;
+	transform: translateX(-50%) translateY(0);
+}
+
+/* ══════════════════════════════════════════════════════════════
+   RESPONSIVE
+   ══════════════════════════════════════════════════════════════ */
+@media (max-width: 600px) {
+	:root {
+		--mt-hero-pizza-size: min(260px, 72vw);
+		--mt-card-w:          140px;
+		--mt-card-img-h:      100px;
+		--mt-tray-h:          58px;
+	}
+	.mt-hero {
+		padding: 32px 16px 24px;
+	}
+	.mt-section {
+		padding: 28px 16px 24px;
+	}
+	.mt-section__search {
+		width: 160px;
+	}
+	.mt-section-nav {
+		padding: 0 10px 0 16px;
+	}
+	.mt-mode-toggle__label {
+		display: none; /* icon only on small screens */
+	}
+	.mt-step-nav {
+		padding: 10px 16px;
+	}
+	.mt-cov-modal__btns {
+		grid-template-columns: repeat(3, 1fr);
+	}
+}
+
+/* ══════════════════════════════════════════════════════════════
+   METRO SETTINGS-DRIVEN ADDITIONS
+   Generated rules for settings wired from metro_setting_* options.
+   All selectors are scoped to .mt-root.
+   ══════════════════════════════════════════════════════════════ */
+
+/* ── Hero tagline ───────────────────────────────────────────── */
+.mt-hero__tagline {
+	margin:      0 0 4px;
+	font-size:   22px;
+	font-weight: 700;
+	color:       var(--mt-title);
+	text-align:  center;
+	line-height: 1.25;
+	letter-spacing: -0.01em;
+}
+
+/* Ingredient card price styling removed in PizzaTier 1.2.0 — pricing is
+   provided by PizzaTierPro and rendered in its own elements. */
+.mt-root .mt-card__footer-row--title {
+	display:     flex;
+	align-items: center;
+	gap:         6px;
+	flex-wrap:   wrap;
+}
+
+/* ── Topping count hidden state ─────────────────────────────── */
+.mt-hero__count-wrap--hidden {
+	display: none !important;
+}
+
+/* ── Column grid variants ───────────────────────────────────── */
+.mt-root .mt-cards-grid--cols-2 {
+	grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+}
+.mt-root .mt-cards-grid--cols-3 {
+	grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+}
+.mt-root .mt-cards-grid--cols-4 {
+	grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+}
+.mt-root .mt-cards-grid--cols-auto {
+	grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+}
+
+/* ── Builder-wrap (flex container for side-by-side) ─────────── */
+.mt-builder-wrap {
+	display:     flex;
+	flex-direction: column; /* default: centered layout, stacks normally */
+}
+
+/* ── Side-by-side layout ────────────────────────────────────── */
+.mt-root.mt-layout--side-by-side .mt-hero {
+	display: none; /* sidebar takes over pizza display */
+}
+.mt-root.mt-layout--side-by-side .mt-builder-wrap {
+	flex-direction: row;
+	align-items:    flex-start;
+}
+.mt-root.mt-layout--side-by-side .mt-builder {
+	flex:      1;
+	min-width: 0;
+}
+.mt-root .mt-sidebar {
+	display:        none; /* hidden unless side-by-side mode active */
+	flex-direction: column;
+	align-items:    center;
+	gap:            20px;
+	width:          300px;
+	flex-shrink:    0;
+	padding:        28px 20px;
+	background:     var(--mt-surface);
+	border-right:   1px solid var(--mt-border);
+	position:       sticky;
+	top:            0;
+	align-self:     flex-start;
+	max-height:     100vh;
+	overflow-y:     auto;
+}
+.mt-root.mt-layout--side-by-side .mt-sidebar {
+	display: flex;
+}
+.mt-root .mt-sidebar__pizza-wrap {
+	width:    var(--mt-hero-pizza-size);
+	height:   var(--mt-hero-pizza-size);
+	position: relative;
+	filter:   drop-shadow(0 6px 24px rgba(0,0,0,0.16));
+}
+.mt-root .mt-sidebar__tagline {
+	text-align: center;
+	font-size:  18px;
+}
+/* In side-by-side mode, hide the orb (not needed — sidebar is always visible) */
+.mt-root.mt-layout--side-by-side .mt-orb {
+	display: none;
+}
+
+/* ── Full-width layout ──────────────────────────────────────── */
+.mt-root.mt-layout--fullwidth .mt-hero {
+	position: sticky;
+	top:      0;
+	z-index:  100;
+}
+.mt-root.mt-layout--fullwidth .mt-hero__inner {
+	flex-direction:  row;
+	justify-content: center;
+	max-width:       100%;
+	gap:             32px;
+}
+.mt-root.mt-layout--fullwidth .mt-hero__pizza-wrap {
+	width:  min(200px, 35vw);
+	height: min(200px, 35vw);
+}
+.mt-root.mt-layout--fullwidth .mt-hero__scroll-hint {
+	display: none;
+}
+
+/* ── Builder footer note ────────────────────────────────────── */
+.mt-footer-note {
+	padding:    16px 24px;
+	font-size:  13px;
+	color:      var(--mt-text-muted);
+	line-height: 1.6;
+	border-top: 1px solid var(--mt-border);
+	background: var(--mt-surface);
+	text-align: center;
+}
+.mt-footer-note a {
+	color: var(--mt-accent);
+}
+.mt-footer-note strong {
+	color: var(--mt-text-mid);
+}
+
+/* ── Responsive: side-by-side collapses at tablet and smaller (≤ 768px) */
+@media (max-width: 768px) {
+	.mt-root.mt-layout--side-by-side .mt-sidebar {
+		display: none;
+	}
+	.mt-root.mt-layout--side-by-side .mt-hero {
+		display: flex;
+	}
+	.mt-root.mt-layout--side-by-side .mt-builder-wrap {
+		flex-direction: column;
+	}
+	.mt-root.mt-layout--side-by-side .mt-builder {
+		width: 100%;
+	}
+	.mt-root.mt-layout--fullwidth .mt-hero__inner {
+		flex-direction: column;
+	}
+	.mt-root.mt-layout--fullwidth .mt-hero__pizza-wrap {
+		width:  min(240px, 72vw);
+		height: min(240px, 72vw);
+	}
+}
+
+/* ══════════════════════════════════════════════════════════════
+   FIX #4 — CLICK-TO-TOGGLE CARDS
+   Checkmark badge, better placeholder, cursor affordance
+   ══════════════════════════════════════════════════════════════ */
+
+/* Better placeholder — subtle pizza-grey gradient instead of red dot */
+.mt-root .mt-card__img--placeholder {
+	background: linear-gradient(145deg, #ededeb 0%, #e0dedd 100%);
+	display:    flex;
+	align-items: center;
+	justify-content: center;
+}
+.mt-root .mt-card__img--placeholder::after {
+	content:     '🍕';
+	font-size:   28px;
+	opacity:     0.18;
+}
+
+/* Whole-card is clickable — show pointer + subtle active state */
+.mt-root .mt-card {
+	cursor: pointer;
+	user-select: none;
+}
+.mt-root .mt-card:active {
+	transform: scale(0.97);
+}
+
+/* Checkmark badge — appears top-right corner when selected */
+.mt-root .mt-card__check {
+	position:         absolute;
+	top:              8px;
+	right:            8px;
+	width:            26px;
+	height:           26px;
+	border-radius:    50%;
+	background:       var(--mt-accent);
+	color:            #fff;
+	display:          flex;
+	align-items:      center;
+	justify-content:  center;
+	font-size:        12px;
+	box-shadow:       0 2px 8px rgba(0,0,0,0.22);
+	pointer-events:   none;
+	z-index:          10;
+	animation:        mt-check-pop 0.22s cubic-bezier(0.34,1.4,0.64,1) both;
+}
+@keyframes mt-check-pop {
+	from { transform: scale(0); opacity: 0; }
+	to   { transform: scale(1); opacity: 1; }
+}
+
+/* Hide the old add/remove buttons by default in all card styles     */
+/* They remain in the DOM for backward compat but are not the        */
+/* primary affordance — the checkmark and whole-card click replace them */
+.mt-root .mt-card__btn--add,
+.mt-root .mt-card__btn--remove {
+	display: none !important;
+}
+
+/* Coverage button stays visible (only on toppings, only when selected) */
+.mt-root .mt-card.is-selected.mt-card--topping .mt-card__btn--coverage {
+	display:         flex !important;
+	margin-left:     auto;
+	font-size:       11px;
+	padding:         0 8px;
+	height:          26px;
+	border-radius:   var(--mt-radius-pill);
+	width:           auto;
+}
+.mt-root .mt-card__btn--coverage {
+	display: none !important;
+}
+
+
+/* ══════════════════════════════════════════════════════════════
+   FIX #5 — CARD STYLE VARIANTS
+   Activated via .mt-cards--{style} on .mt-root
+   ══════════════════════════════════════════════════════════════ */
+
+/* ── compact — small square thumb + horizontal name ── */
+.mt-root.mt-cards--compact .mt-card {
+	display:    flex;
+	flex-direction: row;
+	align-items: center;
+	gap:         10px;
+	padding:     8px 10px;
+}
+.mt-root.mt-cards--compact .mt-card__img-wrap {
+	width:    54px;
+	height:   54px;
+	flex-shrink: 0;
+	border-radius: var(--mt-radius-sm);
+}
+.mt-root.mt-cards--compact .mt-card__footer {
+	flex:    1;
+	padding: 0;
+	gap:     4px;
+}
+.mt-root.mt-cards--compact .mt-card__name {
+	font-size: 13px;
+}
+/* Tighter grid for compact */
+.mt-root.mt-cards--compact .mt-cards-grid {
+	grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+}
+
+/* ── minimal — name only, no image ── */
+.mt-root.mt-cards--minimal .mt-card__img-wrap {
+	display: none;
+}
+.mt-root.mt-cards--minimal .mt-card {
+	padding: 12px 14px;
+}
+.mt-root.mt-cards--minimal .mt-card__footer {
+	padding: 0;
+}
+.mt-root.mt-cards--minimal .mt-card__name {
+	font-size: 14px;
+}
+.mt-root.mt-cards--minimal .mt-cards-grid {
+	grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+}
+
+/* ── large-image — taller photo, name overlaid at bottom ── */
+.mt-root.mt-cards--large-image .mt-card__img-wrap {
+	height:   180px;
+	position: relative;
+}
+.mt-root.mt-cards--large-image .mt-card__footer {
+	position: absolute;
+	bottom:   0;
+	left:     0;
+	right:    0;
+	background: linear-gradient(transparent, rgba(0,0,0,0.65));
+	padding:  16px 10px 8px;
+}
+.mt-root.mt-cards--large-image .mt-card {
+	position: relative;
+	overflow: hidden;
+}
+.mt-root.mt-cards--large-image .mt-card__name {
+	color:     #fff;
+	font-size: 13px;
+	text-shadow: 0 1px 3px rgba(0,0,0,0.5);
+}
+.mt-root.mt-cards--large-image .mt-card__price {
+	color:       #fff;
+	background:  rgba(255,255,255,0.2);
+	font-size:   11px;
+}
+.mt-root.mt-cards--large-image .mt-cards-grid {
+	grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+}
+
+/* ── pill — round thumb left, horizontal row ── */
+.mt-root.mt-cards--pill .mt-cards-grid {
+	grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+	gap: 8px;
+}
+.mt-root.mt-cards--pill .mt-card {
+	display:     flex;
+	flex-direction: row;
+	align-items: center;
+	gap:         8px;
+	padding:     6px 10px 6px 6px;
+	border-radius: var(--mt-radius-pill);
+}
+.mt-root.mt-cards--pill .mt-card__img-wrap {
+	width:  42px;
+	height: 42px;
+	border-radius: 50%;
+	flex-shrink: 0;
+}
+.mt-root.mt-cards--pill .mt-card__footer {
+	flex:    1;
+	padding: 0;
+}
+.mt-root.mt-cards--pill .mt-card__name {
+	font-size:  13px;
+	font-weight: 500;
+}
+.mt-root.mt-cards--pill .mt-card__check {
+	width:  20px;
+	height: 20px;
+	font-size: 10px;
+	top:   50%;
+	right: 8px;
+	transform: translateY(-50%) scale(0);
+}
+.mt-root.mt-cards--pill .mt-card.is-selected .mt-card__check {
+	animation: mt-check-pop 0.22s cubic-bezier(0.34,1.4,0.64,1) both;
+}
+
+
+/* ══════════════════════════════════════════════════════════════
+   FIX #6 — TAB / SECTION NAV STYLE VARIANTS
+   Activated via .mt-tabs--{style} on .mt-root
+   ══════════════════════════════════════════════════════════════ */
+
+/* ── icons-only — strip with just icons, tooltips on hover ── */
+.mt-root.mt-tabs--icons-only .mt-section-nav__links {
+	justify-content: flex-start;
+	gap:             2px;
+}
+.mt-root.mt-tabs--icons-only .mt-section-nav__item span {
+	display: none;
+}
+.mt-root.mt-tabs--icons-only .mt-section-nav__item .fa {
+	font-size:  18px;
+	width:      18px;
+	height:     18px;
+}
+.mt-root.mt-tabs--icons-only .mt-section-nav__item {
+	padding:     10px 14px;
+	flex-shrink: 0;
+	position:    relative;
+}
+/* Tooltip on hover */
+.mt-root.mt-tabs--icons-only .mt-section-nav__item::after {
+	content:        attr(data-section);
+	position:       absolute;
+	top:            calc(100% + 6px);
+	left:           50%;
+	transform:      translateX(-50%) translateY(4px);
+	background:     #1a1a1a;
+	color:          #fff;
+	font-size:      11px;
+	font-weight:    600;
+	padding:        4px 8px;
+	border-radius:  4px;
+	white-space:    nowrap;
+	opacity:        0;
+	pointer-events: none;
+	transition:     opacity 0.15s, transform 0.15s;
+	text-transform: capitalize;
+	z-index:        50;
+}
+.mt-root.mt-tabs--icons-only .mt-section-nav__item:hover::after {
+	opacity:   1;
+	transform: translateX(-50%) translateY(0);
+}
+
+/* ── pills — rounded pill buttons ── */
+.mt-root.mt-tabs--pills .mt-section-nav {
+	background: transparent;
+	border-bottom: none;
+	padding: 12px 20px;
+}
+.mt-root.mt-tabs--pills .mt-section-nav__links {
+	gap: 6px;
+}
+.mt-root.mt-tabs--pills .mt-section-nav__item {
+	border-radius:   var(--mt-radius-pill);
+	padding:         7px 14px;
+	background:      var(--mt-surface);
+	border:          1px solid var(--mt-border);
+	font-weight:     500;
+	font-size:       13px;
+	gap:             6px;
+}
+.mt-root.mt-tabs--pills .mt-section-nav__item:hover {
+	background:   var(--mt-surface-2);
+	border-color: var(--mt-border-hover);
+}
+.mt-root.mt-tabs--pills .mt-section-nav__item.is-active {
+	background:   var(--mt-accent);
+	border-color: var(--mt-accent);
+	color:        #fff;
+}
+.mt-root.mt-tabs--pills .mt-section-nav__item.is-active .fa {
+	color: #fff;
+}
+
+/* ── underline — minimal, just a bottom indicator line ── */
+.mt-root.mt-tabs--underline .mt-section-nav {
+	background:  transparent;
+	border-bottom: 2px solid var(--mt-border);
+}
+.mt-root.mt-tabs--underline .mt-section-nav__item {
+	padding:      12px 16px;
+	border-radius: 0;
+	background:   transparent;
+	font-size:    14px;
+	font-weight:  400;
+	border-bottom: 2px solid transparent;
+	margin-bottom: -2px;
+	gap:           7px;
+}
+.mt-root.mt-tabs--underline .mt-section-nav__item .fa {
+	opacity: 0.5;
+}
+.mt-root.mt-tabs--underline .mt-section-nav__item:hover {
+	background: transparent;
+	border-bottom-color: var(--mt-border-hover);
+	color: var(--mt-text);
+}
+.mt-root.mt-tabs--underline .mt-section-nav__item.is-active {
+	background: transparent;
+	color:       var(--mt-accent);
+	border-bottom-color: var(--mt-accent);
+	font-weight: 600;
+}
+.mt-root.mt-tabs--underline .mt-section-nav__item.is-active .fa {
+	opacity: 1;
+	color: var(--mt-accent);
+}
+
+/* ── sidebar — vertical left-side fixed nav ── */
+.mt-root.mt-tabs--sidebar .mt-builder-wrap {
+	display: flex;
+	flex-direction: row;
+	align-items: flex-start;
+}
+.mt-root.mt-tabs--sidebar .mt-section-nav {
+	position:    sticky;
+	top:         0;
+	flex-direction: column;
+	width:       180px;
+	flex-shrink: 0;
+	height:      100vh;
+	overflow-y:  auto;
+	border-bottom: none;
+	border-right: 1px solid var(--mt-border);
+	padding:     12px 0;
+	background:  var(--mt-surface);
+	align-self:  flex-start;
+	max-height:  100vh;
+}
+.mt-root.mt-tabs--sidebar .mt-section-nav__links {
+	flex-direction: column;
+	overflow-x:     visible;
+	width:          100%;
+	gap:            2px;
+	padding:        0 8px;
+}
+.mt-root.mt-tabs--sidebar .mt-section-nav__item {
+	width:         100%;
+	border-radius: var(--mt-radius-sm);
+	padding:       9px 12px;
+	font-size:     13px;
+	font-weight:   500;
+	gap:           9px;
+}
+.mt-root.mt-tabs--sidebar .mt-section-nav__item.is-active {
+	background:  var(--mt-accent-dim);
+	color:       var(--mt-accent);
+}
+.mt-root.mt-tabs--sidebar .mt-mode-toggle {
+	margin:  8px;
+	width:   calc(100% - 16px);
+}
+.mt-root.mt-tabs--sidebar .mt-builder {
+	flex: 1;
+	min-width: 0;
+}
+/* Remove horizontal scrollbar on sidebar nav */
+.mt-root.mt-tabs--sidebar .mt-section-nav__links::-webkit-scrollbar { display: none; }
+/* On mobile, collapse sidebar nav back to horizontal */
+@media (max-width: 600px) {
+	.mt-root.mt-tabs--sidebar .mt-section-nav {
+		flex-direction: row;
+		width:          100%;
+		height:         auto;
+		max-height:     none;
+		border-right:   none;
+		border-bottom:  1px solid var(--mt-border);
+	}
+	.mt-root.mt-tabs--sidebar .mt-section-nav__links {
+		flex-direction: row;
+		overflow-x:     auto;
+		padding:        0 10px;
+	}
+	.mt-root.mt-tabs--sidebar .mt-builder-wrap {
+		flex-direction: column;
+	}
+}
+
+/* ── PizzaTier Settings — CSS var overrides ──────────────────────
+   Optional global --pzl-* tokens may be injected by the plugin to skin
+   the builder. When they are absent (the normal case) every value below
+   must fall back to the template's own token so this block stays a no-op
+   passthrough — NOT `inherit`, which would wipe the template defaults
+   (this previously broke the Page Background, card background, card
+   borders and card padding). */
+.mt-root {
+    font-family:    var(--pzl-font,        var(--mt-font));
+    font-size:      var(--pzl-font-size,   15px);
+    background:     var(--pzl-bg,          var(--mt-bg));
+}
+.mt-card {
+    background:     var(--pzl-card-bg,      var(--mt-card-bg));
+    border-color:   var(--pzl-card-border,  var(--mt-border));
+    border-radius:  var(--pzl-card-radius,  var(--mt-radius));
+    box-shadow:     var(--pzl-card-shadow,  none);
+}
+.mt-card--selected {
+    border-color:   var(--pzl-selected, var(--mt-accent)) !important;
+}
+.mt-btn--primary {
+    background:     var(--pzl-btn-bg,     var(--mt-accent));
+    color:          var(--pzl-btn-text,   #fff);
+    border-radius:  var(--pzl-btn-radius, var(--mt-radius-sm));
+    font-weight:    var(--pzl-btn-fw,     700);
+}
+.cb-tab--hidden-step { display: none !important; }
+
+/* ══════════════════════════════════════════════════════════════
+   METRO — TABLET RESPONSIVE (601px – 900px)
+   ══════════════════════════════════════════════════════════════ */
+@media (min-width: 601px) and (max-width: 900px) {
+    :root {
+        --mt-hero-pizza-size: min(290px, 75vw);
+        --mt-card-w:          150px;
+        --mt-card-img-h:      110px;
+    }
+    .mt-hero  { padding: 36px 20px 24px; }
+    .mt-section { padding: 30px 20px 24px; }
+
+    /* Section nav: tighter padding */
+    .mt-section-nav { padding: 0 12px 0 18px; }
+
+    /* Search box: narrower on tablet */
+    .mt-section__search { width: 180px; }
+
+    /* Coverage modal: 3-column grid on tablet */
+    .mt-cov-modal__btns { grid-template-columns: repeat(4, 1fr); }
+
+    /* Sidebar tabs collapse at 850px for sidebar mode */
+    .mt-root.mt-tabs--sidebar .mt-section-nav {
+        width: 160px;
+    }
+}
+
+/* Side-by-side sidebar: visible and compact between 769px–900px only */
+@media (min-width: 769px) and (max-width: 900px) {
+    .mt-root.mt-layout--side-by-side .mt-sidebar {
+        width: 240px;
+        padding: 20px 14px;
+    }
+    .mt-root .mt-sidebar__pizza-wrap {
+        width:  min(200px, 60%);
+        height: min(200px, 60%);
+    }
+}
+
+@media (max-width: 900px) {
+    /* Ensure tray stays usable */
+    .mt-tray__inner { padding: 0 14px; gap: 8px; }
+}
+
+/* ══════════════════════════════════════════════════════════════
+   METRO — CHECKOUT BAR RESPONSIVE
+   ══════════════════════════════════════════════════════════════ */
+@media (max-width: 540px) {
+    .pztpro-checkout-bar--metro .pztpro-bar-row {
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+    .pztpro-checkout-bar--metro .pztpro-bar-row__summary {
+        width: 100%;
+        flex: none;
+    }
+    .pztpro-checkout-bar--metro .pztpro-bar-row__btn {
+        flex: 1 1 auto;
+        justify-content: center;
+    }
+}
+
+
+/* ══════════════════════════════════════════════════════════════
+   METRO — ISSUE FIXES & ENHANCEMENTS
+   ══════════════════════════════════════════════════════════════ */
+
+/* 1. Center the coverage modal in viewport (not bottom-sheet) */
+.mt-cov-modal__panel {
+    bottom:        auto !important;
+    top:           50% !important;
+    left:          50% !important;
+    right:         auto !important;
+    transform:     translate(-50%, -50%) !important;
+    border-radius: var(--mt-radius-lg) !important;
+    max-width:     480px !important;
+    width:         calc(100% - 48px) !important;
+    margin:        0 !important;
+    animation:     mt-modal-pop 0.22s cubic-bezier(0.34,1.56,0.64,1) !important;
+}
+
+@keyframes mt-modal-pop {
+    from { opacity: 0; transform: translate(-50%, calc(-50% + 20px)) scale(0.94); }
+    to   { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+}
+
+/* 2. Dashed ring on pizza canvas when no crust selected */
+.mt-hero__canvas::before {
+    content:        '';
+    position:       absolute;
+    inset:          12%;
+    border-radius:  50%;
+    border:         2px dashed var(--mt-accent, #e63946);
+    opacity:        0.22;
+    pointer-events: none;
+    z-index:        1;
+    transition:     opacity 0.4s ease;
+}
+.mt-hero__canvas.mt-has-crust::before {
+    opacity: 0;
+}
+
+/* 3. Collapsible sections in scroll mode */
+.mt-section__header {
+    cursor: pointer;
+    user-select: none;
+}
+.mt-section__header:hover .mt-section__title {
+    color: var(--mt-accent, #e63946);
+}
+.mt-section__collapse-icon {
+    margin-left: auto;
+    color: var(--mt-text-muted, #8a8a82);
+    font-size: 13px;
+    transition: transform 0.22s cubic-bezier(0.4, 0, 0.2, 1);
+    flex-shrink: 0;
+}
+.mt-section.is-collapsed .mt-section__collapse-icon {
+    transform: rotate(-90deg);
+}
+.mt-section__body {
+    overflow: hidden;
+    transition: max-height 0.35s cubic-bezier(0.4, 0, 0.2, 1),
+                opacity    0.25s ease;
+    max-height: 2000px;
+    opacity:    1;
+}
+.mt-section.is-collapsed .mt-section__body {
+    max-height: 0 !important;
+    opacity:    0;
+}
+
+/* Keep step-mode sections non-collapsible */
+.mt-root.is-step-mode .mt-section__header {
+    cursor: default;
+}
+.mt-root.is-step-mode .mt-section__collapse-icon {
+    display: none;
+}
+.mt-root.is-step-mode .mt-section.is-collapsed .mt-section__body {
+    max-height: 2000px !important;
+    opacity:    1 !important;
+}
+
+/* ══════════════════════════════════════════════════════════════
+   METRO — ADD TO CART CTA & CHECKOUT BAR
+   Styles the PizzaTierPro checkout bar (checkout-bar.php) for Metro.
+   All rules scoped to .pztpro-checkout-bar--metro so they only affect
+   this template. Colours pull from the Metro CSS variables, so they
+   follow the template's Accent / Surface / Background settings.
+   ══════════════════════════════════════════════════════════════ */
+.pztpro-checkout-bar--metro {
+    margin-top:    0;
+    display:       flex;
+    flex-direction: column;
+    gap:           14px;
+    padding:       18px 20px;
+    background:    var(--mt-surface, #fff);
+    border-top:    3px solid var(--mt-accent, #e63946);
+    border-radius: 0 0 var(--mt-radius, 14px) var(--mt-radius, 14px);
+    box-shadow:    var(--mt-shadow-sm, 0 1px 4px rgba(0,0,0,0.07));
+    font-family:   var(--mt-font);
+}
+
+/* ── Order notes ─────────────────────────────────────────────── */
+.pztpro-checkout-bar--metro .pztpro-bar-notes {
+    display:        flex;
+    flex-direction: column;
+    gap:            6px;
+}
+.pztpro-checkout-bar--metro .pztpro-bar-notes__label {
+    font-size:      12px;
+    font-weight:    700;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+    color:          var(--mt-text-muted, #8a8a82);
+}
+.pztpro-checkout-bar--metro .pztpro-bar-notes__input {
+    width:         100%;
+    padding:       10px 12px;
+    border:        2px solid var(--mt-border, #e4e4e0);
+    border-radius: var(--mt-radius-sm, 8px);
+    background:    var(--mt-bg, #f7f7f5);
+    color:         var(--mt-text, #1a1a1a);
+    font-family:   inherit;
+    font-size:     14px;
+    line-height:   1.45;
+    resize:        vertical;
+    transition:    border-color var(--mt-transition, 0.18s ease),
+                   box-shadow   var(--mt-transition, 0.18s ease);
+}
+.pztpro-checkout-bar--metro .pztpro-bar-notes__input:focus {
+    outline:      none;
+    border-color: var(--mt-accent, #e63946);
+    box-shadow:   0 0 0 3px var(--mt-accent-dim, rgba(230,57,70,0.10));
+}
+
+/* ── Bar row (price · quantity · CTA) ────────────────────────── */
+.pztpro-checkout-bar--metro .pztpro-bar-row {
+    display:     flex;
+    align-items: center;
+    gap:         14px;
+}
+.pztpro-checkout-bar--metro .pztpro-bar-row__summary {
+    display:        flex;
+    flex-direction: column;
+    line-height:    1.2;
+    flex:           1 1 auto;
+    min-width:      0;
+}
+.pztpro-checkout-bar--metro .pztpro-bar-row__size-label {
+    font-size:      12px;
+    font-weight:    600;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    color:          var(--mt-text-muted, #8a8a82);
+}
+.pztpro-checkout-bar--metro .pztpro-bar-row__price {
+    font-size:   26px;
+    font-weight: 800;
+    color:       var(--mt-text, #1a1a1a);
+    font-variant-numeric: tabular-nums;
+}
+
+/* ── Quantity stepper ────────────────────────────────────────── */
+.pztpro-checkout-bar--metro .pztpro-bar-qty {
+    display:       inline-flex;
+    align-items:   center;
+    border:        2px solid var(--mt-border, #e4e4e0);
+    border-radius: var(--mt-radius-pill, 999px);
+    overflow:      hidden;
+    flex-shrink:   0;
+}
+.pztpro-checkout-bar--metro .pztpro-qty-btn {
+    width:       38px;
+    height:      38px;
+    border:      none;
+    background:  var(--mt-surface, #fff);
+    color:       var(--mt-text, #1a1a1a);
+    font-size:   20px;
+    font-weight: 700;
+    line-height: 1;
+    cursor:      pointer;
+    transition:  background var(--mt-transition, 0.18s ease),
+                 color      var(--mt-transition, 0.18s ease);
+}
+.pztpro-checkout-bar--metro .pztpro-qty-btn:hover:not(:disabled) {
+    background: var(--mt-accent-dim, rgba(230,57,70,0.10));
+    color:      var(--mt-accent, #e63946);
+}
+.pztpro-checkout-bar--metro .pztpro-qty-btn:disabled {
+    opacity: 0.4;
+    cursor:  not-allowed;
+}
+.pztpro-checkout-bar--metro .pztpro-qty-value {
+    min-width:   32px;
+    text-align:  center;
+    font-size:   15px;
+    font-weight: 700;
+    color:       var(--mt-text, #1a1a1a);
+    font-variant-numeric: tabular-nums;
+}
+
+/* ── Add to Cart CTA ─────────────────────────────────────────── */
+.pztpro-checkout-bar--metro .pztpro-add-to-cart-btn {
+    display:        inline-flex;
+    align-items:    center;
+    justify-content: center;
+    gap:            10px;
+    flex-shrink:    0;
+    padding:        13px 26px;
+    border:         none;
+    border-radius:  var(--mt-radius-pill, 999px);
+    background:     var(--mt-accent, #e63946);
+    color:          #fff;
+    font-family:    inherit;
+    font-size:      15px;
+    font-weight:    700;
+    letter-spacing: 0.01em;
+    line-height:    1;
+    cursor:         pointer;
+    box-shadow:     0 4px 14px var(--mt-accent-dim, rgba(230,57,70,0.10));
+    transition:     background  var(--mt-transition, 0.18s ease),
+                    transform   0.12s ease,
+                    box-shadow  var(--mt-transition, 0.18s ease);
+}
+.pztpro-checkout-bar--metro .pztpro-add-to-cart-btn svg {
+    width:  19px;
+    height: 19px;
+    flex-shrink: 0;
+}
+.pztpro-checkout-bar--metro .pztpro-add-to-cart-btn:hover {
+    background: var(--mt-accent-hover, #c1121f);
+    box-shadow: 0 6px 20px var(--mt-accent-dim, rgba(230,57,70,0.10));
+    transform:  translateY(-1px);
+}
+.pztpro-checkout-bar--metro .pztpro-add-to-cart-btn:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 8px var(--mt-accent-dim, rgba(230,57,70,0.10));
+}
+.pztpro-checkout-bar--metro .pztpro-add-to-cart-btn:focus-visible {
+    outline:     none;
+    box-shadow:  0 0 0 3px var(--mt-surface, #fff),
+                 0 0 0 5px var(--mt-accent, #e63946);
+}
+.pztpro-checkout-bar--metro .pztpro-add-to-cart-btn:disabled,
+.pztpro-checkout-bar--metro .pztpro-add-to-cart-btn.is-loading {
+    opacity:        0.6;
+    cursor:         not-allowed;
+    transform:      none;
+    box-shadow:     none;
+}
+.pztpro-checkout-bar--metro .pztpro-add-to-cart-btn.is-loading {
+    color: transparent;
+    position: relative;
+}
+.pztpro-checkout-bar--metro .pztpro-add-to-cart-btn.is-loading::after {
+    content:       '';
+    position:      absolute;
+    width:         18px;
+    height:        18px;
+    border:        2px solid rgba(255,255,255,0.5);
+    border-top-color: #fff;
+    border-radius: 50%;
+    animation:     mt-cta-spin 0.7s linear infinite;
+}
+@keyframes mt-cta-spin { to { transform: rotate(360deg); } }
+.pztpro-checkout-bar--metro .pztpro-add-to-cart-btn.is-added {
+    background: #2d8a4e;
+}
+
+/* Metro size chips */
+.mt-size-selector__options,
+.mt-size-selector .mt-size-option {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 10px;
+}
+.mt-size-option {
+    display: inline-flex;
+    align-items: center;
+    padding: 9px 20px;
+    border: 2px solid var(--mt-border, #e4e4e0);
+    border-radius: var(--mt-radius-sm, 8px);
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 700;
+    background: var(--mt-surface, #fff);
+    color: var(--mt-text, #1a1a1a);
+    transition: all 0.16s;
+}
+.mt-size-option input[type="radio"] { display: none; }
+.mt-size-option:hover,
+.mt-size-option.pztpro-size-option--active {
+    border-color: var(--mt-accent, #e63946);
+    background: var(--mt-accent-dim, rgba(230,57,70,0.08));
+    color: var(--mt-accent, #e63946);
+    box-shadow: 0 0 0 1px var(--mt-accent, #e63946);
+}

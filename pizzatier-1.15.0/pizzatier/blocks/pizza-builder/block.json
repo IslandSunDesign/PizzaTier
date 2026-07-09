@@ -1,0 +1,75 @@
+{
+    "$schema": "https://schemas.wp.org/trunk/block.json",
+    "apiVersion": 3,
+    "name": "pizzatier/pizza-builder",
+    "version": "1.0.0",
+    "title": "Pizza Builder",
+    "category": "widgets",
+    "icon": "pizza-slice",
+    "description": "Interactive pizza builder — lets visitors choose crust, sauce, cheese, toppings, drizzle and slicing style with a live visual preview.",
+    "keywords": ["pizza", "builder", "interactive", "order"],
+    "textdomain": "pizzatier",
+    "editorScript": "file:./block.js",
+    "scriptDependencies": ["wp-blocks", "wp-element", "wp-components", "wp-block-editor", "wp-i18n", "wp-server-side-render"],
+    "supports": {
+        "html": false,
+        "align": ["wide", "full"],
+        "spacing": {
+            "margin": true,
+            "padding": false
+        }
+    },
+    "attributes": {
+        "instanceId": {
+            "type": "string",
+            "default": ""
+        },
+        "template": {
+            "type": "string",
+            "default": ""
+        },
+        "maxToppings": {
+            "type": "string",
+            "default": ""
+        },
+        "showTabs": {
+            "type": "string",
+            "default": ""
+        },
+        "hideTabs": {
+            "type": "string",
+            "default": ""
+        },
+        "defaultCrust": {
+            "type": "string",
+            "default": ""
+        },
+        "defaultSauce": {
+            "type": "string",
+            "default": ""
+        },
+        "defaultCheese": {
+            "type": "string",
+            "default": ""
+        },
+        "pizzaShape": {
+            "type": "string",
+            "default": ""
+        },
+        "pizzaAspect": {
+            "type": "string",
+            "default": ""
+        },
+        "pizzaRadius": {
+            "type": "string",
+            "default": ""
+        },
+        "layerAnim": {
+            "type": "string",
+            "default": ""
+        }
+    },
+    "example": {
+        "attributes": {}
+    }
+}

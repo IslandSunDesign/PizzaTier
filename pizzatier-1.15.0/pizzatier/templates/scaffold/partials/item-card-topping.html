@@ -1,0 +1,101 @@
+<!--
+  SCAFFOLD PARTIAL: item-card-topping.html
+  ──────────────────────────────────────────────────────────────────────────────
+  Single selectable topping card. Toppings are multi-select and support pizza
+  fraction/coverage buttons (whole, half-left, half-right, quarters).
+
+  Rendered by pzt_scaffold_render_topping_card() in pztp-containers-menu.php.
+
+  VARIABLES:
+    $post         — WP_Post
+    $sc_var       — JS namespace string
+    $thumb_url    — thumbnail image URL
+    $layer_url    — pizza-layer overlay image URL
+    $title        — display name
+    $slug         — sanitized slug
+    $layer_id     — unique DOM id for this topping's layer image
+    $zindex       — CSS z-index for stacking order
+
+  COVERAGE BUTTONS:
+    The .sc-coverage block is hidden until the topping is selected (JS toggles
+    it). Remove this block entirely if you don't need fraction coverage.
+
+  CUSTOMISE:
+    • Remove the coverage block for simpler whole-only toppings.
+    • Swap coverage icons for SVG pizza-shape icons.
+    • Add a quantity stepper (+/–) between the add and remove buttons.
+  ──────────────────────────────────────────────────────────────────────────────
+-->
+
+<div
+  class="sc-card sc-card--topping"
+  data-layer="toppings"
+  data-slug="<?php echo esc_attr( $slug ); ?>"
+  data-title="<?php echo esc_attr( $title ); ?>"
+  data-layer-img="<?php echo esc_attr( (string) $layer_url ); ?>"
+  data-thumb="<?php echo esc_attr( (string) $thumb_url ); ?>"
+  data-zindex="<?php echo esc_attr( (string) $zindex ); ?>"
+>
+
+  <!-- Thumbnail -->
+  <div class="sc-card__thumb">
+    <?php if ( $thumb_url ) : ?>
+      <img
+        src="<?php echo esc_url( (string) $thumb_url ); ?>"
+        alt="<?php echo esc_attr( $title ); ?>"
+        loading="lazy"
+      />
+    <?php else : ?>
+      <span class="sc-card__thumb--no-image"></span>
+    <?php endif; ?>
+  </div>
+
+  <!-- Label -->
+  <span class="sc-card__label"><?php echo esc_html( $title ); ?></span>
+
+  <!-- Selected indicator -->
+  <span class="sc-card__selected-mark" aria-hidden="true">&#10003;</span>
+
+  <!-- Coverage / fraction buttons — hidden until topping is active -->
+  <div class="sc-coverage" style="display:none;" aria-label="<?php esc_attr_e( 'Coverage', 'pizzatier' ); ?>">
+    <?php
+    $coverages = [
+        'whole'                => __( 'Whole',   'pizzatier' ),
+        'half-left'            => __( 'Half L',  'pizzatier' ),
+        'half-right'           => __( 'Half R',  'pizzatier' ),
+        'quarter-top-left'     => __( 'Q1',      'pizzatier' ),
+        'quarter-top-right'    => __( 'Q2',      'pizzatier' ),
+        'quarter-bottom-left'  => __( 'Q3',      'pizzatier' ),
+        'quarter-bottom-right' => __( 'Q4',      'pizzatier' ),
+    ];
+    foreach ( $coverages as $fraction => $label ) :
+        $js_cov = esc_attr( "window['{$sc_var}']&&window['{$sc_var}'].setCoverage('" . esc_js( $slug ) . "','" . esc_js( $fraction ) . "',this)" );
+    ?>
+    <button
+      type="button"
+      class="sc-cov-btn"
+      data-fraction="<?php echo esc_attr( $fraction ); ?>"
+      onclick="<?php echo $js_cov; ?>"
+      aria-label="<?php echo esc_attr( $label ); ?>"
+    ><?php echo esc_html( $label ); ?></button>
+    <?php endforeach; ?>
+  </div>
+
+  <!-- Add button -->
+  <button
+    type="button"
+    class="sc-card__btn sc-card__btn--add"
+    aria-label="<?php echo esc_attr( sprintf( __( 'Add %s', 'pizzatier' ), $title ) ); ?>"
+    onclick="<?php echo esc_attr( "window['{$sc_var}']&&window['{$sc_var}'].addTopping({$zindex},'" . esc_js( $slug ) . "','" . esc_js( (string) $layer_url ) . "','" . esc_js( $title ) . "','{$layer_id}','{$layer_id}',this)" ); ?>"
+  >+</button>
+
+  <!-- Remove button — hidden until topping is active -->
+  <button
+    type="button"
+    class="sc-card__btn sc-card__btn--remove"
+    style="display:none;"
+    aria-label="<?php echo esc_attr( sprintf( __( 'Remove %s', 'pizzatier' ), $title ) ); ?>"
+    onclick="<?php echo esc_attr( "window['{$sc_var}']&&window['{$sc_var}'].removeTopping('pizzatier-topping-" . esc_js( $slug ) . "','" . esc_js( $slug ) . "',this)" ); ?>"
+  >&#x2715;</button>
+
+</div>

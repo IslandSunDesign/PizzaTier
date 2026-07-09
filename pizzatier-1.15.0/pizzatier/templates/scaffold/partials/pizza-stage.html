@@ -1,0 +1,105 @@
+<!--
+  SCAFFOLD PARTIAL: pizza-stage.html
+  ──────────────────────────────────────────────────────────────────────────────
+  The pizza visualizer zone. This block holds the stacked layer images that
+  build up the pizza as choices are made.
+
+  VARIABLES available when included from pztp-containers-menu.php:
+    $instance_id  — unique string ID for this builder instance
+    $sc_var       — JS window-object name, e.g. SC_pizzabuilder_1
+    $pizza_shape  — 'round' | 'square' | 'rectangle' | 'custom'
+    $pizza_aspect — CSS aspect-ratio string, e.g. '1 / 1'
+    $pizza_radius — CSS border-radius string, e.g. '8px'
+    $atts         — full shortcode attributes array
+
+  HOOKS:
+    pizzatier_before_pizza_stage  — fires before the wrapper opens
+    pizzatier_after_pizza_stage   — fires after the wrapper closes
+    pizzatier_pizza_stage_inner   — fires inside the stage (use to inject layers)
+  ──────────────────────────────────────────────────────────────────────────────
+-->
+<?php do_action( 'pizzatier_before_pizza_stage', $instance_id ); ?>
+
+<?php
+// Resolve the inline aspect-ratio / border-radius per shape, mirroring the
+// PizzaStack.applyShape() semantics used by the JS-driven templates:
+// aspect only applies to rectangle/custom; radius only applies to custom.
+switch ( $pizza_shape ) {
+	case 'square':
+		$_sc_aspect = '1 / 1';
+		$_sc_radius = '8px';
+		break;
+	case 'rectangle':
+		$_sc_aspect = $pizza_aspect ?: '4 / 3';
+		$_sc_radius = '12px';
+		break;
+	case 'custom':
+		$_sc_aspect = $pizza_aspect ?: '1 / 1';
+		$_sc_radius = $pizza_radius ?: '0px';
+		break;
+	default: // 'round'
+		$_sc_aspect = '1 / 1';
+		$_sc_radius = '50%';
+		break;
+}
+?>
+<div
+  id="<?php echo esc_attr( $instance_id ); ?>-stage"
+  class="sc-pizza-stage sc-pizza-stage--<?php echo esc_attr( $pizza_shape ); ?>"
+  data-instance="<?php echo esc_attr( $instance_id ); ?>"
+  data-shape="<?php echo esc_attr( $pizza_shape ); ?>"
+  style="aspect-ratio:<?php echo esc_attr( $_sc_aspect ); ?>; border-radius:<?php echo esc_attr( $_sc_radius ); ?>;"
+  role="img"
+  aria-label="<?php esc_attr_e( 'Pizza preview', 'pizzatier' ); ?>"
+>
+
+  <?php do_action( 'pizzatier_pizza_stage_inner', $instance_id ); ?>
+
+  <!-- Base / crust layer slot — JS will populate src when a crust is chosen -->
+  <img
+    id="<?php echo esc_attr( $instance_id ); ?>-layer-crust"
+    class="sc-layer sc-layer--crust"
+    src=""
+    alt="<?php esc_attr_e( 'Crust', 'pizzatier' ); ?>"
+    data-layer="crust"
+    style="display:none;"
+  />
+
+  <!-- Sauce layer slot -->
+  <img
+    id="<?php echo esc_attr( $instance_id ); ?>-layer-sauce"
+    class="sc-layer sc-layer--sauce"
+    src=""
+    alt="<?php esc_attr_e( 'Sauce', 'pizzatier' ); ?>"
+    data-layer="sauce"
+    style="display:none;"
+  />
+
+  <!-- Cheese layer slot -->
+  <img
+    id="<?php echo esc_attr( $instance_id ); ?>-layer-cheese"
+    class="sc-layer sc-layer--cheese"
+    src=""
+    alt="<?php esc_attr_e( 'Cheese', 'pizzatier' ); ?>"
+    data-layer="cheese"
+    style="display:none;"
+  />
+
+  <!--
+    Topping layers are injected here dynamically by JS.
+    Each topping gets its own absolutely-positioned <img class="sc-layer sc-layer--topping">.
+  -->
+
+  <!-- Drizzle layer slot -->
+  <img
+    id="<?php echo esc_attr( $instance_id ); ?>-layer-drizzle"
+    class="sc-layer sc-layer--drizzle"
+    src=""
+    alt="<?php esc_attr_e( 'Drizzle', 'pizzatier' ); ?>"
+    data-layer="drizzle"
+    style="display:none;"
+  />
+
+</div>
+
+<?php do_action( 'pizzatier_after_pizza_stage', $instance_id ); ?>

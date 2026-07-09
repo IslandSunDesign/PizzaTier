@@ -1,0 +1,49 @@
+<!--
+  SCAFFOLD PARTIAL: tab-bar.html
+  ──────────────────────────────────────────────────────────────────────────────
+  The horizontal tab/category navigation bar.
+  Renders one button per visible tab. JS handles active-tab toggling.
+
+  VARIABLES:
+    $instance_id    — builder instance ID
+    $sc_var         — JS namespace string
+    $visible_tabs   — array of tab slugs to render, e.g. ['crust','sauce',…]
+
+  CUSTOMISE:
+    • To reorder tabs change the shortcode show_tabs= attribute or the
+      $visible_tabs filter in the PHP loader.
+    • To restyle: target .sc-tab-bar and .sc-tab-btn in your CSS.
+    • Replace the label text with icons, emoji, or SVG as needed.
+  ──────────────────────────────────────────────────────────────────────────────
+-->
+<?php do_action( 'pizzatier_before_tab_bar', $instance_id ); ?>
+
+<nav
+  id="<?php echo esc_attr( $instance_id ); ?>-tab-bar"
+  class="sc-tab-bar"
+  role="tablist"
+  aria-label="<?php esc_attr_e( 'Pizza builder categories', 'pizzatier' ); ?>"
+>
+
+  <?php foreach ( $visible_tabs as $tab_slug ) :
+    $tab_label = ucfirst( $tab_slug );
+    // Allow label overrides via filter
+    $tab_label = (string) apply_filters( 'pizzatier_tab_label', $tab_label, $tab_slug, $instance_id );
+  ?>
+  <button
+    type="button"
+    class="sc-tab-btn"
+    id="<?php echo esc_attr( $instance_id ); ?>-tab-<?php echo esc_attr( $tab_slug ); ?>"
+    role="tab"
+    data-tab="<?php echo esc_attr( $tab_slug ); ?>"
+    data-instance="<?php echo esc_attr( $instance_id ); ?>"
+    aria-selected="false"
+    aria-controls="<?php echo esc_attr( $instance_id ); ?>-panel-<?php echo esc_attr( $tab_slug ); ?>"
+  >
+    <?php echo esc_html( $tab_label ); ?>
+  </button>
+  <?php endforeach; ?>
+
+</nav>
+
+<?php do_action( 'pizzatier_after_tab_bar', $instance_id ); ?>

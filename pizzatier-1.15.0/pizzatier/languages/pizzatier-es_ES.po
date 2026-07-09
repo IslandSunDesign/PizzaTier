@@ -1,0 +1,2503 @@
+# PizzaTier — WordPress Pizza Builder
+# Copyright (C) 2025 Island Sun Design
+# This file is distributed under the same license as the PizzaTier plugin.
+# Island Sun Design <hello@islandsundesign.com>, 2025.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: PizzaTier 1.0.0\n"
+"Report-Msgid-Bugs-To: https://pizzatier.com/support\n"
+"POT-Creation-Date: 2026-03-18 21:53+0000\n"
+"PO-Revision-Date: 2025-01-01 00:00+0000\n"
+"Last-Translator: \n"
+"Language-Team: Spanish <es@li.org>\n"
+"Language: es_ES\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"X-Generator: PizzaTier makepot.py 2.0\n"
+"X-Domain: pizzatier\n"
+
+#: src/Admin/Settings.php:1585
+msgid "\"Added\" Confirmation Text"
+msgstr ""
+
+#: src/Admin/Settings.php:1592
+msgid "\"Removed\" Confirmation Text"
+msgstr ""
+
+#: src/Admin/Settings.php:1616
+msgid "\"Start Over\" Button Label"
+msgstr ""
+
+#: src/Admin/SetupGuide.php:343
+msgid "%d of %d steps complete"
+msgstr ""
+
+#: src/Admin/Settings.php:1843
+msgid "%d settings restored."
+msgstr ""
+
+#: src/PostTypes/PostTypeRegistrar.php:103
+msgid "%s Image"
+msgstr ""
+
+#: src/PostTypes/PostTypeRegistrar.php:93
+msgid "%s List"
+msgstr ""
+
+#: src/Admin/SetupGuide.php:479
+msgid "<strong>New to PizzaTier?</strong> Head to the full Help &amp; Reference page for the complete Quickstart guide — five clear steps from a blank install to a live interactive builder."
+msgstr ""
+
+#: src/Admin/AdminHome.php:253
+msgid "A few things still need content before your builder works:"
+msgstr ""
+
+#: templates/rustic/pztp-containers-menu.php:470
+msgid "A finishing touch of old-world flavour."
+msgstr ""
+
+#: src/Admin/Settings.php:283
+msgid "A11y & Perf"
+msgstr ""
+
+#: src/Admin/TemplateChoice.php:179
+msgid "above to change it."
+msgstr ""
+
+#: src/Admin/TemplateChoice.php:185
+msgid "above to set the correct page."
+msgstr ""
+
+#: src/Admin/Settings.php:463
+msgid "Accent Color"
+msgstr ""
+
+#: src/Admin/Settings.php:1451
+msgid "Accessibility &amp; Performance"
+msgstr ""
+
+#: src/Admin/Settings.php:797
+msgid "Accessibility alt text for the logo image."
+msgstr ""
+
+#: src/Admin/TemplateChoice.php:298
+msgid "Activate"
+msgstr ""
+
+#: src/Admin/TemplateChoice.php:360
+msgid "Activate Template?"
+msgstr ""
+
+#: src/Admin/TemplateChoice.php:364
+msgid "Activating"
+msgstr ""
+
+#: src/Admin/TemplateChoice.php:268
+msgid "Active"
+msgstr ""
+
+#: src/Admin/Settings.php:1218
+msgid "Active Tab Color"
+msgstr ""
+
+#: src/Admin/AdminHome.php:295
+#: src/Admin/AdminHome.php:351
+#: src/Admin/TemplateChoice.php:389
+msgid "Active Template"
+msgstr ""
+
+#: templates/colorbox/pztp-containers-menu.php:121
+#: templates/colorbox/pztp-containers-menu.php:199
+#: templates/nightpie/pztp-containers-menu.php:119
+#: templates/nightpie/pztp-containers-menu.php:195
+msgid "Add"
+msgstr ""
+
+#: src/Admin/AdminBar.php:116
+msgid "Add a new %s"
+msgstr ""
+
+#: src/Admin/SetupGuide.php:89
+msgid "Add at least one Cheese"
+msgstr ""
+
+#: src/Admin/SetupGuide.php:71
+msgid "Add at least one Crust"
+msgstr ""
+
+#: src/Admin/SetupGuide.php:80
+msgid "Add at least one Sauce"
+msgstr ""
+
+#: src/Admin/SetupGuide.php:93
+msgid "Add Cheese"
+msgstr ""
+
+#: src/Admin/AdminHome.php:321
+msgid "Add content"
+msgstr ""
+
+#: src/Admin/SetupGuide.php:75
+msgid "Add Crust"
+msgstr ""
+
+#: src/Admin/SetupGuide.php:122
+msgid "Add Cut Style"
+msgstr ""
+
+#: src/Admin/SetupGuide.php:117
+msgid "Add Cut styles <em>(optional)</em>"
+msgstr ""
+
+#: src/Admin/SetupGuide.php:112
+msgid "Add Drizzle"
+msgstr ""
+
+#: src/Admin/SetupGuide.php:107
+msgid "Add Drizzles <em>(optional)</em>"
+msgstr ""
+
+#: src/PostTypes/PostTypeRegistrar.php:96
+#: src/Admin/AdminBar.php:124
+msgid "Add New"
+msgstr ""
+
+#: src/PostTypes/PostTypeRegistrar.php:95
+#: src/Admin/AdminBar.php:114
+#: src/Admin/AdminHome.php:426
+msgid "Add New %s"
+msgstr ""
+
+#: src/Admin/AdminBar.php:136
+msgid "Add new %s"
+msgstr ""
+
+#: src/PostTypes/PostTypeRegistrar.php:63
+msgid "Add New Group"
+msgstr ""
+
+#: src/Admin/SetupGuide.php:84
+msgid "Add Sauce"
+msgstr ""
+
+#: src/Admin/SetupGuide.php:102
+msgid "Add Topping"
+msgstr ""
+
+#: templates/colorbox/pztp-containers-menu.php:425
+#: templates/nightpie/pztp-containers-menu.php:399
+msgid "Add up to %s toppings."
+msgstr ""
+
+#: src/Admin/AdminHome.php:240
+msgid "Add WooCommerce cart integration, order pricing grids, and more."
+msgstr ""
+
+#: src/Admin/AdminHome.php:258
+msgid "Add your first %s →"
+msgstr ""
+
+#: src/Admin/SetupGuide.php:98
+msgid "Add your Toppings"
+msgstr ""
+
+#: src/Admin/SetupGuide.php:374
+msgid "added"
+msgstr ""
+
+#: src/Admin/LayerImageMaker.php:81
+msgid "Adjustments"
+msgstr ""
+
+#: src/Admin/Settings.php:285
+msgid "Advanced"
+msgstr ""
+
+#: src/Admin/Settings.php:1664
+msgid "Advanced &amp; Developer"
+msgstr ""
+
+#: src/PostTypes/PostTypeRegistrar.php:94
+#: src/Admin/AdminBar.php:105
+msgid "All %s"
+msgstr ""
+
+#: src/PostTypes/PostTypeRegistrar.php:59
+msgid "All Groups"
+msgstr ""
+
+#: src/Admin/Settings.php:259
+msgid "All plugin settings in one place. These replace the old WordPress Customizer panel."
+msgstr ""
+
+#: src/Admin/Settings.php:1624
+msgid "Allow customers to add free-text notes to their order."
+msgstr ""
+
+#: src/Admin/Settings.php:970
+msgid "Allow customers to navigate the builder with arrow keys."
+msgstr ""
+
+#: src/Admin/Settings.php:543
+msgid "Animation Style"
+msgstr ""
+
+#: src/Admin/Settings.php:271
+msgid "Animations"
+msgstr ""
+
+#: src/Admin/Settings.php:1203
+msgid "Apply Preset"
+msgstr ""
+
+#: src/Admin/Settings.php:1489
+msgid "ARIA Labels Language"
+msgstr ""
+
+#: src/Admin/Settings.php:942
+msgid "Auto-Advance Steps"
+msgstr ""
+
+#: src/Admin/Settings.php:943
+msgid "Automatically move to the next step after a selection."
+msgstr ""
+
+#: templates/colorbox/pztp-containers-menu.php:499
+#: templates/rustic/pztp-containers-menu.php:539
+#: templates/nightpie/pztp-containers-menu.php:473
+msgid "Back"
+msgstr ""
+
+#: src/Admin/Settings.php:1096
+msgid "Base Font Size"
+msgstr ""
+
+#: src/Admin/Settings.php:1014
+msgid "Base Price"
+msgstr ""
+
+#: src/Admin/LayerImageMaker.php:91
+msgid "Blur"
+msgstr ""
+
+#: src/Admin/Settings.php:1223
+msgid "Body Text Color"
+msgstr ""
+
+#: src/Admin/Settings.php:448
+msgid "Border Color"
+msgstr ""
+
+#: src/Admin/Settings.php:442
+msgid "Border Width"
+msgstr ""
+
+#: src/Admin/Settings.php:812
+msgid "Brand Primary Colour"
+msgstr ""
+
+#: src/Admin/Settings.php:825
+msgid "Brand Secondary Colour"
+msgstr ""
+
+#: src/Admin/Settings.php:804
+msgid "Brand Tagline"
+msgstr ""
+
+#: src/Admin/AdminBar.php:218
+#: src/Admin/Settings.php:275
+#: src/Admin/Settings.php:740
+msgid "Branding"
+msgstr ""
+
+#: src/Admin/LayerImageMetaBox.php:191
+msgid "Bright"
+msgstr ""
+
+#: src/Admin/LayerImageMaker.php:87
+msgid "Brightness"
+msgstr ""
+
+#: src/Admin/AdminHome.php:316
+msgid "Build beautiful pizza builders — one layer at a time."
+msgstr ""
+
+#: src/Admin/AdminBar.php:163
+msgid "Build shortcodes with a visual UI"
+msgstr ""
+
+#: templates/colorbox/pztp-containers-menu.php:320
+msgid "Build Your Pizza"
+msgstr ""
+
+#: src/Admin/Settings.php:1212
+msgid "Builder Background"
+msgstr ""
+
+#: src/Admin/Settings.php:851
+msgid "Builder Footer Text"
+msgstr ""
+
+#: src/Admin/Settings.php:890
+msgid "Builder Layout &amp; Behaviour"
+msgstr ""
+
+#: src/Admin/Settings.php:898
+msgid "Builder Layout Mode"
+msgstr ""
+
+#: templates/metro/pztp-containers-menu.php:401
+msgid "Builder sections"
+msgstr ""
+
+#: src/Admin/AdminBar.php:200
+msgid "Builder shortcode"
+msgstr ""
+
+#: src/Admin/Settings.php:908
+msgid "Builder Width"
+msgstr ""
+
+#: src/Admin/Settings.php:1127
+msgid "Button Font Weight"
+msgstr ""
+
+#: src/Admin/Settings.php:1530
+msgid "Cache layer data in the browser for faster repeat visits."
+msgstr ""
+
+#: src/Admin/AdminHome.php:175
+msgid "Cache thumbnails and preload your first visible layer set for a snappier first paint on slower connections."
+msgstr ""
+
+#: src/Admin/LayerImageMetaBox.php:214
+#: src/Admin/Settings.php:1202
+#: src/Admin/TemplateChoice.php:160
+#: src/Admin/TemplateChoice.php:368
+msgid "Cancel"
+msgstr ""
+
+#: src/Admin/Settings.php:1214
+msgid "Card Background"
+msgstr ""
+
+#: src/Admin/Settings.php:1215
+msgid "Card Border Color"
+msgstr ""
+
+#: src/Admin/Settings.php:1309
+msgid "Card Box Shadow"
+msgstr ""
+
+#: src/Admin/Settings.php:1046
+msgid "Cart button visibility, button text, require crust/sauce, minimum order, and tax display are managed in PizzaTierPro → Pro Settings."
+msgstr ""
+
+#: src/Admin/Settings.php:1057
+msgid "Cart integration settings are managed in "
+msgstr ""
+
+#: src/Admin/Settings.php:1145
+msgid "Case transformation for item name labels."
+msgstr ""
+
+#: templates/metro/pztp-containers-menu.php:245
+msgid "Change coverage"
+msgstr ""
+
+#: src/Admin/Settings.php:763
+msgid "Change Logo"
+msgstr ""
+
+#: src/Admin/SetupGuide.php:499
+msgid "Check the documentation or reach out through %s."
+msgstr ""
+
+#: templates/colorbox/pztp-containers-menu.php:331
+#: templates/colorbox/pztp-containers-menu.php:397
+#: templates/colorbox/pztp-containers-menu.php:430
+#: templates/colorbox/pztp-containers-menu.php:481
+msgid "Cheese"
+msgstr ""
+
+#: src/Admin/AdminHome.php:82
+msgid "Cheese sits between sauce and toppings in your stack. Offer mozzarella, provolone, dairy-free alternatives — each with its own visual layer image."
+msgstr ""
+
+#: src/Admin/AdminHome.php:80
+#: src/Admin/AdminHome.php:278
+msgid "Cheeses"
+msgstr ""
+
+#: templates/colorbox/pztp-containers-menu.php:458
+#: templates/nightpie/pztp-containers-menu.php:432
+msgid "Choose a cut style."
+msgstr ""
+
+#: templates/colorbox/pztp-containers-menu.php:441
+#: templates/rustic/pztp-containers-menu.php:469
+#: templates/nightpie/pztp-containers-menu.php:415
+msgid "Choose a Drizzle"
+msgstr ""
+
+#: src/Admin/Settings.php:331
+msgid "Choose a layer"
+msgstr ""
+
+#: src/Admin/Settings.php:494
+msgid "Choose a shape for the pizza visualizer."
+msgstr ""
+
+#: src/Admin/AdminHome.php:325
+msgid "Choose a template"
+msgstr ""
+
+#: src/Admin/SetupGuide.php:127
+#: src/Admin/TemplateChoice.php:132
+msgid "Choose a Template"
+msgstr ""
+
+#: templates/metro/pztp-containers-menu.php:486
+msgid "Choose coverage"
+msgstr ""
+
+#: src/Admin/LayerImageMaker.php:47
+msgid "Choose from Media Library"
+msgstr ""
+
+#: src/Admin/AdminHome.php:340
+#: src/Admin/SetupGuide.php:131
+msgid "Choose Template"
+msgstr ""
+
+#: templates/colorbox/pztp-containers-menu.php:407
+#: templates/rustic/pztp-containers-menu.php:425
+#: templates/nightpie/pztp-containers-menu.php:381
+msgid "Choose Your Cheese"
+msgstr ""
+
+#: templates/colorbox/pztp-containers-menu.php:375
+#: templates/rustic/pztp-containers-menu.php:383
+#: templates/nightpie/pztp-containers-menu.php:349
+msgid "Choose Your Crust"
+msgstr ""
+
+#: templates/colorbox/pztp-containers-menu.php:391
+#: templates/rustic/pztp-containers-menu.php:404
+#: templates/nightpie/pztp-containers-menu.php:365
+msgid "Choose Your Sauce"
+msgstr ""
+
+#: templates/colorbox/pztp-containers-menu.php:423
+#: templates/rustic/pztp-containers-menu.php:446
+#: templates/nightpie/pztp-containers-menu.php:397
+msgid "Choose Your Toppings"
+msgstr ""
+
+#: src/Admin/Settings.php:341
+msgid "Clear selection"
+msgstr ""
+
+#: src/Admin/TemplateChoice.php:185
+msgid "Click"
+msgstr ""
+
+#: src/Admin/Settings.php:572
+msgid "Click the button to preview the selected animation."
+msgstr ""
+
+#: src/Admin/Settings.php:1529
+msgid "Client-Side Caching"
+msgstr ""
+
+#: templates/metro/pztp-containers-menu.php:497
+#: src/Admin/Settings.php:332
+#: src/Admin/Settings.php:1196
+msgid "Close"
+msgstr ""
+
+#: src/Admin/Settings.php:449
+msgid "Color for the pizza border."
+msgstr ""
+
+#: src/Admin/Settings.php:280
+msgid "Colours"
+msgstr ""
+
+#: src/Admin/SetupGuide.php:135
+msgid "Configure Plugin Settings"
+msgstr ""
+
+#: src/Admin/AdminBar.php:80
+#: src/Admin/AdminMenu.php:78
+msgid "Content"
+msgstr ""
+
+#: src/Admin/TemplateChoice.php:226
+msgid "Content &amp; settings are never affected"
+msgstr ""
+
+#: src/Admin/Settings.php:839
+msgid "Content Above Menu Icons"
+msgstr ""
+
+#: src/Admin/AdminMenu.php:107
+msgid "Content Hub"
+msgstr ""
+
+#: src/Admin/Settings.php:878
+msgid "Content shown in the builder's help modal/tab when customers click the help icon."
+msgstr ""
+
+#: src/Admin/LayerImageMaker.php:88
+#: src/Admin/LayerImageMetaBox.php:192
+msgid "Contrast"
+msgstr ""
+
+#: src/Admin/Settings.php:1804
+msgid "could not read file."
+msgstr ""
+
+#: templates/metro/pztp-containers-menu.php:494
+msgid "Coverage for"
+msgstr ""
+
+#: templates/colorbox/pztp-containers-menu.php:176
+#: templates/rustic/pztp-containers-menu.php:200
+#: templates/nightpie/pztp-containers-menu.php:174
+msgid "Coverage:"
+msgstr ""
+
+#: src/Admin/AdminHome.php:491
+msgid "Create a <strong>child theme template</strong> by adding a directory at <code>/pzttemplates/your-slug/</code>. Copy a base template from the plugin's <code>/templates/</code> folder, then freely edit layout, partials, and CSS."
+msgstr ""
+
+#: src/Admin/LayerImageMetaBox.php:145
+msgid "Create Layer Image"
+msgstr ""
+
+#: src/Admin/LayerImageMaker.php:164
+msgid "Crop"
+msgstr ""
+
+#: src/Admin/LayerImageMaker.php:163
+msgid "Crop / pan (C)"
+msgstr ""
+
+#: templates/colorbox/pztp-containers-menu.php:329
+#: templates/colorbox/pztp-containers-menu.php:396
+#: templates/colorbox/pztp-containers-menu.php:479
+#: templates/plainlist/pztp-containers-menu.php:205
+msgid "Crust"
+msgstr ""
+
+#: src/Admin/Settings.php:589
+msgid "Crust Options"
+msgstr ""
+
+#: src/Admin/AdminHome.php:64
+#: src/Admin/AdminHome.php:276
+msgid "Crusts"
+msgstr ""
+
+#: src/Admin/Settings.php:1021
+msgid "Currency Symbol Position"
+msgstr ""
+
+#: src/Admin/LayerImageMetaBox.php:133
+#: src/Admin/LayerImageMetaBox.php:666
+msgid "Current layer image"
+msgstr ""
+
+#: src/Admin/TemplateChoice.php:211
+msgid "Currently Active"
+msgstr ""
+
+#: src/Admin/Settings.php:1319
+msgid "Custom Box Shadow CSS"
+msgstr ""
+
+#: src/Admin/Settings.php:1672
+msgid "Custom CSS (injected into builder pages)"
+msgstr ""
+
+#: src/Admin/Settings.php:1089
+msgid "Custom Google Font Name"
+msgstr ""
+
+#: src/Admin/Settings.php:846
+msgid "Custom HTML for the branding area in the builder header (logo area, above the tabs). Use Text tab for raw HTML with image tags etc."
+msgstr ""
+
+#: src/Admin/Settings.php:1677
+msgid "Custom JS (runs after builder initialises)"
+msgstr ""
+
+#: src/Admin/Settings.php:1617
+msgid "Custom text for the reset button."
+msgstr ""
+
+#: src/Admin/Settings.php:1361
+msgid "Custom Thumbnail Size"
+msgstr ""
+
+#: src/Admin/Settings.php:1546
+msgid "Customer Experience"
+msgstr ""
+
+#: src/Admin/Settings.php:284
+msgid "Customer UX"
+msgstr ""
+
+#: src/Admin/AdminHome.php:143
+msgid "Customizer"
+msgstr ""
+
+#: templates/rustic/pztp-containers-menu.php:491
+msgid "Cut fresh from the stone floor oven."
+msgstr ""
+
+#: src/Admin/AdminHome.php:96
+#: src/Admin/AdminHome.php:280
+msgid "Cuts"
+msgstr ""
+
+#: src/Admin/AdminBar.php:71
+#: src/Admin/AdminMenu.php:74
+msgid "Dashboard"
+msgstr ""
+
+#: src/Admin/Settings.php:1682
+msgid "Debug Mode"
+msgstr ""
+
+#: src/Admin/Settings.php:319
+msgid "Default Cheese"
+msgstr ""
+
+#: src/Admin/Settings.php:317
+msgid "Default Crust"
+msgstr ""
+
+#: src/Admin/Settings.php:321
+msgid "Default Cut"
+msgstr ""
+
+#: src/Admin/Settings.php:320
+msgid "Default Drizzle"
+msgstr ""
+
+#: src/Admin/AdminBar.php:215
+#: src/Admin/Settings.php:267
+#: src/Admin/Settings.php:310
+msgid "Default Layers"
+msgstr ""
+
+#: src/Admin/Settings.php:318
+msgid "Default Sauce"
+msgstr ""
+
+#: src/Admin/Settings.php:1015
+msgid "Default starting price before any layer selections."
+msgstr ""
+
+#: src/Admin/AdminHome.php:98
+msgid "Define how a finished pizza gets sliced. Square cuts, classic triangles, party-style, or left whole — each cut style gets its own overlay layer that drops on top of the finished pizza."
+msgstr ""
+
+#: src/Admin/Settings.php:872
+msgid "Demo / Announcement Bar"
+msgstr ""
+
+#: src/Admin/AdminHome.php:499
+msgid "Developer Hooks Reference"
+msgstr ""
+
+#: src/Admin/AdminBar.php:238
+#: src/Admin/Help.php:85
+msgid "Developer Reference"
+msgstr ""
+
+#: src/Admin/Settings.php:1460
+msgid "Disable all animations for users who prefer reduced motion."
+msgstr ""
+
+#: src/Admin/Settings.php:1692
+msgid "Disable All Plugin CSS"
+msgstr ""
+
+#: src/Admin/AdminHome.php:244
+#: src/Admin/SetupGuide.php:490
+msgid "Dismiss"
+msgstr ""
+
+#: src/Admin/Settings.php:1607
+msgid "Display a button that resets all selections to defaults."
+msgstr ""
+
+#: src/Admin/Settings.php:1415
+msgid "Display a quantity badge on topping cards when count &gt; 0."
+msgstr ""
+
+#: src/Admin/Settings.php:1555
+msgid "Display a running summary of selected layers alongside the visualizer."
+msgstr ""
+
+#: src/Admin/AdminHome.php:176
+msgid "Document your price grid rules in the product notes field — your future self will thank you."
+msgstr ""
+
+#: src/Admin/Settings.php:960
+msgid "Don't show tabs for categories with no published items."
+msgstr ""
+
+#: templates/metro/pztp-containers-menu.php:524
+msgid "Done"
+msgstr ""
+
+#: src/Admin/LayerImageMaker.php:148
+msgid "Download PNG"
+msgstr ""
+
+#: templates/colorbox/pztp-containers-menu.php:333
+#: templates/colorbox/pztp-containers-menu.php:431
+#: templates/colorbox/pztp-containers-menu.php:462
+#: templates/colorbox/pztp-containers-menu.php:483
+msgid "Drizzle"
+msgstr ""
+
+#: src/Admin/AdminHome.php:88
+#: src/Admin/AdminHome.php:279
+msgid "Drizzles"
+msgstr ""
+
+#: src/Admin/AdminHome.php:90
+msgid "Drizzles are the finishing touch — balsamic glaze, hot honey, ranch swirl. They layer above toppings in the visualizer and give your menu a premium feel with minimal setup."
+msgstr ""
+
+#: src/Admin/LayerImageMetaBox.php:157
+msgid "Drop / click to upload"
+msgstr ""
+
+#: src/Admin/LayerImageMaker.php:43
+msgid "Drop an image here, or click to browse"
+msgstr ""
+
+#: src/Admin/Settings.php:559
+msgid "Duration of the layer animation. Ignored when style is Instant."
+msgstr ""
+
+#: src/Admin/SetupGuide.php:64
+msgid "Each ingredient needs a transparent PNG layer image (800×800 px). Use PizzaTier → Layer Image Maker to crop, adjust, and export your images — or create them when adding each item."
+msgstr ""
+
+#: src/Admin/TemplateChoice.php:204
+msgid "Each template is a complete, self-contained builder experience — different layout, different feel, same content. Hover a card to preview it live in the pane on the right. When you find the one, hit <strong>Activate</strong>."
+msgstr ""
+
+#: src/PostTypes/PostTypeRegistrar.php:97
+msgid "Edit %s"
+msgstr ""
+
+#: src/Admin/LayerImageMetaBox.php:145
+msgid "Edit / Replace Layer Image"
+msgstr ""
+
+#: src/PostTypes/PostTypeRegistrar.php:64
+msgid "Edit Group"
+msgstr ""
+
+#: src/Admin/AdminHome.php:329
+msgid "Embed &amp; go"
+msgstr ""
+
+#: src/Admin/SetupGuide.php:143
+msgid "Embed the Builder on a page"
+msgstr ""
+
+#: src/Blocks/BlockRegistrar.php:120
+msgid "Enter a layer slug in the block settings."
+msgstr ""
+
+#: src/Admin/PriceGrid.php:52
+msgid "Enter pricing as CSV. First row is the header. Each following row: Size, Full, Half, Quarter."
+msgstr ""
+
+#: src/Admin/Settings.php:1225
+msgid "Error / Warning Color"
+msgstr ""
+
+#: src/Admin/SetupGuide.php:333
+msgid "Everything you need to get PizzaTier up and running — in the right order."
+msgstr ""
+
+#: src/Admin/LayerImageMaker.php:134
+msgid "Export"
+msgstr ""
+
+#: src/Admin/AdminHome.php:486
+msgid "Extend PizzaTier"
+msgstr ""
+
+#: src/Admin/AdminBar.php:237
+#: src/Admin/Help.php:84
+msgid "FAQ"
+msgstr ""
+
+#: src/Admin/LayerImageMaker.php:143
+msgid "File name"
+msgstr ""
+
+#: templates/metro/pztp-containers-menu.php:461
+msgid "Filter toppings"
+msgstr ""
+
+#: templates/metro/pztp-containers-menu.php:460
+msgid "Filter toppings…"
+msgstr ""
+
+#: src/Admin/SetupGuide.php:108
+msgid "Finishing touch layers — hot honey, balsamic, ranch. Optional but delightful."
+msgstr ""
+
+#: src/Admin/LayerImageMaker.php:178
+msgid "Fit (F)"
+msgstr ""
+
+#: src/Admin/LayerImageMetaBox.php:179
+msgid "Flip H"
+msgstr ""
+
+#: src/Admin/LayerImageMaker.php:189
+msgid "Flip horizontal"
+msgstr ""
+
+#: src/Admin/LayerImageMetaBox.php:180
+msgid "Flip V"
+msgstr ""
+
+#: src/Admin/LayerImageMaker.php:190
+msgid "Flip vertical"
+msgstr ""
+
+#: src/Admin/Settings.php:1479
+msgid "Focus Ring Style"
+msgstr ""
+
+#: src/Admin/Settings.php:1080
+msgid "Font used for headings and labels in the builder."
+msgstr ""
+
+#: src/Admin/Settings.php:1470
+msgid "Force high-contrast colors for all builder UI elements."
+msgstr ""
+
+#: templates/rustic/pztp-containers-menu.php:426
+msgid "Fresh-pulled or aged to perfection."
+msgstr ""
+
+#: src/Admin/AdminBar.php:184
+msgid "Full documentation and developer reference"
+msgstr ""
+
+#: src/Admin/Help.php:40
+msgid "Full documentation for setup, content management, shortcodes, templates, and development."
+msgstr ""
+
+#: src/Admin/Settings.php:464
+msgid "Global accent color used in templates."
+msgstr ""
+
+#: src/Admin/Settings.php:1161
+msgid "Global Colour Palette"
+msgstr ""
+
+#: src/Admin/AdminBar.php:177
+msgid "Global plugin settings"
+msgstr ""
+
+#: src/Admin/SetupGuide.php:385
+msgid "Go"
+msgstr ""
+
+#: src/Admin/SetupGuide.php:90
+msgid "Go to PizzaTier → Cheeses and publish a cheese with a layer image."
+msgstr ""
+
+#: src/Admin/SetupGuide.php:72
+msgid "Go to PizzaTier → Crusts and publish a crust with a layer image."
+msgstr ""
+
+#: src/Admin/SetupGuide.php:81
+msgid "Go to PizzaTier → Sauces and publish a sauce with a layer image."
+msgstr ""
+
+#: src/Admin/Settings.php:1424
+msgid "Group Toppings by Category"
+msgstr ""
+
+#: src/Admin/LayerImageMetaBox.php:183
+msgid "Guide"
+msgstr ""
+
+#: src/Admin/Settings.php:933
+msgid "Guide customers through one layer category at a time."
+msgstr ""
+
+#: src/Admin/LayerImageMaker.php:53
+msgid "Guide Overlay"
+msgstr ""
+
+#: src/Admin/Settings.php:845
+msgid "Header Custom Content"
+msgstr ""
+
+#: src/Admin/Settings.php:1103
+msgid "Heading Font Weight"
+msgstr ""
+
+#: src/Admin/AdminHome.php:155
+#: src/Admin/AdminMenu.php:104
+msgid "Help"
+msgstr ""
+
+#: src/Admin/AdminBar.php:182
+msgid "Help & Reference"
+msgstr ""
+
+#: src/Admin/SetupGuide.php:485
+msgid "Help &amp; Reference"
+msgstr ""
+
+#: src/Admin/Settings.php:877
+msgid "Help Screen Content"
+msgstr ""
+
+#: src/Admin/Settings.php:959
+msgid "Hide Empty Categories"
+msgstr ""
+
+#: src/Admin/Settings.php:1469
+msgid "High Contrast Mode"
+msgstr ""
+
+#: src/Admin/Settings.php:1634
+msgid "Hint text inside the special instructions text box."
+msgstr ""
+
+#: src/Admin/AdminHome.php:495
+msgid "Hook into any part of the builder with the full <strong>action &amp; filter API</strong> — <code>pizzatier_before_builder</code>, <code>pizzatier_layer_html</code>, <code>pizzatier_tab_order</code>, and more."
+msgstr ""
+
+#: src/Admin/TemplateChoice.php:219
+msgid "Hover → Preview → Activate → Customise"
+msgstr ""
+
+#: src/Admin/Settings.php:653
+msgid "How far inset the cheese layer is."
+msgstr ""
+
+#: src/Admin/TemplateChoice.php:218
+msgid "How it works"
+msgstr ""
+
+#: src/Admin/Settings.php:1575
+msgid "How long the toast notification stays visible."
+msgstr ""
+
+#: src/Admin/Settings.php:1703
+msgid "How long to cache REST API responses server-side. 0 = no cache."
+msgstr ""
+
+#: src/Admin/Settings.php:1005
+msgid "How prices are shown to customers in the builder UI."
+msgstr ""
+
+#: templates/colorbox/pztp-containers-menu.php:457
+#: templates/rustic/pztp-containers-menu.php:490
+#: templates/nightpie/pztp-containers-menu.php:431
+msgid "How Should We Slice It?"
+msgstr ""
+
+#: src/Admin/Settings.php:899
+msgid "How the builder panels are arranged on screen."
+msgstr ""
+
+#: src/Admin/Settings.php:923
+msgid "How the builder stacks on small screens."
+msgstr ""
+
+#: src/Admin/Settings.php:1383
+msgid "How toppings are positioned over the pizza visualizer."
+msgstr ""
+
+#: src/Admin/Settings.php:1435
+msgid "How toppings are sorted in the menu grid."
+msgstr ""
+
+#: src/Admin/LayerImageMaker.php:90
+msgid "Hue Shift"
+msgstr ""
+
+#: src/Admin/Settings.php:873
+msgid "If set, this message appears as an announcement bar above all pages using PizzaTier. Leave empty to disable."
+msgstr ""
+
+#: src/Admin/Settings.php:1519
+msgid "Image Format Preference"
+msgstr ""
+
+#: src/Admin/LayerImageMaker.php:40
+msgid "Image Source"
+msgstr ""
+
+#: src/Admin/Settings.php:1798
+#: src/Admin/Settings.php:1804
+#: src/Admin/Settings.php:1809
+msgid "Import failed:"
+msgstr ""
+
+#: src/Admin/Settings.php:1843
+msgid "Import successful:"
+msgstr ""
+
+#: src/PostTypes/PostTypeRegistrar.php:57
+msgctxt "Taxonomy Singular Name"
+msgid "Ingredient Group"
+msgstr ""
+
+#: src/PostTypes/PostTypeRegistrar.php:56
+msgctxt "Taxonomy General Name"
+msgid "Ingredient Groups"
+msgstr ""
+
+#: src/PostTypes/PostTypeRegistrar.php:58
+msgid "Ingredient Groups"
+msgstr ""
+
+#: src/Admin/Settings.php:604
+msgid "Inset padding applied to the crust layer image."
+msgstr ""
+
+#: src/Admin/SetupGuide.php:55
+msgid "Install &amp; activate PizzaTier"
+msgstr ""
+
+#: src/Admin/AdminHome.php:470
+msgid "Interactive builder on any page."
+msgstr ""
+
+#: src/Admin/Settings.php:840
+msgid "Intro text or custom HTML shown above the builder tab icons. Use Visual mode for rich text, Text tab for raw HTML."
+msgstr ""
+
+#: src/Admin/Settings.php:1809
+msgid "invalid JSON."
+msgstr ""
+
+#: src/Admin/LayerImageMaker.php:128
+msgid "Invert selection (keep background)"
+msgstr ""
+
+#: src/Admin/AdminHome.php:169
+msgid "Keep layer images lean — use WebP or transparent PNG at a consistent canvas size for crisp, predictable stacking."
+msgstr ""
+
+#: src/Admin/Settings.php:980
+msgid "Keep the pizza preview pinned while scrolling the menu."
+msgstr ""
+
+#: src/Admin/Settings.php:969
+msgid "Keyboard Navigation"
+msgstr ""
+
+#: src/Admin/Settings.php:1113
+msgid "Label Font Size"
+msgstr ""
+
+#: src/Admin/Settings.php:1490
+msgid "Language used for auto-generated ARIA accessibility labels."
+msgstr ""
+
+#: src/Admin/AdminBar.php:217
+#: src/Admin/Settings.php:535
+msgid "Layer Animation"
+msgstr ""
+
+#: src/Admin/AdminMenu.php:99
+#: src/Admin/LayerImageMaker.php:30
+#: src/Admin/LayerImageMetaBox.php:52
+#: src/Admin/SetupGuide.php:67
+msgid "Layer Image Maker"
+msgstr ""
+
+#: src/Admin/AdminBar.php:202
+msgid "Layer image shortcode"
+msgstr ""
+
+#: src/Admin/AdminHome.php:380
+msgid "Layer Manager"
+msgstr ""
+
+#: src/Admin/AdminBar.php:233
+#: src/Admin/Help.php:80
+msgid "Layer Type Reference"
+msgstr ""
+
+#: src/Admin/SetupGuide.php:411
+msgid "Layer-by-Layer Setup Guide"
+msgstr ""
+
+#: src/Admin/Settings.php:277
+msgid "Layout"
+msgstr ""
+
+#: src/Admin/Settings.php:1499
+msgid "Lazy-Load Topping Images"
+msgstr ""
+
+#: src/Admin/AdminHome.php:241
+#: src/Admin/Settings.php:1047
+msgid "Learn more →"
+msgstr ""
+
+#: src/Admin/PriceGrid.php:56
+msgid "Leave blank if this item has no size-based pricing."
+msgstr ""
+
+#: src/Admin/Settings.php:1137
+msgid "Letter Spacing (headings)"
+msgstr ""
+
+#: templates/colorbox/pztp-containers-menu.php:275
+#: templates/nightpie/pztp-containers-menu.php:262
+#: src/Admin/TemplateChoice.php:323
+msgid "Live Preview"
+msgstr ""
+
+#: src/Admin/Settings.php:1683
+msgid "Log builder events and state changes to the browser console."
+msgstr ""
+
+#: src/Admin/Settings.php:796
+msgid "Logo Alt Text"
+msgstr ""
+
+#: src/Admin/Settings.php:789
+msgid "Logo Display Height"
+msgstr ""
+
+#: src/Admin/Settings.php:782
+msgid "Logo Display Width"
+msgstr ""
+
+#: src/Admin/Settings.php:813
+msgid "Main brand colour — used for buttons, accents, and active states in supported templates."
+msgstr ""
+
+#: src/Admin/AdminBar.php:98
+msgid "Manage %s"
+msgstr ""
+
+#: src/Admin/AdminBar.php:232
+#: src/Admin/Help.php:79
+msgid "Managing Content"
+msgstr ""
+
+#: src/Admin/SetupGuide.php:394
+msgid "Mark done"
+msgstr ""
+
+#: src/Admin/Settings.php:430
+msgid "Max Size"
+msgstr ""
+
+#: src/Admin/Settings.php:359
+msgid "Max Toppings"
+msgstr ""
+
+#: src/Admin/Settings.php:1599
+msgid "Max Toppings Warning Text"
+msgstr ""
+
+#: src/Admin/Settings.php:1641
+msgid "Maximum characters allowed in the instructions field."
+msgstr ""
+
+#: src/Admin/Settings.php:360
+msgid "Maximum number of toppings a customer can add. 0 = unlimited."
+msgstr ""
+
+#: src/Admin/LayerImageMetaBox.php:161
+msgid "Media Library"
+msgstr ""
+
+#: src/Admin/Settings.php:1213
+msgid "Menu Panel Background"
+msgstr ""
+
+#: src/Admin/Settings.php:1586
+msgid "Message shown when an item is added to the pizza."
+msgstr ""
+
+#: src/Admin/Settings.php:1593
+msgid "Message shown when an item is removed."
+msgstr ""
+
+#: src/Admin/Settings.php:436
+msgid "Min Size"
+msgstr ""
+
+#: src/Admin/Settings.php:437
+msgid "Min size (px or %). Include unit."
+msgstr ""
+
+#: src/Admin/Settings.php:915
+msgid "Mobile Breakpoint (px)"
+msgstr ""
+
+#: src/Admin/Settings.php:922
+msgid "Mobile Layout"
+msgstr ""
+
+#: src/Admin/AdminHome.php:471
+msgid "Multiple builders, different settings."
+msgstr ""
+
+#: src/Admin/Settings.php:1224
+msgid "Muted / Helper Text"
+msgstr ""
+
+#: src/Admin/AdminHome.php:171
+msgid "Name CPT slugs cleanly (e.g. <code>pepperoni</code>, <code>thin-crust</code>) — they feed directly into CSS classes and JS data keys."
+msgstr ""
+
+#: src/Admin/SetupGuide.php:498
+msgid "Need help?"
+msgstr ""
+
+#: src/Admin/AdminHome.php:289
+msgid "Needs content"
+msgstr ""
+
+#: src/Admin/AdminBar.php:134
+msgid "New %s"
+msgstr ""
+
+#: src/PostTypes/PostTypeRegistrar.php:62
+msgid "New Group Name"
+msgstr ""
+
+#: templates/metro/pztp-containers-menu.php:434
+msgid "Next"
+msgstr ""
+
+#: templates/rustic/pztp-containers-menu.php:412
+msgid "Next: Cheese"
+msgstr ""
+
+#: templates/rustic/pztp-containers-menu.php:456
+msgid "Next: Drizzle"
+msgstr ""
+
+#: templates/rustic/pztp-containers-menu.php:391
+msgid "Next: Sauce"
+msgstr ""
+
+#: templates/rustic/pztp-containers-menu.php:477
+msgid "Next: Slicing"
+msgstr ""
+
+#: templates/rustic/pztp-containers-menu.php:433
+msgid "Next: Toppings"
+msgstr ""
+
+#: templates/colorbox/pztp-containers-menu.php:223
+#: templates/plainlist/pztp-containers-menu.php:228
+#: templates/pocketpie/pztp-containers-menu.php:197
+#: templates/metro/pztp-containers-menu.php:269
+msgid "No cheeses found."
+msgstr ""
+
+#: templates/colorbox/pztp-containers-menu.php:215
+#: templates/plainlist/pztp-containers-menu.php:218
+#: templates/pocketpie/pztp-containers-menu.php:189
+#: templates/metro/pztp-containers-menu.php:261
+msgid "No crusts found."
+msgstr ""
+
+#: templates/colorbox/pztp-containers-menu.php:236
+#: templates/plainlist/pztp-containers-menu.php:247
+#: templates/pocketpie/pztp-containers-menu.php:210
+#: templates/metro/pztp-containers-menu.php:282
+msgid "No cut styles found."
+msgstr ""
+
+#: templates/scaffold/pztp-containers-menu.php:201
+msgid "No cuts found."
+msgstr ""
+
+#: templates/colorbox/pztp-containers-menu.php:227
+#: templates/plainlist/pztp-containers-menu.php:233
+#: templates/pocketpie/pztp-containers-menu.php:201
+#: templates/metro/pztp-containers-menu.php:273
+msgid "No drizzles found."
+msgstr ""
+
+#: src/Admin/Settings.php:1798
+msgid "no file received."
+msgstr ""
+
+#: templates/scaffold/pztp-containers-menu.php:315
+msgid "No items found."
+msgstr ""
+
+#: templates/plainlist/pztp-containers-menu.php:375
+msgid "No items selected yet."
+msgstr ""
+
+#: src/Admin/LayerImageMetaBox.php:138
+msgid "No layer image set"
+msgstr ""
+
+#: templates/colorbox/pztp-containers-menu.php:219
+#: templates/plainlist/pztp-containers-menu.php:223
+#: templates/pocketpie/pztp-containers-menu.php:193
+#: templates/metro/pztp-containers-menu.php:265
+msgid "No sauces found."
+msgstr ""
+
+#: src/Admin/TemplateChoice.php:192
+msgid "No templates found. Make sure at least the <code>nightpie</code> folder exists in the plugin&#8217;s <code>/templates/</code> directory."
+msgstr ""
+
+#: templates/colorbox/pztp-containers-menu.php:232
+#: templates/plainlist/pztp-containers-menu.php:242
+#: templates/pocketpie/pztp-containers-menu.php:206
+#: templates/metro/pztp-containers-menu.php:278
+msgid "No toppings found."
+msgstr ""
+
+#: templates/pocketpie/pztp-containers-menu.php:625
+msgid "none"
+msgstr ""
+
+#: templates/colorbox/pztp-containers-menu.php:492
+#: templates/rustic/pztp-containers-menu.php:532
+#: templates/nightpie/pztp-containers-menu.php:466
+msgid "none selected"
+msgstr ""
+
+#: src/Admin/Settings.php:2184
+msgid "None selected"
+msgstr ""
+
+#: src/PostTypes/PostTypeRegistrar.php:68
+msgid "Not Found"
+msgstr ""
+
+#: src/PostTypes/PostTypeRegistrar.php:101
+msgid "Not found"
+msgstr ""
+
+#: src/PostTypes/PostTypeRegistrar.php:102
+msgid "Not found in Trash"
+msgstr ""
+
+#: src/Admin/AdminHome.php:352
+msgid "Not set"
+msgstr ""
+
+#: src/Admin/Settings.php:1369
+msgid "Number of topping columns in the menu grid on large screens."
+msgstr ""
+
+#: src/Admin/Settings.php:1376
+msgid "Number of topping columns on small screens."
+msgstr ""
+
+#: src/Admin/AdminHome.php:172
+msgid "Offer half and quarter topping coverage to boost average order value without overwhelming the decision."
+msgstr ""
+
+#: src/Admin/LayerImageMaker.php:218
+msgid "On dark"
+msgstr ""
+
+#: src/Admin/LayerImageMaker.php:236
+msgid "On light"
+msgstr ""
+
+#: src/Admin/LayerImageMaker.php:230
+msgid "On pizza base"
+msgstr ""
+
+#: src/Admin/TemplateChoice.php:205
+msgid "Once activated, the <strong>Template Settings</strong> panel below lets you fine-tune colors, fonts, and layout options specific to that template."
+msgstr ""
+
+#: src/Admin/Settings.php:1500
+msgid "Only load topping images when they scroll into view."
+msgstr ""
+
+#: src/Admin/LayerImageMaker.php:93
+#: src/Admin/LayerImageMetaBox.php:194
+msgid "Opacity"
+msgstr ""
+
+#: src/Admin/Settings.php:1404
+msgid "Opacity of topping images in the visualizer."
+msgstr ""
+
+#: src/Admin/Settings.php:1737
+msgid "Open %s Template Settings"
+msgstr ""
+
+#: src/Admin/AdminBar.php:256
+msgid "Open front-end demo in new tab"
+msgstr ""
+
+#: src/Admin/SetupGuide.php:139
+msgid "Open Settings"
+msgstr ""
+
+#: src/Admin/AdminHome.php:476
+msgid "Open Shortcode Generator"
+msgstr ""
+
+#: src/Admin/SetupGuide.php:377
+msgid "optional"
+msgstr ""
+
+#: templates/colorbox/pztp-containers-menu.php:442
+#: templates/nightpie/pztp-containers-menu.php:416
+msgid "Optional finishing drizzle."
+msgstr ""
+
+#: src/Admin/Settings.php:852
+msgid "Optional text or HTML shown in the footer of the builder (e.g. allergen notice, T&amp;Cs link)."
+msgstr ""
+
+#: src/Admin/Settings.php:1647
+msgid "Order Review Modal"
+msgstr ""
+
+#: src/Admin/LayerImageMaker.php:135
+msgid "Output size"
+msgstr ""
+
+#: src/Admin/Settings.php:670
+msgid "Padding between cheese and toppings."
+msgstr ""
+
+#: src/Admin/Settings.php:636
+msgid "Padding between sauce and crust edge."
+msgstr ""
+
+#: src/Admin/LayerImageMaker.php:167
+msgid "Pan"
+msgstr ""
+
+#: src/Admin/LayerImageMaker.php:166
+msgid "Pan (M)"
+msgstr ""
+
+#: src/PostTypes/PostTypeRegistrar.php:60
+msgid "Parent Group"
+msgstr ""
+
+#: src/PostTypes/PostTypeRegistrar.php:61
+msgid "Parent Group:"
+msgstr ""
+
+#: src/Admin/AdminHome.php:331
+msgid "paste [pizza_builder] on any page and you're live."
+msgstr ""
+
+#: src/Admin/AdminHome.php:325
+msgid "pick the visual style for your builder UI."
+msgstr ""
+
+#: src/Admin/SetupGuide.php:128
+msgid "Pick the visual theme for your pizza builder in PizzaTier → Template."
+msgstr ""
+
+#: src/Admin/TemplateChoice.php:203
+msgid "Pick your style, then make it yours."
+msgstr ""
+
+#: templates/rustic/pztp-containers-menu.php:448
+msgid "Pile on up to %s toppings — market-fresh."
+msgstr ""
+
+#: src/Admin/Settings.php:269
+#: src/Admin/Settings.php:422
+msgid "Pizza Display"
+msgstr ""
+
+#: templates/metro/pztp-containers-menu.php:375
+msgid "Pizza preview"
+msgstr ""
+
+#: src/Admin/AdminBar.php:216
+#: src/Admin/Settings.php:270
+#: src/Admin/Settings.php:485
+msgid "Pizza Shape"
+msgstr ""
+
+#: src/Admin/AdminMenu.php:64
+#: src/Admin/AdminMenu.php:65
+msgid "PizzaTier"
+msgstr ""
+
+#: src/Admin/AdminBar.php:64
+#: src/Admin/AdminBar.php:73
+msgid "PizzaTier Dashboard"
+msgstr ""
+
+#: src/Admin/Help.php:38
+msgid "PizzaTier Help &amp; Reference"
+msgstr ""
+
+#: src/Admin/AdminHome.php:317
+msgid "PizzaTier turns your WordPress site into an interactive pizza configurator. Add your ingredients as layer images, choose a template, drop in a shortcode, and your customers build their perfect pizza in real time."
+msgstr ""
+
+#: src/Admin/AdminHome.php:514
+msgid "PizzaTier v%1$s &mdash; crafted by <strong>%2$s</strong> / %3$s"
+msgstr ""
+
+#: src/Shortcodes/BuilderShortcode.php:65
+msgid "PizzaTier: template not found."
+msgstr ""
+
+#: src/Admin/Settings.php:1058
+msgid "PizzaTierPro → Pro Settings"
+msgstr ""
+
+#: src/Admin/SetupGuide.php:151
+msgid "Place a test order end-to-end"
+msgstr ""
+
+#: src/Admin/Settings.php:276
+msgid "Plugin"
+msgstr ""
+
+#: src/Admin/Settings.php:864
+msgid "Plugin Settings"
+msgstr ""
+
+#: src/Admin/AdminHome.php:114
+msgid "Pre-configured pizza combinations that customers can start from. Each preset stores a full layer configuration (crust, sauce, cheese, toppings, drizzle, cut) managed via PizzaTierPro's visual builder."
+msgstr ""
+
+#: src/Admin/Settings.php:1520
+msgid "Preferred image format for layer images."
+msgstr ""
+
+#: src/Admin/Settings.php:1509
+msgid "Preload Builder Assets"
+msgstr ""
+
+#: src/Admin/SetupGuide.php:63
+msgid "Prepare your layer images"
+msgstr ""
+
+#: src/Admin/AdminHome.php:112
+#: src/Admin/AdminHome.php:161
+msgid "Presets"
+msgstr ""
+
+#: src/Admin/Settings.php:1693
+msgid "Prevent PizzaTier from enqueueing any front-end stylesheets."
+msgstr ""
+
+#: src/Admin/Settings.php:571
+#: src/Admin/TemplateChoice.php:289
+msgid "Preview"
+msgstr ""
+
+#: src/Admin/TemplateChoice.php:152
+msgid "Preview page URL — enter any page on your site that contains <code>[pizza_builder]</code>:"
+msgstr ""
+
+#: src/Admin/TemplateChoice.php:140
+#: src/Admin/TemplateChoice.php:179
+#: src/Admin/TemplateChoice.php:185
+msgid "Preview URL"
+msgstr ""
+
+#: src/Admin/TemplateChoice.php:171
+msgid "Preview URL saved."
+msgstr ""
+
+#: templates/metro/pztp-containers-menu.php:428
+msgid "Previous"
+msgstr ""
+
+#: src/Admin/Settings.php:1004
+msgid "Price Display Mode"
+msgstr ""
+
+#: src/Admin/Settings.php:1120
+msgid "Price Font Size"
+msgstr ""
+
+#: src/Admin/Settings.php:1031
+msgid "Price Update Animation"
+msgstr ""
+
+#: src/Admin/Settings.php:278
+msgid "Pricing"
+msgstr ""
+
+#: src/Admin/Settings.php:996
+msgid "Pricing &amp; Cart"
+msgstr ""
+
+#: src/Admin/PriceGrid.php:27
+msgid "Pricing Grid (CSV)"
+msgstr ""
+
+#: src/Admin/Settings.php:1220
+msgid "Primary Button Background"
+msgstr ""
+
+#: src/Admin/Settings.php:1221
+msgid "Primary Button Text"
+msgstr ""
+
+#: src/Admin/Settings.php:1079
+msgid "Primary Font Family"
+msgstr ""
+
+#: src/Admin/Help.php:78
+msgid "Quickstart"
+msgstr ""
+
+#: src/Admin/AdminBar.php:231
+msgid "Quickstart Guide"
+msgstr ""
+
+#: src/Admin/Settings.php:1459
+msgid "Reduce Motion"
+msgstr ""
+
+#: templates/colorbox/pztp-containers-menu.php:124
+#: templates/colorbox/pztp-containers-menu.php:202
+#: templates/nightpie/pztp-containers-menu.php:122
+#: templates/nightpie/pztp-containers-menu.php:198
+msgid "Remove"
+msgstr ""
+
+#: src/PostTypes/PostTypeRegistrar.php:105
+msgid "Remove %s image"
+msgstr ""
+
+#: src/Admin/LayerImageMaker.php:118
+msgid "Remove background (threshold)"
+msgstr ""
+
+#: templates/colorbox/pztp-containers-menu.php:301
+#: templates/pocketpie/pztp-containers-menu.php:339
+#: templates/pocketpie/pztp-containers-menu.php:424
+#: templates/pocketpie/pztp-containers-menu.php:579
+msgid "Reset"
+msgstr ""
+
+#: src/Admin/LayerImageMaker.php:82
+msgid "Reset all adjustments"
+msgstr ""
+
+#: templates/metro/pztp-containers-menu.php:545
+msgid "Reset pizza"
+msgstr ""
+
+#: src/Admin/Settings.php:1702
+msgid "REST API Cache TTL (seconds)"
+msgstr ""
+
+#: templates/pocketpie/pztp-containers-menu.php:387
+#: templates/pocketpie/pztp-containers-menu.php:464
+#: templates/pocketpie/pztp-containers-menu.php:547
+msgid "Review"
+msgstr ""
+
+#: templates/rustic/pztp-containers-menu.php:498
+msgid "Review Your Order"
+msgstr ""
+
+#: src/Admin/LayerImageMaker.php:183
+msgid "Rotate 90° left"
+msgstr ""
+
+#: src/Admin/LayerImageMaker.php:186
+msgid "Rotate 90° right"
+msgstr ""
+
+#: src/Admin/LayerImageMetaBox.php:177
+msgid "Rotate left"
+msgstr ""
+
+#: src/Admin/LayerImageMetaBox.php:178
+msgid "Rotate right"
+msgstr ""
+
+#: src/Admin/TemplateChoice.php:225
+msgid "Safe to switch"
+msgstr ""
+
+#: src/Admin/LayerImageMetaBox.php:193
+msgid "Sat"
+msgstr ""
+
+#: src/Admin/LayerImageMaker.php:89
+msgid "Saturation"
+msgstr ""
+
+#: templates/colorbox/pztp-containers-menu.php:330
+#: templates/colorbox/pztp-containers-menu.php:381
+#: templates/colorbox/pztp-containers-menu.php:412
+#: templates/colorbox/pztp-containers-menu.php:480
+msgid "Sauce"
+msgstr ""
+
+#: src/Admin/Settings.php:273
+msgid "Sauce & Cheese"
+msgstr ""
+
+#: src/Admin/Settings.php:625
+msgid "Sauce &amp; Cheese Options"
+msgstr ""
+
+#: src/Admin/AdminHome.php:72
+#: src/Admin/AdminHome.php:277
+msgid "Sauces"
+msgstr ""
+
+#: src/Admin/TemplateChoice.php:159
+msgid "Save"
+msgstr ""
+
+#: src/Admin/TemplateChoice.php:507
+msgid "Save Template Settings"
+msgstr ""
+
+#: src/Admin/Settings.php:916
+msgid "Screen width at which the mobile layout activates."
+msgstr ""
+
+#: templates/metro/pztp-containers-menu.php:353
+msgid "Scroll to build"
+msgstr ""
+
+#: src/PostTypes/PostTypeRegistrar.php:100
+msgid "Search %s"
+msgstr ""
+
+#: src/PostTypes/PostTypeRegistrar.php:67
+msgid "Search Groups"
+msgstr ""
+
+#: src/Admin/Settings.php:336
+msgid "Searchâ¦"
+msgstr ""
+
+#: src/Admin/Settings.php:1222
+msgid "Secondary Button Background"
+msgstr ""
+
+#: src/Admin/Settings.php:1326
+msgid "Section Divider Style"
+msgstr ""
+
+#: templates/colorbox/pztp-containers-menu.php:463
+#: templates/nightpie/pztp-containers-menu.php:437
+msgid "See Your Pizza"
+msgstr ""
+
+#: templates/pocketpie/pztp-containers-menu.php:108
+msgid "Select"
+msgstr ""
+
+#: src/Admin/Settings.php:763
+msgid "Select / Upload Logo"
+msgstr ""
+
+#: src/Admin/AdminHome.php:382
+msgid "Select a layer type to learn about it and jump directly to its content."
+msgstr ""
+
+#: src/Admin/SetupGuide.php:412
+msgid "Select a section to see step-by-step instructions for setting it up."
+msgstr ""
+
+#: templates/colorbox/pztp-containers-menu.php:408
+#: templates/nightpie/pztp-containers-menu.php:382
+msgid "Select one cheese."
+msgstr ""
+
+#: templates/colorbox/pztp-containers-menu.php:376
+#: templates/nightpie/pztp-containers-menu.php:350
+msgid "Select one crust — it forms the base of your pizza."
+msgstr ""
+
+#: templates/colorbox/pztp-containers-menu.php:392
+#: templates/nightpie/pztp-containers-menu.php:366
+msgid "Select one sauce."
+msgstr ""
+
+#: src/Admin/TemplateChoice.php:133
+msgid "Select the visual style for your pizza builder. Preview any template live, then activate it — your content and settings stay intact."
+msgstr ""
+
+#: src/Admin/Settings.php:1216
+msgid "Selected Card Highlight"
+msgstr ""
+
+#: src/Admin/LayerImageMaker.php:151
+msgid "Send to Media Library"
+msgstr ""
+
+#: src/Admin/Settings.php:1425
+msgid "Separate toppings into category sub-groups in the menu."
+msgstr ""
+
+#: src/Admin/Settings.php:1709
+msgid "Server Log Level"
+msgstr ""
+
+#: src/PostTypes/PostTypeRegistrar.php:104
+msgid "Set %s image"
+msgstr ""
+
+#: src/Admin/LayerImageMetaBox.php:212
+msgid "Set as %s Layer Image"
+msgstr ""
+
+#: src/Admin/SetupGuide.php:136
+msgid "Set your default crust, sauce, max toppings and other options in PizzaTier → Settings."
+msgstr ""
+
+#: src/Admin/AdminBar.php:175
+#: src/Admin/AdminMenu.php:103
+#: src/Admin/Settings.php:258
+#: src/Admin/TemplateChoice.php:137
+msgid "Settings"
+msgstr ""
+
+#: src/Admin/Settings.php:214
+msgid "Settings saved."
+msgstr ""
+
+#: src/Admin/SetupGuide.php:351
+msgid "Setup Checklist"
+msgstr ""
+
+#: src/Admin/AdminBar.php:154
+#: src/Admin/AdminHome.php:125
+#: src/Admin/AdminHome.php:201
+#: src/Admin/AdminHome.php:337
+msgid "Setup Guide"
+msgstr ""
+
+#: src/Admin/Settings.php:1310
+msgid "Shadow preset for item cards."
+msgstr ""
+
+#: src/Admin/AdminBar.php:235
+#: src/Admin/Help.php:82
+msgid "Shape & Animation"
+msgstr ""
+
+#: src/Admin/Settings.php:493
+msgid "Shape Preset"
+msgstr ""
+
+#: src/Admin/LayerImageMaker.php:92
+msgid "Sharpen"
+msgstr ""
+
+#: src/Admin/Settings.php:805
+msgid "Short slogan shown beneath the logo in templates that support it (e.g. \"Build your perfect pizza\")."
+msgstr ""
+
+#: src/Admin/AdminBar.php:161
+#: src/Admin/AdminHome.php:131
+#: src/Admin/AdminMenu.php:101
+#: src/Admin/Help.php:47
+msgid "Shortcode Generator"
+msgstr ""
+
+#: src/Admin/AdminBar.php:234
+#: src/Admin/AdminHome.php:467
+msgid "Shortcode Reference"
+msgstr ""
+
+#: src/Admin/AdminHome.php:204
+#: src/Admin/AdminHome.php:343
+#: src/Admin/Help.php:81
+msgid "Shortcodes"
+msgstr ""
+
+#: src/Admin/Settings.php:1554
+msgid "Show \"Pizza Summary\" Panel"
+msgstr ""
+
+#: src/Admin/Settings.php:1606
+msgid "Show \"Start Over\" Button"
+msgstr ""
+
+#: src/Admin/Settings.php:1648
+msgid "Show a \"Review your order\" confirmation dialog before adding to cart."
+msgstr ""
+
+#: src/Admin/LayerImageMaker.php:71
+msgid "Show pizza outline guide"
+msgstr ""
+
+#: src/Admin/LayerImageMaker.php:75
+msgid "Show rule-of-thirds grid"
+msgstr ""
+
+#: src/Admin/Settings.php:1623
+msgid "Show Special Instructions Field"
+msgstr ""
+
+#: src/Admin/Settings.php:724
+msgid "Show thumbnail images in menu UI."
+msgstr ""
+
+#: src/Admin/Settings.php:723
+msgid "Show Thumbnails"
+msgstr ""
+
+#: src/Admin/Settings.php:1414
+msgid "Show Topping Count Badge"
+msgstr ""
+
+#: src/Admin/Settings.php:1600
+msgid "Shown when the customer tries to exceed the topping limit."
+msgstr ""
+
+#: src/Admin/AdminHome.php:473
+msgid "Single layer image anywhere."
+msgstr ""
+
+#: src/Admin/Settings.php:1393
+msgid "Size of each topping image on the pizza preview (% of pizza width)."
+msgstr ""
+
+#: src/Admin/Settings.php:1114
+msgid "Size of item name labels in the menu grid."
+msgstr ""
+
+#: src/Admin/Settings.php:1121
+msgid "Size of price figures in the builder."
+msgstr ""
+
+#: src/Admin/Settings.php:1352
+msgid "Size of the topping image in the menu grid."
+msgstr ""
+
+#: src/Admin/AdminHome.php:106
+msgid "Size options define the available pizza dimensions — small, medium, large, party. Each size carries dimension metadata, weight, area, and base price for pricing integrations."
+msgstr ""
+
+#: src/Admin/AdminHome.php:104
+msgid "Sizes"
+msgstr ""
+
+#: src/Admin/SetupGuide.php:118
+msgid "Slice overlay layers — triangle, square, party, whole. Optional."
+msgstr ""
+
+#: templates/colorbox/pztp-containers-menu.php:334
+#: templates/colorbox/pztp-containers-menu.php:447
+#: templates/colorbox/pztp-containers-menu.php:484
+#: templates/plainlist/pztp-containers-menu.php:210
+msgid "Slicing"
+msgstr ""
+
+#: templates/rustic/pztp-containers-menu.php:405
+msgid "Slow-cooked and full of character."
+msgstr ""
+
+#: src/Admin/Settings.php:281
+msgid "Spacing"
+msgstr ""
+
+#: src/Admin/Settings.php:1259
+msgid "Spacing &amp; Borders"
+msgstr ""
+
+#: templates/colorbox/pztp-containers-menu.php:511
+msgid "Special Instructions"
+msgstr ""
+
+#: src/Admin/Settings.php:1640
+msgid "Special Instructions Max Length"
+msgstr ""
+
+#: src/Admin/Settings.php:1633
+msgid "Special Instructions Placeholder"
+msgstr ""
+
+#: templates/pocketpie/pztp-containers-menu.php:521
+msgid "Start building your pizza"
+msgstr ""
+
+#: templates/pocketpie/pztp-containers-menu.php:633
+#: templates/rustic/pztp-containers-menu.php:540
+#: templates/nightpie/pztp-containers-menu.php:474
+msgid "Start Over"
+msgstr ""
+
+#: templates/metro/pztp-containers-menu.php:541
+msgid "Start selecting below ↓"
+msgstr ""
+
+#: src/Admin/AdminHome.php:472
+msgid "Static pizza display anywhere."
+msgstr ""
+
+#: src/Admin/AdminBar.php:201
+msgid "Static shortcode"
+msgstr ""
+
+#: templates/plainlist/pztp-containers-menu.php:288
+msgid "Step %1$s of %2$s"
+msgstr ""
+
+#: templates/metro/pztp-containers-menu.php:421
+msgid "Step mode"
+msgstr ""
+
+#: templates/plainlist/pztp-containers-menu.php:355
+msgid "Step navigation"
+msgstr ""
+
+#: src/Admin/Settings.php:932
+msgid "Step-by-Step Mode"
+msgstr ""
+
+#: src/Admin/AdminBar.php:156
+msgid "Step-by-step onboarding guide"
+msgstr ""
+
+#: src/Admin/Settings.php:979
+msgid "Sticky Builder Header"
+msgstr ""
+
+#: src/Admin/Settings.php:1480
+msgid "Style of the keyboard-focus ring on interactive elements."
+msgstr ""
+
+#: src/Admin/Settings.php:1565
+msgid "Style of the pop-up when a layer is added or removed."
+msgstr ""
+
+#: src/Admin/Settings.php:1226
+msgid "Success / Confirmed Color"
+msgstr ""
+
+#: src/Admin/AdminHome.php:239
+msgid "Supercharge with PizzaTierPro"
+msgstr ""
+
+#: src/Admin/Settings.php:826
+msgid "Supporting brand colour — used for secondary buttons and highlights."
+msgstr ""
+
+#: src/Admin/AdminBar.php:170
+msgid "Switch or preview templates"
+msgstr ""
+
+#: templates/metro/pztp-containers-menu.php:417
+msgid "Switch to step-by-step mode"
+msgstr ""
+
+#: src/Admin/Settings.php:1217
+msgid "Tab Bar Background"
+msgstr ""
+
+#: src/Admin/Settings.php:952
+msgid "Tab Order"
+msgstr ""
+
+#: src/Admin/Settings.php:1219
+msgid "Tab Text Color"
+msgstr ""
+
+#: templates/colorbox/pztp-containers-menu.php:321
+msgid "Tap a category, then pick your favorites."
+msgstr ""
+
+#: templates/pocketpie/pztp-containers-menu.php:401
+msgid "Tap a choice below"
+msgstr ""
+
+#: src/Admin/AdminBar.php:168
+#: src/Admin/AdminHome.php:137
+#: src/Admin/AdminHome.php:198
+#: src/Admin/AdminMenu.php:102
+msgid "Template"
+msgstr ""
+
+#: src/Admin/TemplateChoice.php:23
+msgid "Template %s activated."
+msgstr ""
+
+#: src/Admin/TemplateChoice.php:32
+msgid "Template settings saved."
+msgstr ""
+
+#: src/Admin/AdminBar.php:236
+#: src/Admin/Help.php:83
+msgid "Template System"
+msgstr ""
+
+#: src/Admin/Settings.php:1144
+msgid "Text Transform (labels)"
+msgstr ""
+
+#: templates/rustic/pztp-containers-menu.php:384
+msgid "The foundation of every great pie."
+msgstr ""
+
+#: src/Admin/AdminHome.php:74
+msgid "The sauce defines the flavor direction. Whether it's a bold marinara, a smoky BBQ, or a creamy garlic white — each sauce is a distinct layer image that sits on top of the crust in the visualizer."
+msgstr ""
+
+#: src/Admin/AdminHome.php:192
+msgid "The WordPress pizza builder — v%s"
+msgstr ""
+
+#: src/Admin/Settings.php:311
+msgid "These layers are pre-selected when the builder loads, unless overridden by the shortcode attribute."
+msgstr ""
+
+#: src/Admin/TemplateChoice.php:516
+msgid "This template has no customizable settings."
+msgstr ""
+
+#: src/Admin/Settings.php:1199
+msgid "This will replace all 15 colour palette values below with the selected preset. Your current colours will be overwritten."
+msgstr ""
+
+#: src/Admin/AdminHome.php:443
+msgid "Tips &amp; Tricks"
+msgstr ""
+
+#: src/Admin/Settings.php:1564
+msgid "Toast Notification Style"
+msgstr ""
+
+#: templates/colorbox/pztp-containers-menu.php:277
+#: templates/nightpie/pztp-containers-menu.php:264
+msgid "Toggle pizza preview"
+msgstr ""
+
+#: src/Admin/AdminBar.php:144
+#: src/Admin/AdminMenu.php:96
+msgid "Tools"
+msgstr ""
+
+#: src/Admin/Settings.php:715
+msgid "Topping Choice Menu Style"
+msgstr ""
+
+#: src/Admin/Settings.php:1368
+msgid "Topping Columns (desktop)"
+msgstr ""
+
+#: src/Admin/Settings.php:1375
+msgid "Topping Columns (mobile)"
+msgstr ""
+
+#: src/Admin/Settings.php:282
+#: src/Admin/Settings.php:1343
+msgid "Topping Display"
+msgstr ""
+
+#: src/Admin/Settings.php:1382
+msgid "Topping Placement Mode"
+msgstr ""
+
+#: src/Admin/Settings.php:365
+msgid "Topping Portions"
+msgstr ""
+
+#: src/Admin/Settings.php:1434
+msgid "Topping Sort Order"
+msgstr ""
+
+#: src/Admin/Settings.php:1351
+msgid "Topping Thumbnail Size"
+msgstr ""
+
+#: templates/colorbox/pztp-containers-menu.php:305
+#: templates/pocketpie/pztp-containers-menu.php:307
+#: templates/pocketpie/pztp-containers-menu.php:571
+#: templates/metro/pztp-containers-menu.php:341
+msgid "toppings"
+msgstr ""
+
+#: templates/colorbox/pztp-containers-menu.php:332
+#: templates/colorbox/pztp-containers-menu.php:413
+#: templates/colorbox/pztp-containers-menu.php:446
+#: templates/colorbox/pztp-containers-menu.php:482
+msgid "Toppings"
+msgstr ""
+
+#: src/Admin/SetupGuide.php:99
+msgid "Toppings are the heart of the builder — add as many as your menu needs."
+msgstr ""
+
+#: src/Admin/AdminHome.php:58
+msgid "Toppings are where the action is. Every topping has its own layer image, price data, and coverage options (whole, half, quarters). The visualizer renders each selected topping in real time as your customer builds."
+msgstr ""
+
+#: src/Admin/Settings.php:707
+msgid "Toppings Style"
+msgstr ""
+
+#: src/Admin/AdminHome.php:271
+msgid "Total Layers"
+msgstr ""
+
+#: src/Admin/AdminHome.php:358
+msgid "Total Layers Published"
+msgstr ""
+
+#: src/Admin/LayerImageMaker.php:224
+msgid "Transparency"
+msgstr ""
+
+#: src/Admin/Settings.php:279
+#: src/Admin/Settings.php:1071
+msgid "Typography"
+msgstr ""
+
+#: src/Admin/Settings.php:691
+msgid "UI Element Styles"
+msgstr ""
+
+#: src/Admin/Settings.php:274
+msgid "UI Styles"
+msgstr ""
+
+#: src/Admin/LayerImageMaker.php:194
+#: src/Admin/SetupGuide.php:398
+msgid "Undo"
+msgstr ""
+
+#: src/Admin/LayerImageMaker.php:193
+msgid "Undo (Ctrl+Z)"
+msgstr ""
+
+#: src/PostTypes/PostTypeRegistrar.php:98
+msgid "Update %s"
+msgstr ""
+
+#: src/PostTypes/PostTypeRegistrar.php:65
+msgid "Update Group"
+msgstr ""
+
+#: src/Admin/LayerImageMetaBox.php:169
+msgid "Upload an image to begin"
+msgstr ""
+
+#: src/Admin/LayerImageMaker.php:204
+msgid "Upload an image to get started"
+msgstr ""
+
+#: src/Admin/LayerImageMaker.php:31
+msgid "Upload any image, crop it to the correct aspect ratio for your pizza layers, adjust colour and transparency, then download the result as a transparent PNG."
+msgstr ""
+
+#: src/Admin/AdminHome.php:321
+msgid "upload crusts, sauces, cheeses &amp; toppings as layer images."
+msgstr ""
+
+#: src/Admin/LayerImageMaker.php:41
+#: src/Admin/LayerImageMetaBox.php:155
+msgid "Upload image"
+msgstr ""
+
+#: src/Admin/AdminHome.php:174
+msgid "Use the <code>[pizza_layer]</code> shortcode to embed a single ingredient image anywhere on your menu pages."
+msgstr ""
+
+#: src/Admin/SetupGuide.php:144
+msgid "Use the Shortcode Generator to get your <code>[pizza_builder]</code> shortcode, then add it to any page."
+msgstr ""
+
+#: src/Admin/Settings.php:1320
+msgid "Used when \"Custom CSS\" is selected above."
+msgstr ""
+
+#: src/Admin/Settings.php:1710
+msgid "Verbosity of server-side logging to the WordPress debug log."
+msgstr ""
+
+#: src/Admin/SetupGuide.php:389
+msgid "View"
+msgstr ""
+
+#: src/PostTypes/PostTypeRegistrar.php:99
+msgid "View %s"
+msgstr ""
+
+#: src/Admin/AdminBar.php:107
+msgid "View all %s"
+msgstr ""
+
+#: src/Admin/AdminHome.php:416
+msgid "View All %s"
+msgstr ""
+
+#: src/Admin/AdminBar.php:254
+msgid "View Demo"
+msgstr ""
+
+#: src/PostTypes/PostTypeRegistrar.php:66
+msgid "View Group"
+msgstr ""
+
+#: src/Admin/SetupGuide.php:482
+msgid "View Quickstart Guide"
+msgstr ""
+
+#: src/Admin/AdminHome.php:370
+#: src/Admin/SetupGuide.php:155
+msgid "View Site"
+msgstr ""
+
+#: templates/pocketpie/pztp-containers-menu.php:342
+msgid "View summary"
+msgstr ""
+
+#: src/Admin/SetupGuide.php:152
+msgid "Visit your builder page as a customer and confirm layers display correctly."
+msgstr ""
+
+#: src/Admin/Settings.php:1327
+msgid "Visual divider style between builder sections."
+msgstr ""
+
+#: src/Admin/Settings.php:1032
+msgid "Visual effect when the running total changes."
+msgstr ""
+
+#: src/Admin/Settings.php:1104
+msgid "Weight applied to section headings inside the builder."
+msgstr ""
+
+#: src/Admin/Settings.php:1128
+msgid "Weight for text inside action buttons."
+msgstr ""
+
+#: src/Admin/Settings.php:1022
+msgid "Where the currency symbol appears relative to the amount."
+msgstr ""
+
+#: src/Admin/TemplateChoice.php:364
+msgid "will apply it to your live site immediately."
+msgstr ""
+
+#: src/Admin/Settings.php:1045
+#: src/Admin/Settings.php:1056
+msgid "WooCommerce Cart Settings"
+msgstr ""
+
+#: src/Admin/SetupGuide.php:352
+msgid "Work through these steps in order. Auto-detected items update as you add content."
+msgstr ""
+
+#: src/Admin/TemplateChoice.php:373
+msgid "Yes, Activate"
+msgstr ""
+
+#: src/Admin/SetupGuide.php:56
+msgid "You're reading this — done!"
+msgstr ""
+
+#: src/Admin/AdminHome.php:66
+msgid "Your crust is the canvas. Define every base your pizza can be built on — from thin & crispy to thick & pillowy. Each crust item gets its own layer image that stacks in the live visualizer."
+msgstr ""
+
+#: src/Admin/TemplateChoice.php:365
+msgid "Your existing content and settings are unaffected — only the front-end visual design will change."
+msgstr ""
+
+#: templates/rustic/pztp-containers-menu.php:347
+msgid "Your Order"
+msgstr ""
+
+#: templates/colorbox/pztp-containers-menu.php:293
+#: templates/colorbox/pztp-containers-menu.php:335
+#: templates/colorbox/pztp-containers-menu.php:473
+#: templates/pocketpie/pztp-containers-menu.php:228
+msgid "Your Pizza"
+msgstr ""
+
+#: templates/metro/pztp-containers-menu.php:362
+msgid "Your pizza"
+msgstr ""
+
+#: src/Admin/LayerImageMaker.php:175
+msgid "Zoom in (+)"
+msgstr ""
+
+#: src/Admin/LayerImageMaker.php:171
+msgid "Zoom out (-)"
+msgstr ""
+
+#: src/Admin/TemplateChoice.php:179
+msgid "— click"
+msgstr ""
+
+#: src/Admin/Settings.php:2131
+msgid "— None / Plugin default —"
+msgstr ""
+
+#: src/Admin/SetupGuide.php:501
+msgid "← Back to Dashboard"
+msgstr ""
+
+#: src/Admin/AdminHome.php:83
+msgid "💡 A subtle melt texture with a slight golden edge makes cheese layers look mouth-wateringly real."
+msgstr ""
+
+#: src/Admin/AdminHome.php:99
+msgid "💡 Cut overlay PNGs should use a thin line weight with slight transparency so toppings show through."
+msgstr ""
+
+#: src/Admin/AdminHome.php:91
+msgid "💡 Drizzle images look best with a flowing, asymmetric pattern that feels handcrafted."
+msgstr ""
+
+#: src/Admin/AdminHome.php:75
+msgid "💡 Keep sauce layer images semi-transparent around the edges for a natural blending effect."
+msgstr ""
+
+#: src/Admin/AdminHome.php:107
+msgid "💡 Set size_area_sqin for accurate topping price-per-area calculations in PizzaTierPro."
+msgstr ""
+
+#: src/Admin/AdminHome.php:67
+msgid "💡 Use a transparent PNG against a consistent circular canvas for the crispest stacking results."
+msgstr ""
+
+#: src/Admin/AdminHome.php:59
+msgid "💡 Use consistent transparent PNGs — 500×500 px works great across all templates."
+msgstr ""
+
+#: src/Admin/AdminHome.php:115
+msgid "💡 Use presets to showcase your most popular pizzas — customers can customise further after selecting one."
+msgstr ""
+

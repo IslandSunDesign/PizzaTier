@@ -1,0 +1,1636 @@
+/* ══════════════════════════════════════════════════════════════
+   COLORBOX TEMPLATE — template.css
+   Dark pizza builder: sticky split-screen preview, rounded cards,
+   tab navigation, fly-to animation.
+   ══════════════════════════════════════════════════════════════ */
+
+/* ── Design Tokens ─────────────────────────────────────────── */
+:root {
+    /* Base surfaces */
+    --cb-bg:            #f6f7fb;
+    --cb-surface:       #ffffff;
+    --cb-surface-2:     #f1f3f9;
+    --cb-surface-3:     #e9ecf5;
+
+    /* Text */
+    --cb-text:          #161822;
+    --cb-text-muted:    #5b5f73;
+    --cb-text-faint:    #8a90a8;
+
+    /* Borders / shadows */
+    --cb-border:        rgba(16, 24, 40, 0.10);
+    --cb-border-hover:  rgba(16, 24, 40, 0.22);
+    --cb-shadow:        0 12px 28px rgba(16, 24, 40, 0.10);
+
+    /* Accent + actions */
+    --cb-accent:        #ff4d4d;
+    --cb-accent-dim:    rgba(255, 77, 77, 0.14);
+
+    /* Category colors (Style 3: colorful tiles) */
+    --cb-size:          #4a90e2;
+    --cb-crust:         #f5a623;
+    --cb-sauce:         #d0021b;
+    --cb-cheese:        #f8e71c;
+    --cb-toppings:      #7ed321;
+    --cb-drizzle:       #bd10e0;
+    --cb-cuts:          #50e3c2;
+
+    --cb-radius:        18px;
+    --cb-radius-sm:     12px;
+    --cb-radius-lg:     18px;
+    --cb-radius-pill:   999px;
+
+    /* Motion + small shadow (previously referenced but never defined) */
+    --cb-transition:    0.18s ease;
+    --cb-shadow-sm:     0 4px 12px rgba(16, 24, 40, 0.10);
+    --cb-accent-glow:   rgba(255, 77, 77, 0.30);
+
+    /* Full container panel (wraps preview + builder) */
+    --cb-container-bg:  #f3e2c7;
+}
+
+/* ── Base reset scoped to Colorbox ─────────────────────────── */
+.cb-root,
+.cb-root * {
+    box-sizing: border-box;
+}
+.cb-root {
+    font-family:  var(--cb-font);
+    font-size:    15px;
+    line-height:  1.5;
+    color:        var(--cb-text);
+    background:   var(--cb-bg);
+    border-radius: var(--cb-radius-lg);
+    overflow:     hidden;
+    box-shadow:   var(--cb-shadow);
+}
+
+/* ══════════════════════════════════════════════════════════════
+   LAYOUT
+   Mobile:  pizza preview stacked above the tabs
+   Desktop: two-column split — pizza left, tabs right
+   ══════════════════════════════════════════════════════════════ */
+
+.cb-layout { padding: 0; width: 100%; }
+
+.cb-layout__row {
+    display:        flex;
+    flex-direction: column;   /* mobile: stacked */
+    align-items:    stretch;
+    width:          100%;
+}
+
+@media (min-width: 900px) {
+    .cb-layout__row {
+        flex-direction: row;  /* desktop: side by side */
+        align-items:    stretch;
+        min-height:     580px;
+    }
+}
+
+/* ── LEFT: Pizza preview column ─────────────────────────────── */
+
+/* Always visible — mobile shows it at the top */
+.cb-pizza-col {
+    display:         flex;
+    flex-direction:  column;
+    align-items:     center;
+    justify-content: flex-start;
+    background:      var(--cb-surface);
+    padding:         20px 16px 16px;
+    border-bottom:   1px solid var(--cb-border);
+}
+
+@media (min-width: 900px) {
+    .cb-pizza-col {
+        flex:          0 0 320px;
+        width:         320px;
+        max-width:     38%;
+        border-bottom: none;
+        border-right:  1px solid var(--cb-border);
+        padding:       28px 20px 20px;
+        position:      sticky;
+        top:           0;
+        align-self:    flex-start;
+        max-height:    100vh;
+        overflow-y:    auto;
+    }
+    .cb-mobile-preview-bar {
+        display: none !important;
+    }
+}
+
+.cb-pizza-sticky {
+    display:        flex;
+    flex-direction: column;
+    align-items:    center;
+    gap:            12px;
+    width:          100%;
+}
+
+.cb-pizza-sticky__header {
+    display:        flex;
+    align-items:    center;
+    gap:            8px;
+    font-size:      12px;
+    font-weight:    700;
+    text-transform: uppercase;
+    letter-spacing: 0.09em;
+    color:          var(--cb-text-muted);
+    align-self:     flex-start;
+    padding-left:   4px;
+}
+.cb-pizza-sticky__header .fa { color: var(--cb-accent); font-size: 14px; }
+
+/* ────────────────────────────────────────────────────────────
+   THE PIZZA CANVAS
+   A round dark plate that layers stack inside.
+   Canvas clips to circle; the stage fills it absolutely.
+   ──────────────────────────────────────────────────────────── */
+.cb-pizza-sticky__canvas {
+    position:     relative;
+    width:        100%;
+    max-width:    260px;    /* compact on mobile */
+    aspect-ratio: 1 / 1;
+    border-radius: 50%;
+    /* dark pizza-dough background — visible before any layer loads */
+    background:   radial-gradient(
+                      circle at 44% 40%,
+                      #3a2e1a 0%,
+                      #251e0e 45%,
+                      #161006 100%
+                  );
+    box-shadow:
+        0 0 0 4px rgba(255,255,255,0.05),   /* subtle rim */
+        0 0 0 8px rgba(0,0,0,0.5),
+        0 12px 48px rgba(0,0,0,0.75),
+        inset 0 2px 16px rgba(0,0,0,0.6);
+    overflow:     hidden;   /* clip all layers to circle */
+    flex-shrink:  0;
+}
+
+@media (min-width: 900px) {
+    .cb-pizza-sticky__canvas { max-width: 270px; }
+}
+
+/* Stage-wrap and stage fill canvas absolutely */
+.cb-pizza-sticky__canvas .cb-pizza-stage-wrap {
+    position: absolute;
+    inset:    0;
+    width:    100%;
+    height:   100%;
+}
+
+.cb-pizza-sticky__canvas .cb-pizza-stage {
+    position:      absolute;
+    inset:         0;
+    width:         100%;
+    height:        100%;
+    background:    transparent;
+    border-radius: 0;  /* canvas already clips */
+}
+
+/* Layer divs fill stage */
+.cb-pizza-sticky__canvas .cb-layer-div {
+    position:       absolute;
+    inset:          0;
+    pointer-events: none;
+}
+.cb-pizza-sticky__canvas .cb-layer-div img {
+    position:   absolute;
+    inset:      0;
+    width:      100%;
+    height:     100%;
+    object-fit: contain;
+    display:    block;
+    transition: opacity 0.3s ease, clip-path 0.25s ease;
+}
+
+/* Dashed ring shown before any layer loads */
+.cb-pizza-sticky__canvas::before {
+    content:        '';
+    position:       absolute;
+    inset:          6%;
+    border-radius:  50%;
+    border:         1px dashed rgba(255,255,255,0.08);
+    pointer-events: none;
+    z-index:        1;
+    transition:     opacity 0.4s ease;
+}
+.cb-pizza-sticky__canvas.cb-has-layers::before { opacity: 0; }
+
+.cb-pizza-sticky__footer {
+    display:         flex;
+    align-items:     center;
+    justify-content: space-between;
+    width:           100%;
+    max-width:       260px;
+    gap:             8px;
+}
+@media (min-width: 900px) {
+    .cb-pizza-sticky__footer { max-width: 270px; }
+}
+
+.cb-topping-counter {
+    display:       flex;
+    align-items:   center;
+    gap:           6px;
+    font-size:     12px;
+    color:         var(--cb-text-muted);
+    background:    var(--cb-surface-2);
+    border:        1px solid var(--cb-border);
+    border-radius: var(--cb-radius-pill);
+    padding:       4px 12px;
+}
+.cb-topping-counter .fa { color: var(--cb-accent); }
+.cb-topping-counter-inline { font-size: 12px; color: var(--cb-text-muted); }
+
+/* ── RIGHT: Tabs column ──────────────────────────────────── */
+.cb-tabs-col {
+    flex:           1 1 0;
+    min-width:      0;
+    background:     var(--cb-bg);
+    display:        flex;
+    flex-direction: column;
+}
+.cb-builder {
+    flex:           1;
+    display:        flex;
+    flex-direction: column;
+}
+
+/* ══════════════════════════════════════════════════════════════
+   TAB NAV
+   ══════════════════════════════════════════════════════════════ */
+.cb-tabnav {
+    position:   sticky;
+    top:        0;
+    z-index:    50;
+    display:    flex;
+    align-items: center;
+    gap:        4px;
+    padding:    12px 16px 0;
+    background: var(--cb-bg);
+    border-bottom: 1px solid var(--cb-border);
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    flex-wrap:  nowrap;
+}
+.cb-tabnav::-webkit-scrollbar { display: none; }
+
+.cb-tab {
+    display:        flex;
+    flex-direction: column;
+    align-items:    center;
+    gap:            4px;
+    padding:        8px 14px 12px;
+    border:         none;
+    background:     transparent;
+    color:          var(--cb-text-muted);
+    cursor:         pointer;
+    border-radius:  var(--cb-radius) var(--cb-radius) 0 0;
+    font-size:      12px;
+    font-weight:    600;
+    letter-spacing: 0.03em;
+    transition:     color var(--cb-transition), background var(--cb-transition);
+    white-space:    nowrap;
+    position:       relative;
+    outline:        none;
+}
+.cb-tab:hover  { color: var(--cb-text); background: var(--cb-surface-2); }
+.cb-tab.active { color: var(--cb-accent); background: var(--cb-surface); }
+.cb-tab.active::after {
+    content:       '';
+    position:      absolute;
+    bottom:        0; left: 12px; right: 12px;
+    height:        3px;
+    background:    var(--cb-accent);
+    border-radius: var(--cb-radius-pill) var(--cb-radius-pill) 0 0;
+}
+.cb-tab.cb-tab--done:not(.active) { color: #4caf50; }
+.cb-tab.cb-tab--done:not(.active)::after {
+    content:       '';
+    position:      absolute;
+    bottom:        0; left: 12px; right: 12px;
+    height:        3px;
+    background:    #4caf5060;
+    border-radius: var(--cb-radius-pill) var(--cb-radius-pill) 0 0;
+}
+.cb-tab__icon  { font-size: 16px; line-height: 1; }
+.cb-tab__label { font-size: 11px; }
+
+/* Progress dots */
+.cb-progress {
+    display:         flex;
+    gap:             6px;
+    padding:         8px 20px 0;
+    background:      var(--cb-surface);
+    align-items:     center;
+    justify-content: center;
+}
+.cb-progress__dot {
+    width:         8px;
+    height:        8px;
+    border-radius: var(--cb-radius-pill);
+    background:    var(--cb-surface-3);
+    border:        1px solid var(--cb-border);
+    transition:    background var(--cb-transition), transform var(--cb-transition);
+}
+.cb-progress__dot.active {
+    background: var(--cb-accent);
+    transform:  scale(1.3);
+    box-shadow: 0 0 8px var(--cb-accent-glow);
+}
+.cb-progress__dot.done { background: #4caf5080; }
+
+/* ══════════════════════════════════════════════════════════════
+   PANELS
+   ══════════════════════════════════════════════════════════════ */
+.cb-panels  { flex: 1; background: var(--cb-surface); }
+.cb-panel   { display: none; padding: 24px 20px; min-height: 400px; }
+.cb-panel.active { display: block; animation: cb-fadein 0.25s ease; }
+
+@keyframes cb-fadein {
+    from { opacity: 0; transform: translateY(6px); }
+    to   { opacity: 1; transform: translateY(0);   }
+}
+
+.cb-panel__header { margin-bottom: 20px; }
+.cb-panel__title {
+    font-size:   20px;
+    font-weight: 700;
+    color:       var(--cb-text);
+    margin:      0 0 6px;
+    display:     flex;
+    align-items: center;
+    gap:         10px;
+}
+.cb-panel__title .fa { color: var(--cb-accent); font-size: 18px; }
+.cb-panel__hint  { font-size: 13px; color: var(--cb-text-muted); margin: 0; }
+
+.cb-panel__nav {
+    display:         flex;
+    justify-content: space-between;
+    align-items:     center;
+    margin-top:      28px;
+    padding-top:     20px;
+    border-top:      1px solid var(--cb-border);
+    gap:             12px;
+    flex-wrap:       wrap;
+}
+
+/* ══════════════════════════════════════════════════════════════
+   CARD GRID
+   ══════════════════════════════════════════════════════════════ */
+.cb-cards-grid { display: grid; gap: 14px; }
+.cb-cards-grid--exclusive { grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); }
+.cb-cards-grid--toppings  { grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); }
+
+.cb-card {
+    background:     var(--cb-surface-2);
+    border:         1px solid var(--cb-border);
+    border-radius:  var(--cb-radius);
+    padding:        14px;
+    display:        flex;
+    flex-direction: column;
+    gap:            10px;
+    cursor:         pointer;
+    transition:     border-color var(--cb-transition),
+                    background   var(--cb-transition),
+                    box-shadow   var(--cb-transition),
+                    transform    var(--cb-transition);
+    position:       relative;
+}
+.cb-card:hover {
+    border-color: var(--cb-border-hover);
+    background:   var(--cb-surface-3);
+    box-shadow:   var(--cb-shadow-sm);
+    transform:    translateY(-2px);
+}
+.cb-card.cb-card--selected {
+    border-color: var(--cb-accent);
+    background:   var(--cb-accent-dim);
+    box-shadow:   0 0 0 1px var(--cb-accent), var(--cb-shadow-sm);
+}
+.cb-card.cb-card--selected .cb-card__check { opacity: 1; transform: scale(1); }
+.cb-card.cb-card--selected .cb-btn--add    { display: none !important; }
+.cb-card.cb-card--selected .cb-btn--remove { display: flex !important; }
+
+.cb-card__thumb-wrap {
+    position:      relative;
+    width:         100%;
+    aspect-ratio:  1 / 1;
+    border-radius: var(--cb-radius-sm);
+    overflow:      hidden;
+    background:    var(--cb-surface-3);
+    flex-shrink:   0;
+}
+.cb-card__thumb {
+    width:      100%;
+    height:     100%;
+    object-fit: cover;
+    display:    block;
+    transition: transform var(--cb-transition);
+}
+.cb-card:hover .cb-card__thumb { transform: scale(1.04); }
+.cb-card__thumb--placeholder {
+    width:  100%; height: 100%;
+    background: linear-gradient(135deg, var(--cb-surface-3) 0%, var(--cb-surface-2) 100%);
+}
+
+.cb-card__check {
+    position:        absolute;
+    top:             6px; right: 6px;
+    width:           26px; height: 26px;
+    border-radius:   var(--cb-radius-pill);
+    background:      var(--cb-accent);
+    color:           #fff;
+    display:         flex;
+    align-items:     center;
+    justify-content: center;
+    font-size:       12px;
+    opacity:         0;
+    transform:       scale(0.6);
+    transition:      opacity var(--cb-transition), transform var(--cb-transition);
+    box-shadow:      0 2px 8px var(--cb-accent-glow);
+    pointer-events:  none;
+}
+/* Draw the check as a font glyph so it renders even when Font Awesome
+   isn't loaded (the .fa <i> would otherwise be an empty box). Coloration
+   (accent circle + white check) is preserved. */
+.cb-card__check i { display: none; }
+.cb-card__check::after {
+    content:     "\2713";   /* ✓ */
+    font-family: inherit;
+    font-size:   15px;
+    font-weight: 800;
+    line-height: 1;
+    color:       #fff;
+}
+.cb-card__body  { display: flex; flex-direction: column; gap: 6px; flex: 1; }
+.cb-card__name  { font-size: 13px; font-weight: 600; color: var(--cb-text); line-height: 1.3; }
+.cb-card__actions { display: flex; gap: 6px; flex-wrap: wrap; margin-top: auto; }
+
+/* ══════════════════════════════════════════════════════════════
+   BUTTONS
+   ══════════════════════════════════════════════════════════════ */
+.cb-btn {
+    display:         inline-flex;
+    align-items:     center;
+    gap:             6px;
+    padding:         8px 16px;
+    border-radius:   var(--cb-radius-pill);
+    font-size:       13px;
+    font-weight:     600;
+    cursor:          pointer;
+    border:          1px solid transparent;
+    transition:      background var(--cb-transition),
+                     border-color var(--cb-transition),
+                     color var(--cb-transition),
+                     box-shadow var(--cb-transition),
+                     transform 0.1s;
+    text-decoration: none;
+    line-height:     1;
+    outline:         none;
+}
+.cb-btn:active { transform: scale(0.97); }
+
+.cb-btn--add    { background: var(--cb-accent); color: #fff; border-color: var(--cb-accent); width: 100%; justify-content: center; }
+.cb-btn--add:hover { background: #e64e1a; box-shadow: 0 4px 14px var(--cb-accent-glow); }
+
+.cb-btn--remove { background: transparent; color: var(--cb-text-muted); border-color: var(--cb-border); width: 100%; justify-content: center; }
+.cb-btn--remove:hover { border-color: #f44336; color: #f44336; }
+
+.cb-btn--ghost  { background: transparent; color: var(--cb-text-muted); border-color: var(--cb-border); }
+.cb-btn--ghost:hover { color: var(--cb-text); border-color: var(--cb-border-hover); background: var(--cb-surface-2); }
+
+.cb-btn--prev   { background: var(--cb-surface-2); color: var(--cb-text-muted); border-color: var(--cb-border); }
+.cb-btn--prev:hover { color: var(--cb-text); border-color: var(--cb-border-hover); }
+
+.cb-btn--next   { background: var(--cb-accent); color: #fff; border-color: var(--cb-accent); margin-left: auto; }
+.cb-btn--next:hover { background: #e64e1a; box-shadow: 0 4px 14px var(--cb-accent-glow); }
+
+.cb-btn--cta    { padding: 10px 24px; font-size: 14px; letter-spacing: 0.02em; box-shadow: 0 4px 20px var(--cb-accent-glow); }
+.cb-btn--sm     { padding: 5px 12px; font-size: 12px; }
+
+/* ══════════════════════════════════════════════════════════════
+   COVERAGE SELECTOR
+   ══════════════════════════════════════════════════════════════ */
+.cb-coverage { margin-top: 6px; }
+.cb-coverage__label {
+    font-size:      11px;
+    font-weight:    600;
+    color:          var(--cb-text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    display:        block;
+    margin-bottom:  6px;
+}
+.cb-coverage__btns { display: flex; flex-wrap: wrap; gap: 5px; }
+.cb-cov-btn {
+    display:       flex;
+    align-items:   center;
+    gap:           5px;
+    padding:       5px 8px;
+    border-radius: var(--cb-radius-sm);
+    border:        1px solid var(--cb-border);
+    background:    var(--cb-surface-3);
+    color:         var(--cb-text-muted);
+    font-size:     11px;
+    font-weight:   600;
+    cursor:        pointer;
+    transition:    all var(--cb-transition);
+    outline:       none;
+}
+.cb-cov-btn:hover  { border-color: var(--cb-border-hover); color: var(--cb-text); }
+.cb-cov-btn.active { border-color: var(--cb-accent); background: var(--cb-accent-dim); color: var(--cb-accent); box-shadow: 0 0 0 1px var(--cb-accent); }
+
+.cb-cov-ico {
+    display:               grid;
+    grid-template-columns: repeat(2, 7px);
+    grid-template-rows:    repeat(2, 7px);
+    gap:                   1px;
+    border:                1px solid rgba(255,255,255,0.18);
+    border-radius:         3px;
+    overflow:              hidden;
+    flex-shrink:           0;
+}
+.cb-cov-ico--whole { background: var(--cb-accent); }
+.cb-cov-ico--left  { background: linear-gradient(to right, var(--cb-accent) 50%, var(--cb-surface-3) 50%); }
+.cb-cov-ico--right { background: linear-gradient(to left,  var(--cb-accent) 50%, var(--cb-surface-3) 50%); }
+.cb-cov-ico--q1    { background: linear-gradient(135deg, var(--cb-accent) 50%, var(--cb-surface-3) 50%); }
+.cb-cov-ico--q2    { background: linear-gradient(225deg, var(--cb-accent) 50%, var(--cb-surface-3) 50%); }
+.cb-cov-ico--q3    { background: linear-gradient(315deg, var(--cb-accent) 50%, var(--cb-surface-3) 50%); }
+.cb-cov-ico--q4    { background: linear-gradient(45deg,  var(--cb-accent) 50%, var(--cb-surface-3) 50%); }
+
+/* ── Chosen-coverage chip (replaces the inline button row) ──────── */
+.cb-coverage__current {
+    display:       inline-flex;
+    align-items:   center;
+    gap:           7px;
+    width:         100%;
+    padding:       7px 10px;
+    border-radius: var(--cb-radius-sm);
+    border:        1px solid var(--cb-border);
+    background:    var(--cb-surface-2);
+    color:         var(--cb-text);
+    font-size:     12px;
+    font-weight:   600;
+    cursor:        pointer;
+    transition:    border-color var(--cb-transition), background var(--cb-transition), box-shadow var(--cb-transition);
+    outline:       none;
+    text-align:    left;
+}
+.cb-coverage__current:hover {
+    border-color: var(--cb-accent);
+    background:   var(--cb-accent-dim);
+}
+.cb-coverage__current .cb-cov-ico { width: 16px; height: 16px; }
+.cb-coverage__current .cb-cov-ico {
+    display:               grid;
+    grid-template-columns: repeat(2, 1fr);
+    grid-template-rows:    repeat(2, 1fr);
+    border:                1px solid var(--cb-border);
+    border-radius:         4px;
+    overflow:              hidden;
+    flex-shrink:           0;
+}
+.cb-coverage__current-label { flex: 1; }
+.cb-coverage__caret {
+    width: 0; height: 0;
+    border-left:  4px solid transparent;
+    border-right: 4px solid transparent;
+    border-top:   5px solid var(--cb-text-muted);
+    flex-shrink: 0;
+}
+
+/* ── Coverage picker modal ──────────────────────────────────────── */
+.cb-cov-modal {
+    position: fixed;
+    inset:    0;
+    z-index:  100000;
+    display:  none;
+    align-items:     center;
+    justify-content: center;
+    padding:  20px;
+}
+.cb-cov-modal.cb-cov-modal--open { display: flex; }
+.cb-cov-modal__backdrop {
+    position: absolute;
+    inset:    0;
+    background: rgba(16, 24, 40, 0.55);
+    backdrop-filter: blur(2px);
+}
+.cb-cov-modal__dialog {
+    position: relative;
+    z-index:  1;
+    width:    100%;
+    max-width: 360px;
+    background: var(--cb-surface);
+    color:     var(--cb-text);
+    border-radius: var(--cb-radius);
+    box-shadow: 0 24px 60px rgba(16, 24, 40, 0.35);
+    overflow: hidden;
+    animation: cb-cov-pop 0.16s ease;
+}
+@keyframes cb-cov-pop {
+    from { opacity: 0; transform: translateY(8px) scale(0.97); }
+    to   { opacity: 1; transform: none; }
+}
+.cb-cov-modal__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 16px;
+    border-bottom: 1px solid var(--cb-border);
+}
+.cb-cov-modal__title {
+    font-size: 14px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.cb-cov-modal__title .fa { color: var(--cb-accent); }
+.cb-cov-modal__close {
+    background: transparent;
+    border: 0;
+    font-size: 26px;
+    line-height: 1;
+    color: var(--cb-text-muted);
+    cursor: pointer;
+    padding: 0 4px;
+    transition: color var(--cb-transition);
+}
+.cb-cov-modal__close:hover { color: var(--cb-text); }
+.cb-cov-modal__grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    padding: 16px;
+}
+.cb-cov-opt {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    padding: 14px 10px;
+    border-radius: var(--cb-radius-sm);
+    border: 1px solid var(--cb-border);
+    background: var(--cb-surface-2);
+    color: var(--cb-text);
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all var(--cb-transition);
+    outline: none;
+}
+.cb-cov-opt:hover {
+    border-color: var(--cb-accent);
+    background: var(--cb-accent-dim);
+}
+.cb-cov-opt.active {
+    border-color: var(--cb-accent);
+    background: var(--cb-accent-dim);
+    color: var(--cb-accent);
+    box-shadow: 0 0 0 1px var(--cb-accent);
+}
+.cb-cov-opt .cb-cov-ico {
+    width: 34px;
+    height: 34px;
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    grid-template-rows: repeat(2, 1fr);
+    border: 1px solid var(--cb-border);
+    border-radius: 6px;
+    overflow: hidden;
+}
+.cb-cov-opt__label { text-align: center; line-height: 1.2; }
+
+@media (max-width: 380px) {
+    .cb-cov-modal__grid { grid-template-columns: 1fr; }
+}
+
+/* ══════════════════════════════════════════════════════════════
+   YOUR PIZZA SUMMARY
+   ══════════════════════════════════════════════════════════════ */
+.cb-yourpizza { display: flex; flex-direction: column; gap: 10px; margin-bottom: 24px; }
+.cb-yourpizza__row {
+    display:       flex;
+    align-items:   flex-start;
+    gap:           12px;
+    padding:       14px 16px;
+    background:    var(--cb-surface-2);
+    border:        1px solid var(--cb-border);
+    border-radius: var(--cb-radius);
+    transition:    border-color var(--cb-transition), background var(--cb-transition);
+}
+.cb-yourpizza__row.has-selection { border-color: rgba(255,87,34,0.3); background: var(--cb-accent-dim); }
+.cb-yourpizza__icon {
+    width:           34px; height: 34px;
+    border-radius:   var(--cb-radius-pill);
+    background:      var(--cb-surface-3);
+    border:          1px solid var(--cb-border);
+    display:         flex;
+    align-items:     center;
+    justify-content: center;
+    color:           var(--cb-accent);
+    font-size:       15px;
+    flex-shrink:     0;
+}
+.cb-yourpizza__layer-name {
+    font-size:      12px;
+    font-weight:    600;
+    color:          var(--cb-text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    min-width:      64px;
+    padding-top:    4px;
+    flex-shrink:    0;
+}
+.cb-yourpizza__selection { flex: 1; min-width: 0; display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.cb-yp-none { font-size: 13px; color: var(--cb-text-faint); font-style: italic; }
+.cb-yourpizza__edit {
+    margin-left:     auto;
+    background:      transparent;
+    border:          1px solid var(--cb-border);
+    border-radius:   var(--cb-radius-pill);
+    color:           var(--cb-text-muted);
+    cursor:          pointer;
+    width:           30px; height: 30px;
+    display:         flex;
+    align-items:     center;
+    justify-content: center;
+    font-size:       12px;
+    flex-shrink:     0;
+    transition:      all var(--cb-transition);
+}
+.cb-yourpizza__edit:hover { color: var(--cb-accent); border-color: var(--cb-accent); background: var(--cb-accent-dim); }
+
+.cb-yp-bubble {
+    display:       inline-flex;
+    align-items:   center;
+    gap:           6px;
+    padding:       4px 10px;
+    background:    var(--cb-surface-3);
+    border:        1px solid var(--cb-border);
+    border-radius: var(--cb-radius-pill);
+    font-size:     12px;
+    font-weight:   600;
+    color:         var(--cb-text);
+}
+.cb-yp-bubble img        { width: 20px; height: 20px; border-radius: var(--cb-radius-pill); object-fit: cover; }
+.cb-yp-bubble .cb-yp-coverage { font-size: 10px; color: var(--cb-text-muted); font-weight: 400; }
+.cb-yp-bubble .cb-yp-remove {
+    background:  transparent;
+    border:      none;
+    cursor:      pointer;
+    color:       var(--cb-text-muted);
+    padding:     0;
+    line-height: 1;
+    margin-left: 2px;
+    font-size:   12px;
+    display:     flex;
+    align-items: center;
+    transition:  color var(--cb-transition);
+}
+.cb-yp-bubble .cb-yp-remove:hover { color: #f44336; }
+
+/* ══════════════════════════════════════════════════════════════
+   EMPTY STATE
+   ══════════════════════════════════════════════════════════════ */
+.cb-empty {
+    color:         var(--cb-text-muted);
+    font-size:     14px;
+    padding:       24px;
+    text-align:    center;
+    background:    var(--cb-surface-2);
+    border:        1px dashed var(--cb-border);
+    border-radius: var(--cb-radius);
+    grid-column:   1 / -1;
+}
+.cb-empty .fa { margin-right: 6px; }
+
+/* ══════════════════════════════════════════════════════════════
+   MOBILE MINI-PREVIEW BAR  (shown below 900px as fallback)
+   ══════════════════════════════════════════════════════════════ */
+.cb-mobile-preview-bar {
+    display:    none;   /* hidden — pizza-col is always visible now */
+}
+
+/* ══════════════════════════════════════════════════════════════
+   FLY-TO ANIMATION CLONE
+   ══════════════════════════════════════════════════════════════ */
+#cb-fly-container {
+    position:       fixed;
+    top:            0; left: 0;
+    width:          0; height: 0;
+    overflow:       visible;
+    pointer-events: none;
+    z-index:        9999;
+}
+.cb-fly-clone {
+    position:       fixed;
+    border-radius:  var(--cb-radius);
+    overflow:       hidden;
+    pointer-events: none;
+    box-shadow:     0 4px 20px var(--cb-accent-glow);
+    border:         2px solid var(--cb-accent);
+    transition:     none;
+}
+
+/* ══════════════════════════════════════════════════════════════
+   PIZZA STACK LAYER SYSTEM
+   .cb-pizza-stage-wrap > .cb-pizza-stage > .cb-layer-div > img
+   Each .cb-layer-div absolutely fills the stage.
+   ══════════════════════════════════════════════════════════════ */
+
+/* Standalone stage (outside canvas, e.g. static shortcode) */
+.cb-pizza-stage-wrap {
+    position:      relative;
+    width:         100%;
+    aspect-ratio:  1;
+    border-radius: 50%;
+    overflow:      hidden;
+}
+
+.cb-pizza-stage {
+    position:      absolute;
+    inset:         0;
+    width:         100%;
+    height:        100%;
+    background:    transparent;
+}
+
+/* Within the canvas, stage-wrap and stage are already set above */
+
+.cb-layer-div {
+    position:       absolute;
+    inset:          0;
+    pointer-events: none;
+}
+.cb-layer-div img {
+    position:   absolute;
+    inset:      0;
+    width:      100%;
+    height:     100%;
+    object-fit: contain;
+    display:    block;
+    transition: opacity 0.3s ease, clip-path 0.25s ease;
+}
+
+/* Static pizza (non-interactive) uses same system */
+.cb-pizza-stage--static { }
+
+/* ══════════════════════════════════════════════════════════════
+   TOAST
+   ══════════════════════════════════════════════════════════════ */
+.cb-toast {
+    position:       fixed;
+    bottom:         24px;
+    left:           50%;
+    transform:      translateX(-50%) translateY(20px);
+    background:     #1a1e23;
+    color:          #fff;
+    padding:        10px 20px;
+    border-radius:  99px;
+    font-size:      13px;
+    font-weight:    600;
+    opacity:        0;
+    transition:     opacity 0.3s ease, transform 0.3s ease;
+    pointer-events: none;
+    z-index:        9999;
+}
+.cb-toast--visible { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+/* ══════════════════════════════════════════════════════════════
+   RESPONSIVE
+   ══════════════════════════════════════════════════════════════ */
+@media (max-width: 899px) {
+    .cb-root { border-radius: var(--cb-radius); }
+
+    /* Pizza preview area on mobile — constrained height, centered */
+    .cb-pizza-col {
+        padding:    16px 16px 12px;
+        background: var(--cb-surface);
+    }
+    .cb-pizza-sticky {
+        flex-direction: row;          /* header + pizza side by side on mobile */
+        align-items:    center;
+        justify-content: center;
+        gap:            16px;
+        flex-wrap:      wrap;
+    }
+    .cb-pizza-sticky__header { align-self: center; }
+}
+
+@media (max-width: 575px) {
+    .cb-tabnav { padding: 8px 8px 0; gap: 2px; }
+    .cb-tab     { padding: 6px 10px 10px; }
+    .cb-tab__label { font-size: 10px; }
+    .cb-panel   { padding: 16px 12px; }
+    .cb-cards-grid--exclusive,
+    .cb-cards-grid--toppings { grid-template-columns: 1fr 1fr; }
+    .cb-yourpizza__layer-name { display: none; }
+
+    .cb-pizza-sticky__canvas { max-width: 200px; }
+    .cb-pizza-sticky__footer { max-width: 200px; }
+}
+
+
+/* ══════════════════════════════════════════════════════════════
+   COLORBOX OVERRIDES
+   Keeps NightPie structure but restyles into bright "colorful tiles".
+   ══════════════════════════════════════════════════════════════ */
+
+.cb-root {
+    background: var(--cb-bg);
+    color: var(--cb-text);
+}
+
+.cb-panel,
+.cb-yourpizza,
+.cb-tabnav,
+.cb-tab,
+.cb-pizza-sticky {
+    background: transparent;
+}
+
+/* Cards as colorful tiles */
+.cb-card {
+    background: var(--cb-surface);
+    border: 1px solid var(--cb-border);
+    border-radius: var(--cb-radius);
+    box-shadow: var(--cb-shadow);
+    overflow: hidden;
+}
+
+.cb-card:hover {
+    border-color: var(--cb-border-hover);
+    transform: translateY(-2px);
+}
+
+/* Top color stripe (category) */
+.cb-card::before {
+    content: "";
+    display: block;
+    height: 8px;
+    width: 100%;
+    background: var(--cb-surface-3);
+}
+
+.cb-card[data-layer="size"]::before     { background: var(--cb-size); }
+.cb-card[data-layer="crust"]::before    { background: var(--cb-crust); }
+.cb-card[data-layer="sauce"]::before    { background: var(--cb-sauce); }
+.cb-card[data-layer="cheese"]::before   { background: var(--cb-cheese); }
+.cb-card[data-layer="toppings"]::before { background: var(--cb-toppings); }
+.cb-card[data-layer="drizzle"]::before  { background: var(--cb-drizzle); }
+.cb-card[data-layer="cuts"]::before     { background: var(--cb-cuts); }
+
+/* Tile thumbs */
+.cb-card__thumb-wrap {
+    background: var(--cb-surface-2);
+}
+
+/* Buttons */
+.cb-btn {
+    border-radius: 999px;
+    background: var(--cb-surface-2);
+    border: 1px solid var(--cb-border);
+    color: var(--cb-text);
+}
+
+.cb-btn--add {
+    background: rgba(126, 211, 33, 0.14);
+    border-color: rgba(126, 211, 33, 0.35);
+}
+
+.cb-btn--remove {
+    background: rgba(208, 2, 27, 0.10);
+    border-color: rgba(208, 2, 27, 0.25);
+}
+
+/* Tab nav: pill + colored active state */
+.cb-tabnav .cb-tab {
+    border-radius: 999px;
+    background: var(--cb-surface);
+    border: 1px solid var(--cb-border);
+    color: var(--cb-text-muted);
+}
+
+.cb-tabnav .cb-tab.is-active,
+.cb-tabnav .cb-tab.active {
+    color: var(--cb-text);
+    border-color: rgba(74, 144, 226, 0.40);
+    box-shadow: 0 10px 20px rgba(74, 144, 226, 0.12);
+}
+
+/* Price / summary surfaces */
+.cb-yourpizza .cb-panel,
+.cb-yourpizza,
+.cb-coverage {
+    background: var(--cb-surface);
+    border: 1px solid var(--cb-border);
+    border-radius: var(--cb-radius);
+}
+
+
+
+/* +=============================================+
+   | Colorbox – Colorful Tiles Layout (v1.1)      |
+   | Inspired by Style 3 "Colorful Tiles" concept |
+   +=============================================+ */
+
+/* Overall surface: warm / bright */
+.cb-root {
+    --cb-surface: #ffffff;
+    --cb-shadow: 0 10px 24px rgba(0,0,0,.10);
+    --cb-radius-lg: 18px;
+
+    --cb-c-crust:  #F5A623;
+    --cb-c-sauce:  #D0021B;
+    --cb-c-cheese: #F8E71C;
+    --cb-c-top:    #7ED321;
+    --cb-c-driz:   #BD10E0;
+    --cb-c-slice:  #4A90E2;
+}
+
+/* Make the right column feel like a clean “app card” on the container panel */
+.cb-layout {
+    background: var(--cb-container-bg, #f3e2c7);
+    padding: 18px;
+    border-radius: var(--cb-radius-lg);
+}
+
+/* Outer backdrop ("Background Color") shows as a thin matte frame
+   around the container panel above. */
+.cb-root {
+    padding: 14px;
+}
+
+.cb-layout__row {
+    gap: 18px;
+}
+
+/* Left preview: simple, bright, photo-friendly */
+.cb-pizza-sticky {
+    background: var(--cb-surface);
+    border-radius: var(--cb-radius-lg);
+    box-shadow: var(--cb-shadow);
+    overflow: hidden;
+}
+
+.cb-pizza-sticky__header {
+    background: #111;
+    color: #fff;
+    font-weight: 800;
+    letter-spacing: .6px;
+    text-transform: uppercase;
+}
+
+.cb-pizza-sticky__canvas {
+    background: #fff;
+}
+
+/* Builder header */
+.cb-builder__header {
+    background: var(--cb-surface);
+    border-radius: var(--cb-radius-lg);
+    box-shadow: var(--cb-shadow);
+    padding: 14px 16px;
+    margin-bottom: 14px;
+}
+
+.cb-builder__title {
+    font-size: 18px;
+    font-weight: 900;
+    letter-spacing: .4px;
+    text-transform: uppercase;
+}
+
+.cb-builder__subtitle {
+    margin-top: 4px;
+    opacity: .75;
+    font-size: 13px;
+}
+
+/* Builder body split: left category list, right content */
+.cb-builder__body {
+    display: grid;
+    grid-template-columns: 260px 1fr;
+    gap: 14px;
+    align-items: start;
+}
+
+@media (max-width: 980px) {
+    .cb-builder__body {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* Category list (tabs) -> vertical stack */
+.cb-side {
+    background: transparent;
+}
+
+.cb-tabnav {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    background: transparent;
+    border: 0;
+    padding: 0;
+}
+
+.cb-tab {
+    justify-content: space-between;
+    width: 100%;
+    padding: 12px 12px;
+    border-radius: 14px;
+    border: 0 !important;
+    box-shadow: var(--cb-shadow);
+    background: #fff;
+    transition: transform .18s ease, box-shadow .18s ease;
+}
+
+.cb-tab:hover {
+    transform: translateY(-2px);
+}
+
+.cb-tab.active {
+    transform: translateY(-2px);
+    box-shadow: 0 16px 34px rgba(0,0,0,.16);
+}
+
+.cb-tab__label {
+    font-weight: 800;
+}
+
+/* Category colors via left stripe */
+.cb-tab {
+    position: relative;
+    overflow: hidden;
+}
+.cb-tab::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 10px;
+    background: #ddd;
+}
+.cb-tab[data-tab="crust"]::before   { background: var(--cb-c-crust); }
+.cb-tab[data-tab="sauce"]::before   { background: var(--cb-c-sauce); }
+.cb-tab[data-tab="cheese"]::before  { background: var(--cb-c-cheese); }
+.cb-tab[data-tab="toppings"]::before{ background: var(--cb-c-top); }
+.cb-tab[data-tab="drizzle"]::before { background: var(--cb-c-driz); }
+.cb-tab[data-tab="slicing"]::before { background: var(--cb-c-slice); }
+.cb-tab[data-tab="yourpizza"]::before{ background: #111; }
+
+/* Progress dots: keep but deemphasize */
+.cb-progress {
+    margin-top: 10px;
+    opacity: .45;
+}
+
+/* Main content panel surface */
+.cb-main .cb-panels {
+    background: var(--cb-surface);
+    border-radius: var(--cb-radius-lg);
+    box-shadow: var(--cb-shadow);
+    padding: 14px;
+}
+
+/* Panels: reduce heavy headers; more compact like an order app */
+.cb-panel__header {
+    padding: 0 0 10px 0;
+    border-bottom: 1px solid rgba(0,0,0,.06);
+    margin-bottom: 12px;
+}
+
+.cb-panel__title {
+    font-size: 16px;
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: .35px;
+}
+
+.cb-panel__hint {
+    margin-top: 4px;
+    font-size: 12px;
+    opacity: .70;
+}
+
+/* Tile/card look: more colorful, “buttony”, image-forward */
+.cb-card,
+.cb-card--exclusive,
+.cb-card--topping {
+    border-radius: 16px;
+    background: #fff;
+    box-shadow: 0 10px 24px rgba(0,0,0,.08);
+    border: 3px solid transparent;
+}
+
+.cb-card:hover {
+    transform: translateY(-2px);
+}
+
+.cb-card.is-selected,
+.cb-card.active,
+.cb-card--selected {
+    border-color: #111;
+    box-shadow: 0 16px 34px rgba(0,0,0,.14);
+}
+
+.cb-card__thumb-wrap {
+    background: #fff;
+}
+
+.cb-card__thumb {
+    height: 112px;
+    object-fit: cover;
+}
+
+.cb-card__content {
+    padding: 10px 12px 12px;
+}
+
+.cb-card__title {
+    font-weight: 800;
+}
+
+/* Grid spacing: matches “tiles” */
+.cb-grid,
+.cb-cards,
+.cb-cardgrid {
+    gap: 14px !important;
+}
+
+/* CTA buttons: chunkier */
+.cb-btn {
+    border-radius: 14px;
+    font-weight: 900;
+    letter-spacing: .2px;
+}
+
+.cb-btn--primary {
+    background: #111;
+    border-color: #111;
+}
+
+/* Mobile: keep Colorbox feel */
+@media (max-width: 980px) {
+    .cb-layout { padding: 12px; }
+    .cb-main .cb-panels { padding: 12px; }
+}
+
+/* ══════════════════════════════════════════════════════════════
+   SETTINGS-DRIVEN ADDITIONS
+   Applied by FrontendSettings.php CSS vars + JS behaviour flags
+   ══════════════════════════════════════════════════════════════ */
+
+/* ── Step-by-step mode: hide unrevealed tabs ──────────────── */
+.cb-tab--hidden-step {
+    display: none !important;
+}
+
+/* ── Toast position variants ──────────────────────────────── */
+.cb-toast--style-bottom-right {
+    bottom:    24px;
+    right:     24px;
+    left:      auto;
+    transform: translateY(20px);
+}
+.cb-toast--style-bottom-right.cb-toast--visible {
+    transform: translateY(0);
+}
+.cb-toast--style-top-center {
+    top:       20px;
+    bottom:    auto;
+    left:      50%;
+    transform: translateX(-50%) translateY(-20px);
+}
+.cb-toast--style-top-center.cb-toast--visible {
+    transform: translateX(-50%) translateY(0);
+}
+.cb-toast--style-inline {
+    position:  relative;
+    bottom:    auto;
+    left:      auto;
+    transform: none;
+    margin:    8px 0;
+    display:   none;
+    border-radius: 8px;
+}
+.cb-toast--style-inline.cb-toast--visible {
+    display: block;
+    opacity: 1;
+    transform: none;
+}
+
+/* ── Special instructions textarea (Customer Experience) ──── */
+.cb-special-instructions {
+    width:          100%;
+    margin-top:     12px;
+    padding:        10px 14px;
+    border:         1px solid var(--cb-border);
+    border-radius:  var(--cb-radius-sm);
+    background:     var(--cb-surface);
+    color:          var(--cb-text);
+    font-size:      13px;
+    font-family:    inherit;
+    resize:         vertical;
+    min-height:     72px;
+    transition:     border-color 0.15s;
+}
+.cb-special-instructions:focus {
+    outline:        none;
+    border-color:   var(--cb-accent);
+}
+.cb-special-instructions-wrap {
+    padding:        0 18px 14px;
+}
+.cb-special-instructions-label {
+    font-size:      11.5px;
+    font-weight:    600;
+    color:          var(--cb-text-muted);
+    margin-bottom:  4px;
+    display:        block;
+}
+
+/* ── Topping count badge ──────────────────────────────────── */
+.cb-card__badge {
+    position:       absolute;
+    top:            4px;
+    right:          4px;
+    background:     var(--cb-accent);
+    color:          #fff;
+    font-size:      10px;
+    font-weight:    700;
+    min-width:      18px;
+    height:         18px;
+    border-radius:  9px;
+    display:        flex;
+    align-items:    center;
+    justify-content:center;
+    padding:        0 5px;
+    pointer-events: none;
+    opacity:        0;
+    transform:      scale(0.6);
+    transition:     opacity 0.15s, transform 0.15s;
+}
+.cb-card__badge--visible {
+    opacity:   1;
+    transform: scale(1);
+}
+
+/* ── CSS-var typography overrides (set by FrontendSettings) ── */
+.cb-root {
+    font-family:    var(--pzl-font,      var(--cb-font, inherit));
+    font-size:      var(--pzl-font-size, 15px);
+    color:          var(--pzl-body-text, var(--cb-text));
+}
+.cb-builder__title,
+.cb-card__name,
+.cb-panel-title {
+    font-weight:    var(--pzl-heading-fw, 700);
+    letter-spacing: var(--pzl-letter-sp,  0);
+    text-transform: var(--pzl-text-tx,    none);
+}
+.cb-card__name {
+    font-size:      var(--pzl-label-size, inherit);
+}
+/* .cb-card__price removed in PizzaTier 1.2.0 — pricing now provided by PizzaTierPro. */
+.cb-btn {
+    font-weight:    var(--pzl-btn-fw, 600);
+}
+
+/* ── CSS-var color overrides (set by FrontendSettings) ───── */
+.cb-root {
+    background:     var(--pzl-bg, var(--cb-bg));
+}
+.cb-tabs-col,
+.cb-builder {
+    background:     var(--pzl-menu-bg, var(--cb-surface));
+}
+.cb-card {
+    background:     var(--pzl-card-bg, var(--cb-surface-2));
+    border-color:   var(--pzl-card-border, var(--cb-border));
+    border-radius:  var(--pzl-card-radius, var(--cb-radius-sm));
+    padding:        var(--pzl-card-pad, 10px);
+    box-shadow:     var(--pzl-card-shadow, none);
+}
+.cb-card--selected {
+    border-color:   var(--pzl-selected, var(--cb-accent)) !important;
+}
+.cb-tabnav {
+    background:     var(--pzl-tab-bg, transparent);
+    height:         var(--pzl-tab-height, auto);
+}
+.cb-tab {
+    color:          var(--pzl-tab-text, var(--cb-text-muted));
+}
+.cb-tab.active {
+    color:          var(--pzl-tab-active, var(--cb-accent));
+    border-bottom-color: var(--pzl-tab-active, var(--cb-accent));
+}
+.cb-btn--primary {
+    background:     var(--pzl-btn-bg, var(--cb-accent));
+    color:          var(--pzl-btn-text, #fff);
+    border-radius:  var(--pzl-btn-radius, var(--cb-radius-sm));
+}
+.cb-btn--ghost {
+    background:     var(--pzl-btn2-bg, transparent);
+}
+.cb-text-muted,
+.cb-card__desc {
+    color:          var(--pzl-muted-text, var(--cb-text-muted));
+}
+.cb-card-grid {
+    gap:            var(--pzl-grid-gap, 12px);
+}
+
+/* ── Layout mode variants (driven by data-layout-mode on .cb-root) ── */
+.cb-root[data-layout-mode="split-rtl"] .cb-layout__row {
+    flex-direction: row-reverse;
+}
+.cb-root[data-layout-mode="stacked"] .cb-layout__row {
+    flex-direction: column;
+}
+.cb-root[data-layout-mode="menu-only"] .cb-pizza-col {
+    display: none;
+}
+
+/* ── Sticky header mode ──────────────────────────────────── */
+.cb-root[data-sticky-header="yes"] .cb-pizza-sticky {
+    position: sticky;
+    top:      20px;
+}
+
+
+/* ══════════════════════════════════════════════════════════════
+   CHECKOUT BAR (PizzaTierPro) — Colorbox variant
+   Rendered by PizzaTierPro's checkout-bar.php (this template's copy).
+   Bright, rounded "order app" bar matching the Colorbox builder.
+   All hook classes/ids are kept so Pro's cart JS still binds.
+   ══════════════════════════════════════════════════════════════ */
+
+/* Full-width wrapper below the builder. The bar lives here (not inside the
+   sticky pizza column) so it is always on screen rather than clipped by the
+   column's max-height/overflow. */
+.cb-action-bar {
+    margin-top: 14px;
+    width:      100%;
+}
+.cb-action-bar:empty { display: none; }   /* no Pro = no empty gap */
+
+.pztpro-checkout-bar--colorbox {
+    margin-top:    0;
+    width:         100%;
+    background:    var(--cb-surface);
+    border:        1px solid var(--cb-border);
+    border-radius: var(--cb-radius);
+    box-shadow:    var(--cb-shadow-sm);
+    padding:       14px 16px;
+    font-family:   var(--cb-font);
+    color:         var(--cb-text);
+    box-sizing:    border-box;
+}
+
+.pztpro-checkout-bar--colorbox .pztpro-bar-row {
+    display:     flex;
+    align-items: center;
+    gap:         10px;
+    flex-wrap:   wrap;
+}
+
+/* Size + price summary */
+.pztpro-checkout-bar--colorbox .pztpro-bar-row__summary {
+    display:        flex;
+    flex-direction: column;
+    gap:            2px;
+    margin-right:   auto;
+    min-width:      0;
+}
+.pztpro-checkout-bar--colorbox .pztpro-bar-row__size-label {
+    font-size:      11px;
+    font-weight:    700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color:          var(--cb-text-muted);
+}
+.pztpro-checkout-bar--colorbox .pztpro-bar-row__size-label:empty { display: none; }
+.pztpro-checkout-bar--colorbox .pztpro-bar-row__price {
+    font-size:   20px;
+    font-weight: 900;
+    line-height: 1.1;
+    color:       var(--cb-text);
+}
+.pztpro-checkout-bar--colorbox .pztpro-bar-row__currency { margin-right: 1px; }
+
+/* Quantity stepper */
+.pztpro-checkout-bar--colorbox .pztpro-bar-qty {
+    display:       inline-flex;
+    align-items:   center;
+    gap:           2px;
+    background:    var(--cb-surface-2);
+    border:        1px solid var(--cb-border);
+    border-radius: var(--cb-radius-pill);
+    padding:       3px;
+}
+.pztpro-checkout-bar--colorbox .pztpro-qty-btn {
+    width:         30px;
+    height:        30px;
+    border:        0;
+    border-radius: var(--cb-radius-pill);
+    background:    transparent;
+    color:         var(--cb-text);
+    font-size:     18px;
+    font-weight:   700;
+    line-height:   1;
+    cursor:        pointer;
+    display:       inline-flex;
+    align-items:   center;
+    justify-content: center;
+    transition:    background var(--cb-transition), color var(--cb-transition);
+}
+.pztpro-checkout-bar--colorbox .pztpro-qty-btn:hover:not(:disabled) {
+    background: var(--cb-accent-dim);
+    color:      var(--cb-accent);
+}
+.pztpro-checkout-bar--colorbox .pztpro-qty-btn:disabled {
+    opacity: 0.4;
+    cursor:  default;
+}
+.pztpro-checkout-bar--colorbox .pztpro-qty-value {
+    min-width:   26px;
+    text-align:  center;
+    font-size:   14px;
+    font-weight: 800;
+    color:       var(--cb-text);
+}
+
+/* Add to Cart CTA */
+.pztpro-checkout-bar--colorbox .pztpro-add-to-cart-btn {
+    display:         inline-flex;
+    align-items:     center;
+    justify-content: center;
+    gap:             8px;
+    padding:         11px 22px;
+    border:          1px solid var(--cb-accent);
+    border-radius:   var(--cb-radius-pill);
+    background:      var(--cb-accent);
+    color:           #fff;
+    font-size:       14px;
+    font-weight:     800;
+    letter-spacing:  0.02em;
+    cursor:          pointer;
+    transition:      background var(--cb-transition), box-shadow var(--cb-transition), transform 0.1s;
+    box-shadow:      0 4px 16px var(--cb-accent-glow);
+    outline:         none;
+}
+.pztpro-checkout-bar--colorbox .pztpro-add-to-cart-btn:hover {
+    background: #e64545;
+    box-shadow: 0 6px 22px var(--cb-accent-glow);
+}
+.pztpro-checkout-bar--colorbox .pztpro-add-to-cart-btn:active { transform: scale(0.98); }
+.pztpro-checkout-bar--colorbox .pztpro-add-to-cart-btn:disabled {
+    opacity:    0.55;
+    cursor:     default;
+    box-shadow: none;
+}
+.pztpro-checkout-bar--colorbox .pztpro-bar-row__icon {
+    width:  18px;
+    height: 18px;
+    flex-shrink: 0;
+}
+
+/* Order notes */
+.pztpro-checkout-bar--colorbox .pztpro-bar-notes { margin-top: 10px; }
+.pztpro-checkout-bar--colorbox .pztpro-bar-notes__input {
+    width:         100%;
+    padding:       9px 12px;
+    border:        1px solid var(--cb-border);
+    border-radius: var(--cb-radius-sm);
+    background:    var(--cb-surface-2);
+    color:         var(--cb-text);
+    font-family:   inherit;
+    font-size:     13px;
+    resize:        vertical;
+    min-height:    52px;
+    transition:    border-color var(--cb-transition);
+}
+.pztpro-checkout-bar--colorbox .pztpro-bar-notes__input:focus {
+    outline:      none;
+    border-color: var(--cb-accent);
+}
+
+/* Responsive: stack summary above the controls on narrow screens */
+@media (max-width: 520px) {
+    .pztpro-checkout-bar--colorbox .pztpro-bar-row__summary { width: 100%; margin-right: 0; }
+    .pztpro-checkout-bar--colorbox .pztpro-add-to-cart-btn  { flex: 1 1 auto; }
+}

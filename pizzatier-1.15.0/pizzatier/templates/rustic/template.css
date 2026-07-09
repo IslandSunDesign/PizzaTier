@@ -1,0 +1,1423 @@
+/* ══════════════════════════════════════════════════════════════
+   TERRAFORNO TEMPLATE — template.css
+   Rustic artisan pizza builder: warm earthy palette, aged-paper
+   texture, serif typography, vintage badge accents, step nav.
+   Self-contained — no Bootstrap or external framework dependency.
+   ══════════════════════════════════════════════════════════════ */
+
+/* ── Design Tokens ─────────────────────────────────────────── */
+:root {
+    /* Earthy palette */
+    --rp-bg:            #f5ede0;           /* aged parchment */
+    --rp-bg-dark:       #ede0cc;           /* slightly darker parchment */
+    --rp-surface:       #faf4eb;           /* lighter paper */
+    --rp-surface-2:     #f0e5d0;           /* card face */
+    --rp-surface-3:     #e8d8be;           /* pressed card */
+
+    /* Borders & accents */
+    --rp-border:        rgba(101,70,30,0.18);
+    --rp-border-hover:  rgba(101,70,30,0.40);
+    --rp-accent:        #b34a00;           /* burnt sienna / terracotta */
+    --rp-accent-dim:    rgba(179,74,0,0.10);
+    --rp-accent-hover:  #8f3a00;
+    --rp-accent-glow:   rgba(179,74,0,0.25);
+    --rp-gold:          #8b6914;           /* antique gold */
+    --rp-gold-light:    #c9a227;           /* badge trim */
+    --rp-green:         #4a6741;           /* herb green for "done" state */
+
+    /* Text */
+    --rp-text:          #2c1a05;           /* dark espresso */
+    --rp-text-mid:      #5c3d1a;           /* warm brown */
+    --rp-text-muted:    #7a5c34;           /* aged ink — darkened for AA contrast on cream */
+    --rp-text-faint:    #8a6c44;           /* faint ink — darkened so placeholders stay legible */
+
+    /* Typography — serif for headings, system for body */
+    --rp-font-serif:    Georgia, 'Times New Roman', Times, serif;
+    --rp-font-body:     system-ui, -apple-system, 'Segoe UI', Roboto, Arial, sans-serif;
+
+    /* Radius — less rounded than NightPie; feels more hand-crafted */
+    --rp-radius-sm:     4px;
+    --rp-radius:        8px;
+    --rp-radius-lg:     12px;
+    --rp-radius-pill:   999px;
+
+    /* Settings-driven tokens (overridden by pizzatier_template_rustic_generated_css) */
+    --rp-preview-col-width: 300px;
+    --rp-canvas-size:       250px;
+    --rp-card-min-width:    150px;
+    --rp-btn-radius:        4px;
+    --rp-font-size:         15px;
+    --rp-canvas-center:     #d4a574;
+    --rp-stepnav-active:    #b34a00;       /* active step text/number — independent of global accent */
+
+    /* Shadows — warm-toned */
+    --rp-shadow:        0 4px 20px rgba(60,30,5,0.18);
+    --rp-shadow-sm:     0 2px 8px  rgba(60,30,5,0.12);
+    --rp-shadow-inner:  inset 0 1px 3px rgba(60,30,5,0.10);
+
+    --rp-transition:    0.2s cubic-bezier(0.4,0,0.2,1);
+}
+
+/* ── Aged-paper noise texture (CSS-only, no image) ──────────── */
+/* Achieved via a repeating SVG data-URI grain overlay           */
+
+/* ── Base reset scoped to Fornaia ───────────────────────── */
+.rp-root,
+.rp-root * {
+    box-sizing: border-box;
+}
+
+.rp-root {
+    font-family:   var(--rp-font-body);
+    font-size:     15px;
+    line-height:   1.5;
+    color:         var(--rp-text);
+    background:    var(--rp-bg);
+    border-radius: var(--rp-radius-lg);
+    overflow:      hidden;
+    box-shadow:    var(--rp-shadow);
+    position:      relative;
+}
+
+/* Paper grain overlay — pseudo element on root */
+.rp-root::before {
+    content:        '';
+    position:       absolute;
+    inset:          0;
+    pointer-events: none;
+    z-index:        0;
+    opacity:        0.04;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23n)' opacity='1'/%3E%3C/svg%3E");
+    background-repeat: repeat;
+    border-radius:  var(--rp-radius-lg);
+}
+
+/* All content above the grain */
+.rp-root > * { position: relative; z-index: 1; }
+
+/* ══════════════════════════════════════════════════════════════
+   LAYOUT — two-column on desktop, stacked on mobile
+   ══════════════════════════════════════════════════════════════ */
+
+.rp-layout {
+    padding: 0;
+    width:   100%;
+}
+
+.rp-layout__row {
+    display:        flex;
+    flex-direction: column;
+    align-items:    stretch;
+    width:          100%;
+}
+
+@media (min-width: 860px) {
+    .rp-layout__row {
+        flex-direction: row;
+        align-items:    stretch;
+        min-height:     560px;
+    }
+}
+
+/* ── Mobile: force full-width columns ─────────────────────── */
+@media (max-width: 859px) {
+    .rp-pizza-col,
+    .rp-tabs-col {
+        width: 100% !important;
+        flex: 0 0 100% !important;
+        max-width: 100% !important;
+    }
+    .rp-pizza-col {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+    .rp-pizza-sticky {
+        width: 100%;
+        align-items: center;
+    }
+    .rp-pizza-sticky__canvas {
+        max-width: 260px;
+        margin: 0 auto;
+    }
+}
+
+/* ── LEFT: Pizza preview column ─────────────────────────────── */
+.rp-pizza-col {
+    display:         flex;
+    flex-direction:  column;
+    align-items:     center;
+    justify-content: flex-start;
+    background:      linear-gradient(160deg, #f0e6d2 0%, #e8d8be 100%);
+    padding:         24px 20px 20px;
+    border-bottom:   2px solid var(--rp-border);
+
+    /* Subtle vertical wood-grain feel via gradient stripes */
+    background-image:
+        repeating-linear-gradient(
+            90deg,
+            transparent,
+            transparent 28px,
+            rgba(101,70,30,0.025) 28px,
+            rgba(101,70,30,0.025) 29px
+        ),
+        linear-gradient(160deg, #f0e6d2 0%, #e8d8be 100%);
+}
+
+@media (min-width: 860px) {
+    .rp-pizza-col {
+        flex:         0 0 var(--rp-preview-col-width);
+        width:        var(--rp-preview-col-width);
+        max-width:    38%;
+        border-bottom: none;
+        border-right: 2px solid var(--rp-border);
+        padding:      28px 20px 24px;
+        position:     sticky;
+        top:          0;
+        align-self:   flex-start;
+        max-height:   100vh;
+        overflow-y:   auto;
+    }
+}
+
+.rp-pizza-sticky {
+    display:        flex;
+    flex-direction: column;
+    align-items:    center;
+    gap:            16px;
+    width:          100%;
+}
+
+/* ── Vintage badge header ─────────────────────────────────────
+   Concentric oval badge — a classic artisan branding motif.
+   ─────────────────────────────────────────────────────────── */
+.rp-preview-badge {
+    display:         flex;
+    justify-content: center;
+    align-items:     center;
+    width:           180px;
+    height:          72px;
+    border:          2px solid var(--rp-gold);
+    border-radius:   50%;
+    position:        relative;
+    background:      transparent;
+    flex-shrink:     0;
+}
+
+.rp-preview-badge::before {
+    content:       '';
+    position:      absolute;
+    inset:         4px;
+    border:        1px solid var(--rp-gold-light);
+    border-radius: 50%;
+    opacity:       0.6;
+}
+
+.rp-preview-badge__inner {
+    display:        flex;
+    flex-direction: column;
+    align-items:    center;
+    gap:            0;
+    line-height:    1;
+    text-align:     center;
+}
+
+.rp-preview-badge__top {
+    font-family:    var(--rp-font-serif);
+    font-size:      9px;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    color:          var(--rp-gold);
+}
+
+.rp-preview-badge__main {
+    font-family:    var(--rp-font-serif);
+    font-size:      18px;
+    font-weight:    700;
+    font-style:     italic;
+    color:          var(--rp-text);
+    letter-spacing: 0.02em;
+}
+
+.rp-preview-badge__bottom {
+    font-family:    var(--rp-font-serif);
+    font-size:      8px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color:          var(--rp-text-muted);
+}
+
+/* ── Pizza canvas ─────────────────────────────────────────────
+   Warm dough-toned background, slight shadow rim.
+   ─────────────────────────────────────────────────────────── */
+.rp-pizza-canvas {
+    position:     relative;
+    width:        100%;
+    max-width:    var(--rp-canvas-size);
+    aspect-ratio: 1 / 1;
+    border-radius: 50%;
+    background:   radial-gradient(
+                      circle at 44% 40%,
+                      var(--rp-canvas-center) 0%,
+                      #b8895a 45%,
+                      #8a6035 100%
+                  );
+    box-shadow:
+        0 0 0 5px rgba(139,105,20,0.3),
+        0 0 0 9px rgba(139,105,20,0.12),
+        0 10px 40px rgba(60,30,5,0.4),
+        inset 0 2px 12px rgba(0,0,0,0.25);
+    overflow:     hidden;
+    flex-shrink:  0;
+}
+
+@media (min-width: 860px) {
+    .rp-pizza-canvas { max-width: var(--rp-canvas-size); }
+}
+
+/* Canvas dashed guide ring */
+.rp-pizza-canvas::before {
+    content:        '';
+    position:       absolute;
+    inset:          6%;
+    border-radius:  50%;
+    border:         1px dashed rgba(255,255,255,0.12);
+    pointer-events: none;
+    z-index:        1;
+    transition:     opacity 0.4s ease;
+}
+.rp-pizza-canvas.rp-has-layers::before { opacity: 0; }
+
+/* Stage-wrap and stage fill canvas absolutely */
+.rp-pizza-canvas .np-pizza-stage-wrap {
+    position: absolute;
+    inset:    0;
+    width:    100%;
+    height:   100%;
+}
+.rp-pizza-canvas .np-pizza-stage {
+    position:   absolute;
+    inset:      0;
+    width:      100%;
+    height:     100%;
+    background: transparent;
+}
+.rp-pizza-canvas .np-layer-div {
+    position:       absolute;
+    inset:          0;
+    pointer-events: none;
+}
+.rp-pizza-canvas .np-layer-div img {
+    position:   absolute;
+    inset:      0;
+    width:      100%;
+    height:     100%;
+    object-fit: contain;
+    display:    block;
+    transition: opacity 0.3s ease, clip-path 0.25s ease;
+}
+
+/* ── Pizza footer ─────────────────────────────────────────── */
+.rp-pizza-footer {
+    display:         flex;
+    align-items:     center;
+    justify-content: space-between;
+    width:           100%;
+    max-width:       250px;
+    gap:             8px;
+}
+
+.rp-topping-counter {
+    display:       flex;
+    align-items:   center;
+    gap:           5px;
+    font-size:     12px;
+    font-family:   var(--rp-font-serif);
+    font-style:    italic;
+    color:         var(--rp-text-muted);
+    background:    rgba(255,255,255,0.5);
+    border:        1px solid var(--rp-border);
+    border-radius: var(--rp-radius-pill);
+    padding:       4px 12px;
+}
+.rp-topping-counter .fa { color: var(--rp-accent); }
+
+/* ── RIGHT: Builder column ──────────────────────────────────── */
+.rp-builder-col {
+    flex:           1 1 0;
+    min-width:      0;
+    background:     var(--rp-surface);
+    display:        flex;
+    flex-direction: column;
+}
+
+.rp-builder {
+    flex:           1;
+    display:        flex;
+    flex-direction: column;
+}
+
+/* ══════════════════════════════════════════════════════════════
+   STEP NAV
+   Numbered horizontal steps — like a recipe card index.
+   ══════════════════════════════════════════════════════════════ */
+.rp-stepnav {
+    position:        sticky;
+    top:             0;
+    z-index:         50;
+    display:         flex;
+    align-items:     stretch;
+    gap:             0;
+    padding:         0;
+    background:      var(--rp-bg-dark);
+    border-bottom:   2px solid var(--rp-border);
+    overflow-x:      auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    flex-wrap:       nowrap;
+}
+.rp-stepnav::-webkit-scrollbar { display: none; }
+
+.rp-step {
+    display:        flex;
+    flex-direction: column;
+    align-items:    center;
+    justify-content: center;
+    gap:            3px;
+    padding:        12px 10px 10px;
+    border:         none;
+    background:     transparent;
+    color:          var(--rp-text-muted);
+    cursor:         pointer;
+    font-family:    var(--rp-font-body);
+    font-size:      11px;
+    font-weight:    600;
+    letter-spacing: 0.03em;
+    transition:     color var(--rp-transition), background var(--rp-transition);
+    white-space:    nowrap;
+    position:       relative;
+    outline:        none;
+    min-width:      56px;
+    border-right:   1px solid var(--rp-border);
+}
+.rp-step:last-child { border-right: none; }
+
+.rp-step:hover {
+    color:       var(--rp-text);
+    background:  var(--rp-surface-2);
+}
+
+.rp-step.active {
+    color:       var(--rp-stepnav-active);
+    background:  var(--rp-surface);
+}
+.rp-step.active::after {
+    content:    '';
+    position:   absolute;
+    bottom:     0; left: 0; right: 0;
+    height:     3px;
+    background: var(--rp-stepnav-active);
+}
+
+.rp-step.rp-step--done:not(.active) { color: var(--rp-green); }
+.rp-step.rp-step--done:not(.active)::after {
+    content:    '';
+    position:   absolute;
+    bottom:     0; left: 0; right: 0;
+    height:     3px;
+    background: rgba(74,103,65,0.5);
+}
+
+/* Circular step number — filled on active, outlined otherwise */
+.rp-step__num {
+    width:           22px;
+    height:          22px;
+    border-radius:   50%;
+    border:          1.5px solid currentColor;
+    display:         flex;
+    align-items:     center;
+    justify-content: center;
+    font-size:       10px;
+    font-weight:     700;
+    font-family:     var(--rp-font-serif);
+    line-height:     1;
+    flex-shrink:     0;
+    transition:      background var(--rp-transition), color var(--rp-transition);
+}
+.rp-step.active .rp-step__num {
+    background: var(--rp-stepnav-active);
+    border-color: var(--rp-stepnav-active);
+    color: #fff;
+}
+.rp-step.rp-step--done:not(.active) .rp-step__num {
+    background: rgba(74,103,65,0.15);
+    border-color: var(--rp-green);
+    color: var(--rp-green);
+}
+
+.rp-step__icon  { font-size: 14px; line-height: 1; }
+.rp-step__label { font-size: 10px; letter-spacing: 0.04em; }
+
+/* Horizontal connector line underneath step nav */
+.rp-step-line {
+    height:     2px;
+    background: repeating-linear-gradient(
+        90deg,
+        var(--rp-gold-light) 0px,
+        var(--rp-gold-light) 8px,
+        transparent 8px,
+        transparent 16px
+    );
+    opacity: 0.4;
+    flex-shrink: 0;
+}
+
+/* ══════════════════════════════════════════════════════════════
+   PANELS
+   ══════════════════════════════════════════════════════════════ */
+.rp-panels {
+    flex:       1;
+    background: var(--rp-surface);
+}
+
+.rp-panel {
+    display:    none;
+    padding:    24px 22px;
+    min-height: 400px;
+}
+.rp-panel.active {
+    display:   block;
+    animation: rp-fadein 0.28s ease;
+}
+
+@keyframes rp-fadein {
+    from { opacity: 0; transform: translateY(5px); }
+    to   { opacity: 1; transform: translateY(0);   }
+}
+
+/* Panel header: numbered badge + title */
+.rp-panel__header { margin-bottom: 20px; }
+
+.rp-panel__badge {
+    display:     flex;
+    align-items: center;
+    gap:         14px;
+}
+
+.rp-panel__badge-num {
+    font-family:     var(--rp-font-serif);
+    font-size:       26px;
+    font-weight:     700;
+    font-style:      italic;
+    color:           var(--rp-gold);
+    line-height:     1;
+    min-width:       36px;
+    text-align:      center;
+    border-right:    2px solid var(--rp-border);
+    padding-right:   14px;
+    flex-shrink:     0;
+}
+
+.rp-panel__title {
+    font-family:  var(--rp-font-serif);
+    font-size:    20px;
+    font-weight:  700;
+    font-style:   italic;
+    color:        var(--rp-text);
+    margin:       0 0 4px;
+    line-height:  1.2;
+}
+
+.rp-panel__hint {
+    font-size:  13px;
+    color:      var(--rp-text-muted);
+    margin:     0;
+    font-style: italic;
+}
+
+.rp-panel__nav {
+    display:         flex;
+    justify-content: space-between;
+    align-items:     center;
+    margin-top:      28px;
+    padding-top:     18px;
+    border-top:      1px dashed var(--rp-border);
+    gap:             12px;
+    flex-wrap:       wrap;
+}
+
+/* ══════════════════════════════════════════════════════════════
+   CARD GRID
+   ══════════════════════════════════════════════════════════════ */
+.rp-cards-grid { display: grid; gap: 14px; }
+.rp-cards-grid--exclusive { grid-template-columns: repeat(auto-fill, minmax(var(--rp-card-min-width), 1fr)); }
+.rp-cards-grid--toppings  { grid-template-columns: repeat(auto-fill, minmax(var(--rp-card-min-width), 1fr)); }
+
+/* Cards: kraft-paper feel — slightly off-white, warm shadow */
+.rp-card {
+    background:     var(--rp-surface-2);
+    border:         1px solid var(--rp-border);
+    border-radius:  var(--rp-radius);
+    padding:        12px;
+    display:        flex;
+    flex-direction: column;
+    gap:            10px;
+    cursor:         pointer;
+    transition:     border-color var(--rp-transition),
+                    background   var(--rp-transition),
+                    box-shadow   var(--rp-transition),
+                    transform    var(--rp-transition);
+    position:       relative;
+
+    /* Subtle corner fold effect */
+    box-shadow:     var(--rp-shadow-inner);
+}
+
+.rp-card::after {
+    content:       '';
+    position:      absolute;
+    bottom:        0;
+    right:         0;
+    width:         12px;
+    height:        12px;
+    background:    linear-gradient(
+        -45deg,
+        var(--rp-bg-dark) 50%,
+        transparent 50%
+    );
+    border-top-left-radius: 2px;
+    opacity:       0.5;
+}
+
+.rp-card:hover {
+    border-color: var(--rp-border-hover);
+    background:   var(--rp-surface-3);
+    box-shadow:   var(--rp-shadow-sm);
+    transform:    translateY(-2px);
+}
+
+.rp-card.rp-card--selected {
+    border-color: var(--rp-accent);
+    background:   var(--rp-accent-dim);
+    box-shadow:   0 0 0 1px var(--rp-accent), var(--rp-shadow-sm);
+}
+.rp-card.rp-card--selected .rp-card__check { opacity: 1; transform: scale(1); }
+.rp-card.rp-card--selected .rp-btn--add    { display: none !important; }
+.rp-card.rp-card--selected .rp-btn--remove { display: flex !important; }
+
+/* Thumbnail */
+.rp-card__thumb-wrap {
+    position:      relative;
+    width:         100%;
+    aspect-ratio:  1 / 1;
+    border-radius: var(--rp-radius-sm);
+    overflow:      hidden;
+    background:    var(--rp-surface-3);
+    flex-shrink:   0;
+    border:        1px solid var(--rp-border);
+}
+.rp-card__thumb {
+    width:      100%;
+    height:     100%;
+    object-fit: cover;
+    display:    block;
+    transition: transform var(--rp-transition);
+}
+.rp-card:hover .rp-card__thumb { transform: scale(1.04); }
+.rp-card__thumb--placeholder {
+    width:  100%; height: 100%;
+    background: repeating-linear-gradient(
+        45deg,
+        var(--rp-surface-3) 0px,
+        var(--rp-surface-3) 6px,
+        var(--rp-surface-2) 6px,
+        var(--rp-surface-2) 12px
+    );
+}
+
+/* Check badge */
+.rp-card__check {
+    position:        absolute;
+    top:             6px; right: 6px;
+    width:           24px; height: 24px;
+    border-radius:   50%;
+    background:      var(--rp-accent);
+    color:           #fff;
+    display:         flex;
+    align-items:     center;
+    justify-content: center;
+    font-size:       11px;
+    opacity:         0;
+    transform:       scale(0.5);
+    transition:      opacity var(--rp-transition), transform var(--rp-transition);
+    pointer-events:  none;
+}
+
+.rp-card__body    { display: flex; flex-direction: column; gap: 6px; flex: 1; }
+.rp-card__name    {
+    font-family:    var(--rp-font-serif);
+    font-size:      13px;
+    font-weight:    700;
+    font-style:     italic;
+    color:          var(--rp-text);
+    line-height:    1.3;
+}
+.rp-card__actions { display: flex; gap: 6px; flex-wrap: wrap; margin-top: auto; }
+
+/* ══════════════════════════════════════════════════════════════
+   BUTTONS
+   ══════════════════════════════════════════════════════════════ */
+.rp-btn {
+    display:         inline-flex;
+    align-items:     center;
+    gap:             6px;
+    padding:         7px 14px;
+    border-radius:   var(--rp-btn-radius);
+    font-size:       12px;
+    font-weight:     600;
+    font-family:     var(--rp-font-body);
+    letter-spacing:  0.03em;
+    text-transform:  uppercase;
+    cursor:          pointer;
+    border:          1px solid transparent;
+    transition:      background var(--rp-transition),
+                     border-color var(--rp-transition),
+                     color var(--rp-transition),
+                     box-shadow var(--rp-transition),
+                     transform 0.1s;
+    text-decoration: none;
+    line-height:     1;
+    outline:         none;
+}
+.rp-btn:active { transform: scale(0.97); }
+
+/* Primary / "Add" — terracotta fill */
+.rp-btn--add {
+    background:      var(--rp-accent);
+    color:           #fff;
+    border-color:    var(--rp-accent);
+    width:           100%;
+    justify-content: center;
+}
+.rp-btn--add:hover {
+    background:  var(--rp-accent-hover);
+    box-shadow:  0 3px 12px var(--rp-accent-glow);
+}
+
+/* Remove — ghost terracotta */
+.rp-btn--remove {
+    background:      transparent;
+    color:           var(--rp-text-muted);
+    border-color:    var(--rp-border);
+    width:           100%;
+    justify-content: center;
+}
+.rp-btn--remove:hover {
+    border-color: #c0392b;
+    color:        #c0392b;
+}
+
+/* Ghost — paper-outlined */
+.rp-btn--ghost {
+    background:   transparent;
+    color:        var(--rp-text-muted);
+    border-color: var(--rp-border);
+}
+.rp-btn--ghost:hover {
+    color:        var(--rp-text);
+    border-color: var(--rp-border-hover);
+    background:   var(--rp-surface-2);
+}
+
+/* Prev — muted */
+.rp-btn--prev {
+    background:   var(--rp-surface-2);
+    color:        var(--rp-text-muted);
+    border-color: var(--rp-border);
+}
+.rp-btn--prev:hover {
+    color:        var(--rp-text);
+    border-color: var(--rp-border-hover);
+}
+
+/* Next — terracotta */
+.rp-btn--next {
+    background:   var(--rp-accent);
+    color:        #fff;
+    border-color: var(--rp-accent);
+    margin-left:  auto;
+}
+.rp-btn--next:hover {
+    background: var(--rp-accent-hover);
+    box-shadow: 0 3px 12px var(--rp-accent-glow);
+}
+
+/* CTA — larger, gold-accented border */
+.rp-btn--cta {
+    padding:     10px 22px;
+    font-size:   13px;
+    box-shadow:  0 0 0 2px var(--rp-gold-light), 0 4px 16px var(--rp-accent-glow);
+}
+.rp-btn--cta:hover {
+    box-shadow: 0 0 0 2px var(--rp-gold), 0 6px 20px var(--rp-accent-glow);
+}
+
+.rp-btn--sm { padding: 4px 10px; font-size: 11px; }
+
+/* ══════════════════════════════════════════════════════════════
+   COVERAGE SELECTOR
+   ══════════════════════════════════════════════════════════════ */
+.rp-coverage { margin-top: 6px; }
+.rp-coverage__label {
+    font-size:      10px;
+    font-weight:    700;
+    color:          var(--rp-text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    display:        block;
+    margin-bottom:  5px;
+}
+.rp-coverage__btns { display: flex; flex-wrap: wrap; gap: 4px; }
+.rp-cov-btn {
+    display:       flex;
+    align-items:   center;
+    gap:           4px;
+    padding:       4px 7px;
+    border-radius: var(--rp-radius-sm);
+    border:        1px solid var(--rp-border);
+    background:    var(--rp-surface-3);
+    color:         var(--rp-text-muted);
+    font-size:     10px;
+    font-weight:   600;
+    cursor:        pointer;
+    transition:    all var(--rp-transition);
+    outline:       none;
+}
+.rp-cov-btn:hover  { border-color: var(--rp-border-hover); color: var(--rp-text); }
+.rp-cov-btn.active { border-color: var(--rp-accent); background: var(--rp-accent-dim); color: var(--rp-accent); box-shadow: 0 0 0 1px var(--rp-accent); }
+
+/* Coverage mini icons — same grid pattern as NightPie */
+.rp-cov-ico {
+    display:               grid;
+    grid-template-columns: repeat(2, 6px);
+    grid-template-rows:    repeat(2, 6px);
+    gap:                   1px;
+    border:                1px solid var(--rp-border);
+    border-radius:         2px;
+    overflow:              hidden;
+    flex-shrink:           0;
+}
+.rp-cov-ico--whole { background: var(--rp-accent); }
+.rp-cov-ico--left  { background: linear-gradient(to right, var(--rp-accent) 50%, var(--rp-surface-3) 50%); }
+.rp-cov-ico--right { background: linear-gradient(to left,  var(--rp-accent) 50%, var(--rp-surface-3) 50%); }
+.rp-cov-ico--q1    { background: linear-gradient(135deg, var(--rp-accent) 50%, var(--rp-surface-3) 50%); }
+.rp-cov-ico--q2    { background: linear-gradient(225deg, var(--rp-accent) 50%, var(--rp-surface-3) 50%); }
+.rp-cov-ico--q3    { background: linear-gradient(315deg, var(--rp-accent) 50%, var(--rp-surface-3) 50%); }
+.rp-cov-ico--q4    { background: linear-gradient(45deg,  var(--rp-accent) 50%, var(--rp-surface-3) 50%); }
+
+/* ══════════════════════════════════════════════════════════════
+   YOUR PIZZA SUMMARY — order sheet style
+   ══════════════════════════════════════════════════════════════ */
+.rp-yourpizza {
+    display:        flex;
+    flex-direction: column;
+    gap:            8px;
+    margin-bottom:  20px;
+
+    /* Lined paper background */
+    background:
+        repeating-linear-gradient(
+            transparent,
+            transparent 31px,
+            rgba(101,70,30,0.08) 31px,
+            rgba(101,70,30,0.08) 32px
+        );
+    padding:        8px 0;
+}
+
+.rp-yourpizza__row {
+    display:       flex;
+    align-items:   flex-start;
+    gap:           12px;
+    padding:       8px 14px;
+    border-radius: var(--rp-radius-sm);
+    transition:    background var(--rp-transition);
+    min-height:    32px;
+}
+.rp-yourpizza__row.has-selection {
+    background: rgba(179,74,0,0.06);
+}
+
+.rp-yourpizza__icon {
+    width:           28px; height: 28px;
+    border-radius:   50%;
+    background:      var(--rp-surface-2);
+    border:          1px solid var(--rp-border);
+    display:         flex;
+    align-items:     center;
+    justify-content: center;
+    color:           var(--rp-accent);
+    font-size:       12px;
+    flex-shrink:     0;
+}
+.rp-yourpizza__layer-name {
+    font-family:    var(--rp-font-serif);
+    font-size:      12px;
+    font-weight:    700;
+    font-style:     italic;
+    color:          var(--rp-text-mid);
+    min-width:      60px;
+    padding-top:    4px;
+    flex-shrink:    0;
+}
+.rp-yourpizza__selection {
+    flex: 1; min-width: 0;
+    display: flex; flex-wrap: wrap; gap: 5px; align-items: center;
+}
+.rp-yp-none {
+    font-size:  12px;
+    color:      var(--rp-text-faint);
+    font-style: italic;
+    font-family: var(--rp-font-serif);
+}
+.rp-yourpizza__edit {
+    margin-left:     auto;
+    background:      transparent;
+    border:          1px solid var(--rp-border);
+    border-radius:   var(--rp-radius-sm);
+    color:           var(--rp-text-muted);
+    cursor:          pointer;
+    width:           26px; height: 26px;
+    display:         flex;
+    align-items:     center;
+    justify-content: center;
+    font-size:       11px;
+    flex-shrink:     0;
+    transition:      all var(--rp-transition);
+}
+.rp-yourpizza__edit:hover {
+    color:        var(--rp-accent);
+    border-color: var(--rp-accent);
+    background:   var(--rp-accent-dim);
+}
+
+/* Selection chips — stamp-like */
+.rp-yp-bubble {
+    display:       inline-flex;
+    align-items:   center;
+    gap:           5px;
+    padding:       3px 9px;
+    background:    var(--rp-surface-3);
+    border:        1px solid var(--rp-border);
+    border-radius: var(--rp-radius-sm);
+    font-size:     11px;
+    font-family:   var(--rp-font-serif);
+    font-weight:   700;
+    font-style:    italic;
+    color:         var(--rp-text);
+}
+.rp-yp-bubble img { width: 18px; height: 18px; border-radius: 50%; object-fit: cover; }
+.rp-yp-coverage   { font-size: 10px; color: var(--rp-text-muted); font-weight: 400; }
+.rp-yp-remove {
+    background:  transparent;
+    border:      none;
+    cursor:      pointer;
+    color:       var(--rp-text-muted);
+    padding:     0;
+    line-height: 1;
+    margin-left: 2px;
+    font-size:   11px;
+    display:     flex;
+    align-items: center;
+    transition:  color var(--rp-transition);
+}
+.rp-yp-remove:hover { color: #c0392b; }
+
+/* ══════════════════════════════════════════════════════════════
+   EMPTY STATE
+   ══════════════════════════════════════════════════════════════ */
+.rp-empty {
+    color:         var(--rp-text-muted);
+    font-size:     13px;
+    font-style:    italic;
+    padding:       22px;
+    text-align:    center;
+    background:    var(--rp-surface-2);
+    border:        1px dashed var(--rp-border);
+    border-radius: var(--rp-radius);
+    grid-column:   1 / -1;
+    font-family:   var(--rp-font-serif);
+}
+.rp-empty .fa { margin-right: 6px; color: var(--rp-accent); }
+
+/* ══════════════════════════════════════════════════════════════
+   FLY-TO ANIMATION CLONE
+   ══════════════════════════════════════════════════════════════ */
+[id$="-fly-container"] {
+    position:       fixed;
+    top:            0; left: 0;
+    width:          0; height: 0;
+    overflow:       visible;
+    pointer-events: none;
+    z-index:        9999;
+}
+.rp-fly-clone {
+    position:       fixed;
+    border-radius:  var(--rp-radius);
+    overflow:       hidden;
+    pointer-events: none;
+    box-shadow:     0 4px 20px var(--rp-accent-glow);
+    border:         2px solid var(--rp-accent);
+    transition:     none;
+}
+
+/* ══════════════════════════════════════════════════════════════
+   PIZZA STACK LAYER SYSTEM (shared with NightPie)
+   ══════════════════════════════════════════════════════════════ */
+.rp-pizza-canvas .np-pizza-stage-wrap {
+    position: absolute;
+    inset:    0;
+    width:    100%;
+    height:   100%;
+}
+.rp-pizza-canvas .np-pizza-stage {
+    position:   absolute;
+    inset:      0;
+    width:      100%;
+    height:     100%;
+    background: transparent;
+}
+.rp-pizza-canvas .np-layer-div {
+    position:       absolute;
+    inset:          0;
+    pointer-events: none;
+}
+.rp-pizza-canvas .np-layer-div img {
+    position:   absolute;
+    inset:      0;
+    width:      100%;
+    height:     100%;
+    object-fit: contain;
+    display:    block;
+}
+
+/* Toast */
+.rp-toast {
+    position:       fixed;
+    bottom:         24px;
+    left:           50%;
+    transform:      translateX(-50%) translateY(20px);
+    background:     var(--rp-text);
+    color:          var(--rp-bg);
+    padding:        9px 20px;
+    border-radius:  var(--rp-radius-pill);
+    font-size:      13px;
+    font-family:    var(--rp-font-serif);
+    font-style:     italic;
+    font-weight:    700;
+    opacity:        0;
+    transition:     opacity 0.3s ease, transform 0.3s ease;
+    pointer-events: none;
+    z-index:        9999;
+    border:         1px solid var(--rp-border);
+}
+.rp-toast--visible {
+    opacity:   1;
+    transform: translateX(-50%) translateY(0);
+}
+
+/* ══════════════════════════════════════════════════════════════
+   RESPONSIVE
+   ══════════════════════════════════════════════════════════════ */
+@media (max-width: 859px) {
+    .rp-root { border-radius: var(--rp-radius); }
+    .rp-pizza-col { padding: 16px; }
+    .rp-pizza-sticky {
+        flex-direction:  row;
+        align-items:     center;
+        justify-content: center;
+        gap:             16px;
+        flex-wrap:       wrap;
+    }
+}
+
+@media (max-width: 575px) {
+    .rp-root { font-size: 14px; }
+
+    /* Pizza column — full width, centred */
+    .rp-pizza-col { width: 100%; padding: 12px 12px 8px; }
+    .rp-pizza-sticky {
+        flex-direction: column;
+        align-items: center;
+        gap: 10px;
+    }
+    .rp-pizza-canvas { max-width: 210px; margin: 0 auto; }
+    .rp-preview-badge { width: 140px; height: 56px; }
+    .rp-preview-badge__main { font-size: 14px; }
+
+    /* Steps nav */
+    .rp-stepnav { padding: 0; overflow-x: auto; flex-wrap: nowrap; }
+    .rp-step    { padding: 10px 8px 8px; min-width: 46px; flex-shrink: 0; }
+    .rp-step__label { display: none; }
+    .rp-panel   { padding: 14px 10px; }
+
+    /* Cards — two columns */
+    .rp-cards-grid--exclusive,
+    .rp-cards-grid--toppings { grid-template-columns: 1fr 1fr; }
+
+    .rp-yourpizza__layer-name { display: none; }
+
+    /* Checkout bar stacks vertically */
+    .rp-checkout-bar__inner {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 8px;
+    }
+    .rp-checkout-bar__btn { width: 100%; text-align: center; }
+}
+
+/* ── PizzaTier Settings — CSS var bridge ──────────────────── */
+.rp-root {
+    font-family: var(--pzl-font,      inherit);
+    font-size:   var(--pzl-font-size, inherit);
+    background:  var(--pzl-bg,        inherit);
+}
+.rp-card {
+    background:    var(--pzl-card-bg,     inherit);
+    border-color:  var(--pzl-card-border, inherit);
+    border-radius: var(--pzl-card-radius, inherit);
+    padding:       var(--pzl-card-pad,    inherit);
+    box-shadow:    var(--pzl-card-shadow, none);
+}
+.rp-card--selected {
+    border-color: var(--pzl-selected, inherit) !important;
+}
+
+/* ══════════════════════════════════════════════════════════════
+   RUSTIC — TABLET RESPONSIVE (576px – 859px)
+   ══════════════════════════════════════════════════════════════ */
+@media (min-width: 576px) and (max-width: 859px) {
+    /* Preview column: horizontal row on tablet */
+    .rp-pizza-col { padding: 14px 20px 12px; }
+    .rp-pizza-sticky {
+        flex-direction: row;
+        align-items: center;
+        justify-content: center;
+        gap: 20px;
+        flex-wrap: nowrap;
+    }
+    .rp-pizza-canvas { max-width: 200px; flex-shrink: 0; }
+    .rp-preview-badge { width: 150px; height: 60px; }
+    .rp-pizza-footer { max-width: 200px; }
+
+    /* Three-column card grid on tablet */
+    .rp-cards-grid--exclusive { grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); }
+    .rp-cards-grid--toppings  { grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); }
+
+    /* Step nav: keep labels visible on tablet */
+    .rp-step { padding: 10px 8px 8px; min-width: 50px; }
+
+    /* Panel padding */
+    .rp-panel { padding: 18px 16px; }
+}
+
+/* ══════════════════════════════════════════════════════════════
+   RUSTIC — CHECKOUT BAR RESPONSIVE
+   ══════════════════════════════════════════════════════════════ */
+@media (max-width: 540px) {
+    .pztpro-checkout-bar--rustic .pztpro-bar-row {
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+    .pztpro-checkout-bar--rustic .pztpro-bar-row__summary {
+        width: 100%;
+        flex: none;
+    }
+    .pztpro-checkout-bar--rustic .pztpro-bar-row__btn {
+        flex: 1 1 auto;
+        justify-content: center;
+    }
+}
+
+
+/* ══════════════════════════════════════════════════════════════
+   FORNAIA/RUSTIC — ISSUE FIXES & ENHANCEMENTS
+   ══════════════════════════════════════════════════════════════ */
+
+/* 1. Size selection — styled pill chips matching template aesthetics */
+.rp-size-selector__options,
+.rp-size-selector .rp-size-option,
+.rp-panel .pztpro-inline-size-selector .rp-size-option {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 10px;
+}
+.rp-size-option,
+.rp-panel .pztpro-inline-size-selector label.rp-size-option {
+    display: inline-flex;
+    align-items: center;
+    padding: 10px 22px;
+    border: 2px solid var(--rp-border, rgba(101,70,30,0.22));
+    border-radius: var(--rp-radius-sm, 4px);
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 700;
+    font-family: var(--rp-font-body, Georgia, serif);
+    background: var(--rp-bg-dark, #ede0cc);
+    color: var(--rp-text, #2c1a05);
+    transition: all 0.16s;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+.rp-size-option input[type="radio"],
+.rp-panel .pztpro-inline-size-selector input[type="radio"] {
+    display: none !important;
+}
+.rp-size-option:hover,
+.rp-size-option.pztpro-size-option--active,
+.rp-panel .pztpro-inline-size-selector label.rp-size-option:hover,
+.rp-panel .pztpro-inline-size-selector .pztpro-size-option--active {
+    border-color: var(--rp-accent, #b34a00);
+    background: var(--rp-accent-dim, rgba(179,74,0,0.12));
+    color: var(--rp-accent, #b34a00);
+    box-shadow: 0 0 0 1px var(--rp-accent, #b34a00);
+}
+
+/* Target the pztpro-inline-size-selector wrapper with rp prefix */
+.rp-panel .pztpro-inline-size-selector {
+    margin-top: 0;
+}
+.rp-panel .pztpro-inline-size-selector .rp-size-selector__options,
+.rp-panel .pztpro-inline-size-selector .rp-size-selector__options {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+/* ══════════════════════════════════════════════════════════════
+   FORNAIA — ADD TO CART CTA & CHECKOUT BAR
+   Styles the PizzaTierPro checkout bar (checkout-bar.php) for Fornaia.
+   All rules scoped to .pztpro-checkout-bar--rustic so they only affect
+   this template. Colours pull from the Fornaia CSS variables, so they
+   follow the template's Accent / Surface / Text / Button-Style settings.
+   ══════════════════════════════════════════════════════════════ */
+.pztpro-checkout-bar--rustic {
+    margin-top:     14px;
+    display:        flex;
+    flex-direction: column;
+    gap:            14px;
+    padding:        18px 20px 20px;
+    background:     var(--rp-surface, #faf4eb);
+    border-top:     2px solid var(--rp-border, rgba(101,70,30,0.18));
+    border-radius:  0 0 var(--rp-radius-lg, 12px) var(--rp-radius-lg, 12px);
+    box-shadow:     var(--rp-shadow-inner, inset 0 1px 3px rgba(60,30,5,0.10));
+    font-family:    var(--rp-font-body);
+}
+
+/* Hand-torn divider rule above the bar */
+.pztpro-checkout-bar--rustic .pztpro-rustic-bar__divider {
+    height:     2px;
+    margin:     0 0 2px;
+    background: repeating-linear-gradient(
+        90deg,
+        var(--rp-gold-light, #c9a227) 0px,
+        var(--rp-gold-light, #c9a227) 8px,
+        transparent 8px,
+        transparent 16px
+    );
+    opacity:    0.45;
+}
+
+/* ── Bar row (price · quantity · CTA) ────────────────────────── */
+.pztpro-checkout-bar--rustic .pztpro-bar-row {
+    display:     flex;
+    align-items: center;
+    gap:         14px;
+}
+.pztpro-checkout-bar--rustic .pztpro-bar-row__summary {
+    display:        flex;
+    flex-direction: column;
+    line-height:    1.2;
+    flex:           1 1 auto;
+    min-width:      0;
+}
+.pztpro-checkout-bar--rustic .pztpro-bar-row__size-label {
+    font-family:    var(--rp-font-serif);
+    font-size:      12px;
+    font-style:     italic;
+    letter-spacing: 0.03em;
+    color:          var(--rp-text-muted, #7a5c34);
+}
+.pztpro-checkout-bar--rustic .pztpro-bar-row__price {
+    font-family:    var(--rp-font-serif);
+    font-size:      26px;
+    font-weight:    700;
+    font-style:     italic;
+    color:          var(--rp-text, #2c1a05);
+    font-variant-numeric: tabular-nums;
+}
+
+/* ── Quantity stepper ────────────────────────────────────────── */
+.pztpro-checkout-bar--rustic .pztpro-bar-qty {
+    display:       inline-flex;
+    align-items:   center;
+    border:        1.5px solid var(--rp-border, rgba(101,70,30,0.18));
+    border-radius: var(--rp-btn-radius, 4px);
+    overflow:      hidden;
+    flex-shrink:   0;
+    background:    var(--rp-surface-2, #f0e5d0);
+}
+.pztpro-checkout-bar--rustic .pztpro-qty-btn {
+    width:       36px;
+    height:      36px;
+    border:      none;
+    background:  transparent;
+    color:       var(--rp-text, #2c1a05);
+    font-family: var(--rp-font-serif);
+    font-size:   20px;
+    font-weight: 700;
+    line-height: 1;
+    cursor:      pointer;
+    transition:  background var(--rp-transition, 0.2s ease),
+                 color      var(--rp-transition, 0.2s ease);
+}
+.pztpro-checkout-bar--rustic .pztpro-qty-btn:hover:not(:disabled) {
+    background: var(--rp-accent-dim, rgba(179,74,0,0.10));
+    color:      var(--rp-accent, #b34a00);
+}
+.pztpro-checkout-bar--rustic .pztpro-qty-btn:disabled {
+    opacity: 0.4;
+    cursor:  not-allowed;
+}
+.pztpro-checkout-bar--rustic .pztpro-qty-value {
+    min-width:   34px;
+    text-align:  center;
+    font-family: var(--rp-font-serif);
+    font-size:   15px;
+    font-weight: 700;
+    color:       var(--rp-text, #2c1a05);
+    font-variant-numeric: tabular-nums;
+}
+
+/* ── Add to Cart CTA — terracotta, hand-crafted ──────────────── */
+.pztpro-checkout-bar--rustic .pztpro-add-to-cart-btn {
+    display:         inline-flex;
+    align-items:     center;
+    justify-content: center;
+    gap:             8px;
+    flex-shrink:     0;
+    padding:         13px 28px;
+    border:          1px solid var(--rp-accent, #b34a00);
+    border-radius:   var(--rp-btn-radius, 4px);
+    background:      var(--rp-accent, #b34a00);
+    color:           #fff;
+    font-family:     var(--rp-font-body);
+    font-size:       13px;
+    font-weight:     700;
+    letter-spacing:  0.08em;
+    text-transform:  uppercase;
+    line-height:     1;
+    cursor:          pointer;
+    box-shadow:      0 3px 12px var(--rp-accent-glow, rgba(179,74,0,0.25));
+    transition:      background  var(--rp-transition, 0.2s ease),
+                     border-color var(--rp-transition, 0.2s ease),
+                     box-shadow  var(--rp-transition, 0.2s ease),
+                     transform   0.1s ease;
+}
+.pztpro-checkout-bar--rustic .pztpro-add-to-cart-btn:hover:not(:disabled) {
+    background:   var(--rp-accent-hover, #8f3a00);
+    border-color: var(--rp-accent-hover, #8f3a00);
+    box-shadow:   0 5px 18px var(--rp-accent-glow, rgba(179,74,0,0.25));
+    transform:    translateY(-1px);
+}
+.pztpro-checkout-bar--rustic .pztpro-add-to-cart-btn:active {
+    transform:  translateY(0) scale(0.99);
+    box-shadow: 0 2px 8px var(--rp-accent-glow, rgba(179,74,0,0.25));
+}
+.pztpro-checkout-bar--rustic .pztpro-add-to-cart-btn:focus-visible {
+    outline:    none;
+    box-shadow: 0 0 0 2px var(--rp-surface, #faf4eb),
+                0 0 0 4px var(--rp-accent, #b34a00);
+}
+.pztpro-checkout-bar--rustic .pztpro-add-to-cart-btn:disabled,
+.pztpro-checkout-bar--rustic .pztpro-add-to-cart-btn.is-loading {
+    opacity:    0.6;
+    cursor:     not-allowed;
+    transform:  none;
+    box-shadow: none;
+}
+.pztpro-checkout-bar--rustic .pztpro-add-to-cart-btn.is-loading {
+    color:    transparent;
+    position: relative;
+}
+.pztpro-checkout-bar--rustic .pztpro-add-to-cart-btn.is-loading::after {
+    content:          '';
+    position:         absolute;
+    width:            18px;
+    height:           18px;
+    border:           2px solid rgba(255,255,255,0.5);
+    border-top-color: #fff;
+    border-radius:    50%;
+    animation:        rp-cta-spin 0.7s linear infinite;
+}
+@keyframes rp-cta-spin { to { transform: rotate(360deg); } }
+.pztpro-checkout-bar--rustic .pztpro-add-to-cart-btn.is-added {
+    background:   var(--rp-green, #4a6741);
+    border-color: var(--rp-green, #4a6741);
+}
+
+/* ── Order notes ─────────────────────────────────────────────── */
+.pztpro-checkout-bar--rustic .pztpro-bar-notes {
+    display:        flex;
+    flex-direction: column;
+    gap:            6px;
+}
+.pztpro-checkout-bar--rustic .pztpro-bar-notes__label {
+    font-family:    var(--rp-font-serif);
+    font-size:      12px;
+    font-weight:    700;
+    font-style:     italic;
+    letter-spacing: 0.02em;
+    color:          var(--rp-text-mid, #5c3d1a);
+}
+.pztpro-checkout-bar--rustic .pztpro-bar-notes__input {
+    width:         100%;
+    padding:       10px 12px;
+    border:        1.5px solid var(--rp-border, rgba(101,70,30,0.18));
+    border-radius: var(--rp-radius-sm, 4px);
+    background:    var(--rp-surface-2, #f0e5d0);
+    color:         var(--rp-text, #2c1a05);
+    font-family:   var(--rp-font-body);
+    font-size:     14px;
+    line-height:   1.45;
+    resize:        vertical;
+    transition:    border-color var(--rp-transition, 0.2s ease),
+                   box-shadow   var(--rp-transition, 0.2s ease);
+}
+.pztpro-checkout-bar--rustic .pztpro-bar-notes__input::placeholder {
+    color:      var(--rp-text-muted, #7a5c34);
+    font-style: italic;
+    opacity:    0.85;
+}
+.pztpro-checkout-bar--rustic .pztpro-bar-notes__input:focus {
+    outline:      none;
+    border-color: var(--rp-accent, #b34a00);
+    box-shadow:   0 0 0 3px var(--rp-accent-dim, rgba(179,74,0,0.10));
+}
+
+/* ── Responsive: stack CTA full-width on narrow screens ──────── */
+@media (max-width: 540px) {
+    .pztpro-checkout-bar--rustic .pztpro-bar-row {
+        flex-wrap: wrap;
+        gap:       10px;
+    }
+    .pztpro-checkout-bar--rustic .pztpro-bar-row__summary {
+        width: 100%;
+        flex:  none;
+    }
+    .pztpro-checkout-bar--rustic .pztpro-add-to-cart-btn {
+        flex:            1 1 auto;
+        justify-content: center;
+    }
+}

@@ -1,0 +1,46 @@
+{
+    "$schema": "https://schemas.wp.org/trunk/block.json",
+    "apiVersion": 3,
+    "name": "pizzatier/pizza-layer",
+    "version": "1.0.0",
+    "title": "Pizza Layer Image",
+    "category": "media",
+    "icon": "format-image",
+    "description": "Outputs a single pizza layer image (crust, sauce, cheese, topping, drizzle, or cut) by type and slug. Useful inline in content or for custom layouts.",
+    "keywords": ["pizza", "layer", "image", "topping", "ingredient"],
+    "textdomain": "pizzatier",
+    "editorScript": "file:./block.js",
+    "scriptDependencies": ["wp-blocks", "wp-element", "wp-components", "wp-block-editor", "wp-i18n", "wp-server-side-render"],
+    "supports": {
+        "html": false,
+        "align": ["left", "center", "right"],
+        "spacing": {
+            "margin": true
+        }
+    },
+    "attributes": {
+        "layerType": {
+            "type": "string",
+            "default": "crust"
+        },
+        "slug": {
+            "type": "string",
+            "default": ""
+        },
+        "imageField": {
+            "type": "string",
+            "default": "list"
+        },
+        "cssClass": {
+            "type": "string",
+            "default": ""
+        }
+    },
+    "example": {
+        "attributes": {
+            "layerType": "crust",
+            "slug": "",
+            "imageField": "list"
+        }
+    }
+}

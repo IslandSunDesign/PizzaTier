@@ -1,0 +1,1180 @@
+/* ══════════════════════════════════════════════════════════════
+   NIGHTPIE TEMPLATE — template.css
+   Dark pizza builder: sticky split-screen preview, rounded cards,
+   tab navigation, fly-to animation.
+   ══════════════════════════════════════════════════════════════ */
+
+/* ── Design Tokens ─────────────────────────────────────────── */
+:root {
+    --np-bg:            #0e0e12;
+    --np-surface:       #18181f;
+    --np-surface-2:     #22222c;
+    --np-surface-3:     #2c2c38;
+    --np-border:        rgba(255,255,255,0.08);
+    --np-border-hover:  rgba(255,255,255,0.18);
+    --np-card-border:   transparent;
+    --np-card-pad:      18px;
+    --np-accent:        #ff5722;
+    --np-accent-dim:    rgba(255,87,34,0.15);
+    --np-accent-glow:   rgba(255,87,34,0.35);
+    --np-text:          #f0f0f4;
+    --np-text-muted:    #888898;
+    --np-text-faint:    #444456;
+    --np-radius-sm:     10px;
+    --np-radius:        16px;
+    --np-radius-lg:     24px;
+    --np-radius-pill:   999px;
+    --np-shadow:        0 4px 24px rgba(0,0,0,0.45);
+    --np-shadow-sm:     0 2px 8px  rgba(0,0,0,0.3);
+    --np-transition:    0.22s cubic-bezier(0.4,0,0.2,1);
+    --np-font:          system-ui, -apple-system, 'Segoe UI', Roboto, Arial, sans-serif;
+}
+
+/* ── Base reset scoped to NightPie ─────────────────────────── */
+.np-root,
+.np-root * {
+    box-sizing: border-box;
+}
+.np-root {
+    font-family:  var(--np-font);
+    font-size:    15px;
+    line-height:  1.5;
+    color:        var(--np-text);
+    background:   var(--np-bg);
+    border-radius: var(--np-radius-lg);
+    overflow:     hidden;
+    box-shadow:   var(--np-shadow);
+}
+
+/* ══════════════════════════════════════════════════════════════
+   LAYOUT
+   Tablet & below (< 1024px): single column — pizza preview on top,
+                              compact tabbed builder beneath.
+   Desktop (≥ 1024px):        two-column split — pizza left, tabs right.
+   ══════════════════════════════════════════════════════════════ */
+
+.np-layout { padding: 0; width: 100%; }
+
+.np-layout__row {
+    display:        flex;
+    flex-direction: column;   /* mobile: stacked */
+    align-items:    stretch;
+    width:          100%;
+}
+
+@media (min-width: 1024px) {
+    .np-layout__row {
+        flex-direction: row;  /* desktop: side by side */
+        align-items:    stretch;
+        min-height:     580px;
+    }
+}
+
+/* ── Mobile: force full-width columns ─────────────────────── */
+@media (max-width: 1023px) {
+    .np-pizza-col,
+    .np-tabs-col {
+        width: 100% !important;
+        flex: 0 0 100% !important;
+        max-width: 100% !important;
+    }
+    .np-pizza-col {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+    .np-pizza-sticky {
+        width: 100%;
+        align-items: center;
+    }
+    .np-pizza-sticky__canvas {
+        max-width: 260px;
+        margin: 0 auto;
+    }
+}
+
+/* ── LEFT: Pizza preview column ─────────────────────────────── */
+
+/* Always visible — mobile shows it at the top */
+.np-pizza-col {
+    display:         flex;
+    flex-direction:  column;
+    align-items:     center;
+    justify-content: flex-start;
+    background:      var(--np-surface);
+    padding:         20px 16px 16px;
+    border-bottom:   1px solid var(--np-border);
+}
+
+@media (min-width: 1024px) {
+    .np-pizza-col {
+        flex:          0 0 320px;
+        width:         320px;
+        max-width:     38%;
+        border-bottom: none;
+        border-right:  1px solid var(--np-border);
+        padding:       28px 20px 20px;
+        position:      sticky;
+        top:           0;
+        align-self:    flex-start;
+        max-height:    100vh;
+        overflow-y:    auto;
+    }
+    .np-mobile-preview-bar {
+        display: none !important;
+    }
+}
+
+.np-pizza-sticky {
+    display:        flex;
+    flex-direction: column;
+    align-items:    center;
+    gap:            12px;
+    width:          100%;
+}
+
+.np-pizza-sticky__header {
+    display:        flex;
+    align-items:    center;
+    gap:            8px;
+    font-size:      12px;
+    font-weight:    700;
+    text-transform: uppercase;
+    letter-spacing: 0.09em;
+    color:          var(--np-text-muted);
+    align-self:     flex-start;
+    padding-left:   4px;
+}
+.np-pizza-sticky__header .fa { color: var(--np-accent); font-size: 14px; }
+
+/* ────────────────────────────────────────────────────────────
+   THE PIZZA CANVAS
+   A round dark plate that layers stack inside.
+   Canvas clips to circle; the stage fills it absolutely.
+   ──────────────────────────────────────────────────────────── */
+.np-pizza-sticky__canvas {
+    position:     relative;
+    width:        100%;
+    max-width:    260px;    /* compact on mobile */
+    aspect-ratio: 1 / 1;
+    border-radius: 50%;
+    /* dark pizza-dough background — visible before any layer loads */
+    background:   radial-gradient(
+                      circle at 44% 40%,
+                      #3a2e1a 0%,
+                      #251e0e 45%,
+                      #161006 100%
+                  );
+    box-shadow:
+        0 0 0 4px rgba(255,255,255,0.05),   /* subtle rim */
+        0 0 0 8px rgba(0,0,0,0.5),
+        0 12px 48px rgba(0,0,0,0.75),
+        inset 0 2px 16px rgba(0,0,0,0.6);
+    overflow:     hidden;   /* clip all layers to circle */
+    flex-shrink:  0;
+}
+
+@media (min-width: 1024px) {
+    .np-pizza-sticky__canvas { max-width: 270px; }
+}
+
+/* Stage-wrap and stage fill canvas absolutely */
+.np-pizza-sticky__canvas .np-pizza-stage-wrap {
+    position: absolute;
+    inset:    0;
+    width:    100%;
+    height:   100%;
+}
+
+.np-pizza-sticky__canvas .np-pizza-stage {
+    position:      absolute;
+    inset:         0;
+    width:         100%;
+    height:        100%;
+    background:    transparent;
+    border-radius: 0;  /* canvas already clips */
+}
+
+/* Layer divs fill stage */
+.np-pizza-sticky__canvas .np-layer-div {
+    position:       absolute;
+    inset:          0;
+    pointer-events: none;
+}
+.np-pizza-sticky__canvas .np-layer-div img {
+    position:   absolute;
+    inset:      0;
+    width:      100%;
+    height:     100%;
+    object-fit: contain;
+    display:    block;
+    transition: opacity 0.3s ease, clip-path 0.25s ease;
+}
+
+/* Dashed ring shown before any layer loads */
+.np-pizza-sticky__canvas::before {
+    content:        '';
+    position:       absolute;
+    inset:          6%;
+    border-radius:  50%;
+    border:         1px dashed rgba(255,255,255,0.08);
+    pointer-events: none;
+    z-index:        1;
+    transition:     opacity 0.4s ease;
+}
+.np-pizza-sticky__canvas.np-has-layers::before { opacity: 0; }
+
+.np-pizza-sticky__footer {
+    display:         flex;
+    align-items:     center;
+    justify-content: space-between;
+    width:           100%;
+    max-width:       260px;
+    gap:             8px;
+}
+@media (min-width: 1024px) {
+    .np-pizza-sticky__footer { max-width: 270px; }
+}
+
+.np-topping-counter {
+    display:       flex;
+    align-items:   center;
+    gap:           6px;
+    font-size:     12px;
+    color:         var(--np-text-muted);
+    background:    var(--np-surface-2);
+    border:        1px solid var(--np-border);
+    border-radius: var(--np-radius-pill);
+    padding:       4px 12px;
+}
+.np-topping-counter .fa { color: var(--np-accent); }
+.np-topping-counter-inline { font-size: 12px; color: var(--np-text-muted); }
+
+/* ── RIGHT: Tabs column ──────────────────────────────────── */
+.np-tabs-col {
+    flex:           1 1 0;
+    min-width:      0;
+    background:     var(--np-bg);
+    display:        flex;
+    flex-direction: column;
+}
+.np-builder {
+    flex:           1;
+    display:        flex;
+    flex-direction: column;
+}
+
+/* ══════════════════════════════════════════════════════════════
+   TAB NAV
+   ══════════════════════════════════════════════════════════════ */
+.np-tabnav {
+    position:   sticky;
+    top:        0;
+    z-index:    50;
+    display:    flex;
+    align-items: center;
+    gap:        4px;
+    padding:    12px 16px 0;
+    background: var(--np-bg);
+    border-bottom: 1px solid var(--np-border);
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    flex-wrap:  nowrap;
+}
+.np-tabnav::-webkit-scrollbar { display: none; }
+
+.np-tab {
+    display:        flex;
+    flex-direction: column;
+    align-items:    center;
+    gap:            4px;
+    padding:        8px 14px 12px;
+    border:         none;
+    background:     transparent;
+    color:          var(--np-text-muted);
+    cursor:         pointer;
+    border-radius:  var(--np-radius) var(--np-radius) 0 0;
+    font-size:      12px;
+    font-weight:    600;
+    letter-spacing: 0.03em;
+    transition:     color var(--np-transition), background var(--np-transition);
+    white-space:    nowrap;
+    position:       relative;
+    outline:        none;
+}
+.np-tab:hover  { color: var(--np-text); background: var(--np-surface-2); }
+.np-tab.active { color: var(--np-accent); background: var(--np-surface); }
+.np-tab.active::after {
+    content:       '';
+    position:      absolute;
+    bottom:        0; left: 12px; right: 12px;
+    height:        3px;
+    background:    var(--np-accent);
+    border-radius: var(--np-radius-pill) var(--np-radius-pill) 0 0;
+}
+.np-tab.np-tab--done:not(.active) { color: #4caf50; }
+.np-tab.np-tab--done:not(.active)::after {
+    content:       '';
+    position:      absolute;
+    bottom:        0; left: 12px; right: 12px;
+    height:        3px;
+    background:    #4caf5060;
+    border-radius: var(--np-radius-pill) var(--np-radius-pill) 0 0;
+}
+.np-tab__icon  { font-size: 16px; line-height: 1; }
+.np-tab__label { font-size: 11px; }
+
+/* ── Builder footer: step controls live BELOW the options now ── */
+.np-builder-footer {
+    background: var(--np-bg);
+    border-top: 1px solid var(--np-border);
+}
+
+/* Progress dots (rendered below the choices, inside .np-builder-footer) */
+.np-progress {
+    display:         flex;
+    gap:             6px;
+    padding:         14px 20px 12px;
+    background:      transparent;
+    align-items:     center;
+    justify-content: center;
+}
+.np-progress__dot {
+    width:         8px;
+    height:        8px;
+    border-radius: var(--np-radius-pill);
+    background:    var(--np-surface-3);
+    border:        1px solid var(--np-border);
+    transition:    background var(--np-transition), transform var(--np-transition);
+}
+.np-progress__dot.active {
+    background: var(--np-accent);
+    transform:  scale(1.3);
+    box-shadow: 0 0 8px var(--np-accent-glow);
+}
+.np-progress__dot.done { background: #4caf5080; }
+
+/* ══════════════════════════════════════════════════════════════
+   PANELS
+   ══════════════════════════════════════════════════════════════ */
+.np-panels  { flex: 1; background: var(--np-surface); }
+.np-panel   { display: none; padding: 24px 20px; min-height: 400px; }
+.np-panel.active { display: block; animation: np-fadein 0.25s ease; }
+
+@keyframes np-fadein {
+    from { opacity: 0; transform: translateY(6px); }
+    to   { opacity: 1; transform: translateY(0);   }
+}
+
+.np-panel__header { margin-bottom: 20px; }
+.np-panel__title {
+    font-size:   20px;
+    font-weight: 700;
+    color:       var(--np-text);
+    margin:      0 0 6px;
+    display:     flex;
+    align-items: center;
+    gap:         10px;
+}
+.np-panel__title .fa { color: var(--np-accent); font-size: 18px; }
+.np-panel__hint  { font-size: 13px; color: var(--np-text-muted); margin: 0; }
+
+.np-panel__nav {
+    display:         flex;
+    justify-content: space-between;
+    align-items:     center;
+    margin-top:      28px;
+    padding-top:     20px;
+    border-top:      1px solid var(--np-border);
+    gap:             12px;
+    flex-wrap:       wrap;
+}
+
+/* ══════════════════════════════════════════════════════════════
+   CARD GRID
+   ══════════════════════════════════════════════════════════════ */
+.np-cards-grid { display: grid; gap: 14px; }
+.np-cards-grid--exclusive { grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); }
+.np-cards-grid--toppings  { grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); }
+
+.np-card {
+    background:     var(--np-surface-2);
+    border:         1px solid var(--np-card-border, transparent);
+    border-radius:  var(--np-radius);
+    padding:        18px;
+    display:        flex;
+    flex-direction: column;
+    gap:            10px;
+    cursor:         pointer;
+    transition:     border-color var(--np-transition),
+                    background   var(--np-transition),
+                    box-shadow   var(--np-transition),
+                    transform    var(--np-transition);
+    position:       relative;
+}
+.np-card:hover {
+    border-color: var(--np-border-hover);
+    background:   var(--np-surface-3);
+    box-shadow:   var(--np-shadow-sm);
+    transform:    translateY(-2px);
+}
+.np-card.np-card--selected {
+    border-color: var(--np-accent);
+    background:   var(--np-accent-dim);
+    box-shadow:   0 0 0 1px var(--np-accent), var(--np-shadow-sm);
+}
+.np-card.np-card--selected .np-card__check { opacity: 1; transform: scale(1); }
+.np-card.np-card--selected .np-btn--add    { display: none !important; }
+.np-card.np-card--selected .np-btn--remove { display: flex !important; }
+
+.np-card__thumb-wrap {
+    position:      relative;
+    width:         100%;
+    aspect-ratio:  1 / 1;
+    border-radius: var(--np-radius-sm);
+    overflow:      hidden;
+    background:    var(--np-surface-3);
+    flex-shrink:   0;
+}
+.np-card__thumb {
+    width:      100%;
+    height:     100%;
+    object-fit: cover;
+    display:    block;
+    transition: transform var(--np-transition);
+}
+.np-card:hover .np-card__thumb { transform: scale(1.04); }
+.np-card__thumb--placeholder {
+    width:  100%; height: 100%;
+    background: linear-gradient(135deg, var(--np-surface-3) 0%, var(--np-surface-2) 100%);
+}
+
+.np-card__check {
+    position:        absolute;
+    top:             6px; right: 6px;
+    width:           26px; height: 26px;
+    border-radius:   var(--np-radius-pill);
+    background:      var(--np-accent);
+    color:           #fff;
+    display:         flex;
+    align-items:     center;
+    justify-content: center;
+    font-size:       12px;
+    opacity:         0;
+    transform:       scale(0.6);
+    transition:      opacity var(--np-transition), transform var(--np-transition);
+    box-shadow:      0 2px 8px var(--np-accent-glow);
+    pointer-events:  none;
+}
+.np-card__body  { display: flex; flex-direction: column; gap: 6px; flex: 1; }
+.np-card__name  { font-size: 13px; font-weight: 600; color: var(--np-text); line-height: 1.3; }
+.np-card__actions { display: flex; gap: 6px; flex-wrap: wrap; margin-top: auto; }
+
+/* ══════════════════════════════════════════════════════════════
+   BUTTONS
+   ══════════════════════════════════════════════════════════════ */
+.np-btn {
+    display:         inline-flex;
+    align-items:     center;
+    gap:             6px;
+    padding:         8px 16px;
+    border-radius:   var(--np-radius-pill);
+    font-size:       13px;
+    font-weight:     600;
+    cursor:          pointer;
+    border:          1px solid transparent;
+    transition:      background var(--np-transition),
+                     border-color var(--np-transition),
+                     color var(--np-transition),
+                     box-shadow var(--np-transition),
+                     transform 0.1s;
+    text-decoration: none;
+    line-height:     1;
+    outline:         none;
+}
+.np-btn:active { transform: scale(0.97); }
+
+.np-btn--add    { background: var(--np-accent); color: #fff; border-color: var(--np-accent); width: 100%; justify-content: center; }
+.np-btn--add:hover { background: #e64e1a; box-shadow: 0 4px 14px var(--np-accent-glow); }
+
+.np-btn--remove { background: transparent; color: var(--np-text-muted); border-color: var(--np-border); width: 100%; justify-content: center; }
+.np-btn--remove:hover { border-color: #f44336; color: #f44336; }
+
+.np-btn--ghost  { background: transparent; color: var(--np-text-muted); border-color: var(--np-border); }
+.np-btn--ghost:hover { color: var(--np-text); border-color: var(--np-border-hover); background: var(--np-surface-2); }
+
+.np-btn--prev   { background: var(--np-surface-2); color: var(--np-text-muted); border-color: var(--np-border); }
+.np-btn--prev:hover { color: var(--np-text); border-color: var(--np-border-hover); }
+
+.np-btn--next   { background: var(--np-accent); color: #fff; border-color: var(--np-accent); margin-left: auto; }
+.np-btn--next:hover { background: #e64e1a; box-shadow: 0 4px 14px var(--np-accent-glow); }
+
+.np-btn--cta    { padding: 10px 24px; font-size: 14px; letter-spacing: 0.02em; box-shadow: 0 4px 20px var(--np-accent-glow); }
+.np-btn--sm     { padding: 5px 12px; font-size: 12px; }
+
+/* ══════════════════════════════════════════════════════════════
+   COVERAGE SELECTOR
+   ══════════════════════════════════════════════════════════════ */
+.np-coverage { margin-top: 6px; }
+.np-coverage__label {
+    font-size:      11px;
+    font-weight:    600;
+    color:          var(--np-text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    display:        block;
+    margin-bottom:  6px;
+}
+.np-coverage__btns { display: flex; flex-wrap: wrap; gap: 5px; }
+.np-cov-btn {
+    display:       flex;
+    align-items:   center;
+    gap:           5px;
+    padding:       5px 8px;
+    border-radius: var(--np-radius-sm);
+    border:        1px solid var(--np-border);
+    background:    var(--np-surface-3);
+    color:         var(--np-text-muted);
+    font-size:     11px;
+    font-weight:   600;
+    cursor:        pointer;
+    transition:    all var(--np-transition);
+    outline:       none;
+}
+.np-cov-btn:hover  { border-color: var(--np-border-hover); color: var(--np-text); }
+.np-cov-btn.active { border-color: var(--np-accent); background: var(--np-accent-dim); color: var(--np-accent); box-shadow: 0 0 0 1px var(--np-accent); }
+
+.np-cov-ico {
+    display:               grid;
+    grid-template-columns: repeat(2, 7px);
+    grid-template-rows:    repeat(2, 7px);
+    gap:                   1px;
+    border:                1px solid rgba(255,255,255,0.18);
+    border-radius:         3px;
+    overflow:              hidden;
+    flex-shrink:           0;
+}
+.np-cov-ico--whole { background: var(--np-accent); }
+.np-cov-ico--left  { background: linear-gradient(to right, var(--np-accent) 50%, var(--np-surface-3) 50%); }
+.np-cov-ico--right { background: linear-gradient(to left,  var(--np-accent) 50%, var(--np-surface-3) 50%); }
+.np-cov-ico--q1    { background: linear-gradient(135deg, var(--np-accent) 50%, var(--np-surface-3) 50%); }
+.np-cov-ico--q2    { background: linear-gradient(225deg, var(--np-accent) 50%, var(--np-surface-3) 50%); }
+.np-cov-ico--q3    { background: linear-gradient(315deg, var(--np-accent) 50%, var(--np-surface-3) 50%); }
+.np-cov-ico--q4    { background: linear-gradient(45deg,  var(--np-accent) 50%, var(--np-surface-3) 50%); }
+
+/* ══════════════════════════════════════════════════════════════
+   YOUR PIZZA SUMMARY
+   ══════════════════════════════════════════════════════════════ */
+.np-yourpizza { display: flex; flex-direction: column; gap: 10px; margin-bottom: 24px; }
+.np-yourpizza__row {
+    display:       flex;
+    align-items:   flex-start;
+    gap:           12px;
+    padding:       14px 16px;
+    background:    var(--np-surface-2);
+    border:        1px solid var(--np-border);
+    border-radius: var(--np-radius);
+    transition:    border-color var(--np-transition), background var(--np-transition);
+}
+.np-yourpizza__row.has-selection { border-color: rgba(255,87,34,0.3); background: var(--np-accent-dim); }
+.np-yourpizza__icon {
+    width:           34px; height: 34px;
+    border-radius:   var(--np-radius-pill);
+    background:      var(--np-surface-3);
+    border:          1px solid var(--np-border);
+    display:         flex;
+    align-items:     center;
+    justify-content: center;
+    color:           var(--np-accent);
+    font-size:       15px;
+    flex-shrink:     0;
+}
+.np-yourpizza__layer-name {
+    font-size:      12px;
+    font-weight:    600;
+    color:          var(--np-text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    min-width:      64px;
+    padding-top:    4px;
+    flex-shrink:    0;
+}
+.np-yourpizza__selection { flex: 1; min-width: 0; display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.np-yp-none { font-size: 13px; color: var(--np-text-faint); font-style: italic; }
+.np-yourpizza__edit {
+    margin-left:     auto;
+    background:      transparent;
+    border:          1px solid var(--np-border);
+    border-radius:   var(--np-radius-pill);
+    color:           var(--np-text-muted);
+    cursor:          pointer;
+    width:           30px; height: 30px;
+    display:         flex;
+    align-items:     center;
+    justify-content: center;
+    font-size:       12px;
+    flex-shrink:     0;
+    transition:      all var(--np-transition);
+}
+.np-yourpizza__edit:hover { color: var(--np-accent); border-color: var(--np-accent); background: var(--np-accent-dim); }
+
+.np-yp-bubble {
+    display:       inline-flex;
+    align-items:   center;
+    gap:           6px;
+    padding:       4px 10px;
+    background:    var(--np-surface-3);
+    border:        1px solid var(--np-border);
+    border-radius: var(--np-radius-pill);
+    font-size:     12px;
+    font-weight:   600;
+    color:         var(--np-text);
+}
+.np-yp-bubble img        { width: 20px; height: 20px; border-radius: var(--np-radius-pill); object-fit: cover; }
+.np-yp-bubble .np-yp-coverage { font-size: 10px; color: var(--np-text-muted); font-weight: 400; }
+.np-yp-bubble .np-yp-remove {
+    background:  transparent;
+    border:      none;
+    cursor:      pointer;
+    color:       var(--np-text-muted);
+    padding:     0;
+    line-height: 1;
+    margin-left: 2px;
+    font-size:   12px;
+    display:     flex;
+    align-items: center;
+    transition:  color var(--np-transition);
+}
+.np-yp-bubble .np-yp-remove:hover { color: #f44336; }
+
+/* ══════════════════════════════════════════════════════════════
+   EMPTY STATE
+   ══════════════════════════════════════════════════════════════ */
+.np-empty {
+    color:         var(--np-text-muted);
+    font-size:     14px;
+    padding:       24px;
+    text-align:    center;
+    background:    var(--np-surface-2);
+    border:        1px dashed var(--np-border);
+    border-radius: var(--np-radius);
+    grid-column:   1 / -1;
+}
+.np-empty .fa { margin-right: 6px; }
+
+/* ══════════════════════════════════════════════════════════════
+   MOBILE MINI-PREVIEW BAR  (shown below 900px as fallback)
+   ══════════════════════════════════════════════════════════════ */
+.np-mobile-preview-bar {
+    display:    none;   /* hidden — pizza-col is always visible now */
+}
+
+/* ══════════════════════════════════════════════════════════════
+   FLY-TO ANIMATION CLONE
+   ══════════════════════════════════════════════════════════════ */
+#np-fly-container {
+    position:       fixed;
+    top:            0; left: 0;
+    width:          0; height: 0;
+    overflow:       visible;
+    pointer-events: none;
+    z-index:        9999;
+}
+.np-fly-clone {
+    position:       fixed;
+    border-radius:  var(--np-radius);
+    overflow:       hidden;
+    pointer-events: none;
+    box-shadow:     0 4px 20px var(--np-accent-glow);
+    border:         2px solid var(--np-accent);
+    transition:     none;
+}
+
+/* ══════════════════════════════════════════════════════════════
+   PIZZA STACK LAYER SYSTEM
+   .np-pizza-stage-wrap > .np-pizza-stage > .np-layer-div > img
+   Each .np-layer-div absolutely fills the stage.
+   ══════════════════════════════════════════════════════════════ */
+
+/* Standalone stage (outside canvas, e.g. static shortcode) */
+.np-pizza-stage-wrap {
+    position:      relative;
+    width:         100%;
+    aspect-ratio:  1;
+    border-radius: 50%;
+    overflow:      hidden;
+}
+
+.np-pizza-stage {
+    position:      absolute;
+    inset:         0;
+    width:         100%;
+    height:        100%;
+    background:    transparent;
+}
+
+/* Within the canvas, stage-wrap and stage are already set above */
+
+.np-layer-div {
+    position:       absolute;
+    inset:          0;
+    pointer-events: none;
+}
+.np-layer-div img {
+    position:   absolute;
+    inset:      0;
+    width:      100%;
+    height:     100%;
+    object-fit: contain;
+    display:    block;
+    transition: opacity 0.3s ease, clip-path 0.25s ease;
+}
+
+/* Static pizza (non-interactive) uses same system */
+.np-pizza-stage--static { }
+
+/* ══════════════════════════════════════════════════════════════
+   TOAST
+   ══════════════════════════════════════════════════════════════ */
+.np-toast {
+    position:       fixed;
+    bottom:         24px;
+    left:           50%;
+    transform:      translateX(-50%) translateY(20px);
+    background:     #1a1e23;
+    color:          #fff;
+    padding:        10px 20px;
+    border-radius:  99px;
+    font-size:      13px;
+    font-weight:    600;
+    opacity:        0;
+    transition:     opacity 0.3s ease, transform 0.3s ease;
+    pointer-events: none;
+    z-index:        9999;
+}
+.np-toast--visible { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+/* ══════════════════════════════════════════════════════════════
+   RESPONSIVE
+   ══════════════════════════════════════════════════════════════ */
+@media (max-width: 1023px) {
+    .np-root { border-radius: var(--np-radius); }
+
+    /* Pizza preview area on mobile — constrained height, centered */
+    .np-pizza-col {
+        padding:    16px 16px 12px;
+        background: var(--np-surface);
+    }
+    .np-pizza-sticky {
+        flex-direction: row;          /* header + pizza side by side on mobile */
+        align-items:    center;
+        justify-content: center;
+        gap:            16px;
+        flex-wrap:      wrap;
+    }
+    .np-pizza-sticky__header { align-self: center; }
+}
+
+@media (max-width: 575px) {
+    .np-tabnav { padding: 8px 8px 0; gap: 2px; }
+    .np-tab     { padding: 6px 10px 10px; }
+    .np-tab__label { font-size: 10px; }
+    .np-panel   { padding: 16px 12px; }
+    .np-cards-grid--exclusive,
+    .np-cards-grid--toppings { grid-template-columns: 1fr 1fr; }
+    .np-yourpizza__layer-name { display: none; }
+
+    .np-pizza-sticky__canvas { max-width: 200px; }
+    .np-pizza-sticky__footer { max-width: 200px; }
+}
+
+/* ── PizzaTier Settings — CSS var overrides ──────────────────────
+   Optional global --pzl-* tokens may be injected by the plugin to skin
+   the builder. When they are absent (the normal case) every value below
+   must fall back to the template's own token so this block stays a no-op
+   passthrough — NOT `inherit`, which previously wiped the item-card
+   border-colour and interior padding (the card-border setting appeared to
+   do nothing, and the cards lost their padding). */
+.np-root {
+    font-family:    var(--pzl-font,      var(--np-font, inherit));
+    font-size:      var(--pzl-font-size, inherit);
+}
+.np-card, .np-item {
+    background:     var(--pzl-card-bg,     var(--np-surface-2));
+    border-color:   var(--pzl-card-border, var(--np-card-border, transparent));
+    border-radius:  var(--pzl-card-radius, var(--np-radius));
+    padding:        var(--pzl-card-pad,    var(--np-card-pad, 18px));
+    box-shadow:     var(--pzl-card-shadow, none);
+}
+.np-card--selected, .np-item--selected {
+    border-color:   var(--pzl-selected, var(--np-accent)) !important;
+}
+.np-btn--primary {
+    background:     var(--pzl-btn-bg,    var(--np-accent));
+    color:          var(--pzl-btn-text,  #fff);
+    border-radius:  var(--pzl-btn-radius, var(--np-radius-sm));
+    font-weight:    var(--pzl-btn-fw,    inherit);
+}
+.cb-tab--hidden-step { display: none !important; }
+
+/* ══════════════════════════════════════════════════════════════
+   MOBILE — one-column layout (≤ 599px)
+   ══════════════════════════════════════════════════════════════ */
+@media (max-width: 599px) {
+    .np-root { font-size: 14px; }
+
+    /* Full-width pizza preview, centred */
+    .np-pizza-col {
+        width: 100%;
+        padding: 12px 12px 8px;
+    }
+    .np-pizza-sticky__canvas { max-width: 210px; margin: 0 auto; }
+    .np-pizza-sticky__footer { max-width: 210px; margin: 0 auto; }
+
+    /* Tabs scroll horizontally; labels shrink */
+    .np-tabnav  { padding: 6px 6px 0; gap: 2px; flex-wrap: nowrap; overflow-x: auto; }
+    .np-tab     { padding: 6px 8px 10px; flex-shrink: 0; }
+    .np-tab__label { font-size: 10px; }
+
+    /* Card grid: two columns on phone */
+    .np-cards-grid--exclusive,
+    .np-cards-grid--toppings { grid-template-columns: 1fr 1fr; }
+
+    /* Panels full-width */
+    .np-panel { padding: 14px 10px; }
+
+    /* Hide layer name in summary on very small screens */
+    .np-yourpizza__layer-name { display: none; }
+
+    /* Checkout bar stacks vertically */
+    .np-checkout-bar__inner {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 8px;
+    }
+    .np-checkout-bar__btn { width: 100%; text-align: center; }
+}
+
+/* ══════════════════════════════════════════════════════════════
+   NIGHTPIE — TABLET RESPONSIVE (600px – 1023px)
+   Single column: pizza preview on top, compact tabbed builder below.
+   ══════════════════════════════════════════════════════════════ */
+@media (min-width: 600px) and (max-width: 1023px) {
+    /* Preview sits on top, centred and full-width */
+    .np-pizza-col { padding: 16px 16px 12px; }
+    .np-pizza-sticky {
+        flex-direction: row;
+        align-items: center;
+        justify-content: center;
+        gap: 20px;
+        flex-wrap: nowrap;
+    }
+    .np-pizza-sticky__canvas { max-width: 190px; flex-shrink: 0; }
+    .np-pizza-sticky__footer { max-width: 190px; }
+
+    /* Compact tab bar: tighter spacing, smaller labels, horizontal scroll */
+    .np-tabnav { padding: 8px 10px 0; gap: 2px; }
+    .np-tab    { padding: 6px 12px 10px; }
+    .np-tab__icon  { font-size: 15px; }
+    .np-tab__label { font-size: 10px; letter-spacing: 0.02em; }
+
+    /* Slightly tighter panel padding */
+    .np-panel { padding: 18px 16px; }
+
+    /* Card grids: 3 columns on tablet */
+    .np-cards-grid--exclusive { grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); }
+    .np-cards-grid--toppings  { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); }
+}
+
+/* ══════════════════════════════════════════════════════════════
+   NIGHTPIE — CHECKOUT BAR RESPONSIVE
+   ══════════════════════════════════════════════════════════════ */
+@media (max-width: 540px) {
+    .pztpro-checkout-bar--nightpie .pztpro-bar-row {
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+    .pztpro-checkout-bar--nightpie .pztpro-bar-row__summary {
+        width: 100%;
+        flex: none;
+    }
+    .pztpro-checkout-bar--nightpie .pztpro-bar-row__btn {
+        flex: 1 1 auto;
+        justify-content: center;
+    }
+}
+
+
+/* ══════════════════════════════════════════════════════════════
+   NIGHTPIE — ISSUE FIXES & ENHANCEMENTS
+   ══════════════════════════════════════════════════════════════ */
+
+/* 1. Dark mode overhaul — update root to deep dark gradient */
+.np-root {
+    background: linear-gradient(145deg, #0a0a10 0%, #12121a 50%, #0d0d15 100%) !important;
+}
+
+/* 2. Remove white/surface background from full preview area;
+      keep it only on the rounded pizza-sticky container */
+.np-pizza-col {
+    background: transparent !important;
+    border-bottom-color: rgba(255,255,255,0.06) !important;
+    border-right-color: rgba(255,255,255,0.06) !important;
+}
+.np-pizza-sticky {
+    background: linear-gradient(145deg, var(--np-surface, #18181f) 0%, var(--np-surface-2, #22222c) 100%);
+    border-radius: var(--np-radius, 16px);
+    border: 1px solid rgba(255,255,255,0.07);
+    padding: 14px;
+    box-shadow:
+        0 0 0 1px rgba(255,87,34,0.06),
+        0 8px 32px rgba(0,0,0,0.50),
+        inset 0 1px 0 rgba(255,255,255,0.04);
+}
+
+/* 3. Section navigation buttons (now inside .np-builder-footer, below options) */
+.np-section-nav {
+    display: flex;
+    gap: 8px;
+    padding: 10px 16px 12px;
+    border-top: 1px solid var(--np-border, rgba(255,255,255,0.08));
+    background: transparent;
+}
+.np-section-nav__btn {
+    flex: 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    padding: 8px 12px;
+    border-radius: var(--np-radius-sm, 10px);
+    border: 1px solid var(--np-border, rgba(255,255,255,0.08));
+    background: var(--np-surface-2, #22222c);
+    color: var(--np-text-muted, #888898);
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.18s;
+    font-family: inherit;
+}
+.np-section-nav__btn:hover:not(:disabled) {
+    background: var(--np-accent-dim, rgba(255,87,34,0.15));
+    border-color: var(--np-accent, #ff5722);
+    color: var(--np-accent, #ff5722);
+}
+.np-section-nav__btn:disabled {
+    opacity: 0.28;
+    cursor: default;
+}
+.np-section-nav__btn--next {
+    background: var(--np-accent, #ff5722);
+    color: #fff;
+    border-color: var(--np-accent, #ff5722);
+    box-shadow: 0 0 12px rgba(255,87,34,0.30);
+}
+.np-section-nav__btn--next:hover:not(:disabled) {
+    background: #ff7043;
+    box-shadow: 0 0 20px rgba(255,87,34,0.50);
+}
+
+/* 4. Size selector styled for NightPie dark theme.
+      Scoped to .np-root and covering the pztpro-* classes so these rules win
+      over PizzaTierPro's generic (light) size-selector defaults — previously
+      the buttons rendered as near-white text on a white background. */
+.np-root .np-size-selector { margin-top: 4px; }
+.np-root .np-size-selector__heading {
+    font-size:      12px;
+    font-weight:    700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color:          var(--np-text-muted, #888898);
+    margin:         0 0 4px;
+}
+.np-root .np-size-selector__options {
+    display:   flex;
+    flex-wrap: wrap;
+    gap:       8px;
+    margin-top: 10px;
+}
+.np-root .np-size-option,
+.np-root .pztpro-size-option {
+    display:        inline-flex;
+    align-items:    center;
+    padding:        10px 20px;
+    border:         2px solid var(--np-border, rgba(255,255,255,0.08));
+    border-radius:  999px;
+    cursor:         pointer;
+    font-size:      14px;
+    font-weight:    700;
+    background:     var(--np-surface-2, #22222c);
+    color:          var(--np-text, #f0f0f4);
+    transition:     all 0.18s;
+    letter-spacing: 0.03em;
+    margin:         0;
+}
+.np-root .np-size-option__name { color: inherit; }
+.np-root .np-size-option input[type="radio"],
+.np-root .pztpro-size-option .pztpro-size-radio,
+.np-root .pztpro-size-radio { display: none; }
+.np-root .np-size-option:hover,
+.np-root .pztpro-size-option:hover,
+.np-root .np-size-option.pztpro-size-option--active,
+.np-root .pztpro-size-option--active {
+    border-color: var(--np-accent, #ff5722);
+    background:   var(--np-accent-dim, rgba(255,87,34,0.15));
+    color:        var(--np-accent, #ff5722);
+    box-shadow:   0 0 0 1px var(--np-accent, #ff5722), 0 0 16px var(--np-accent-glow, rgba(255,87,34,0.25));
+}
+
+/* 5. Checkout bar + "Add to Cart" CTA — NightPie theme.
+      Markup comes from templates/nightpie/checkout-bar.php (PizzaTierPro).
+      All styling is kept here in the template CSS and uses NightPie tokens so
+      it tracks the Accent Color setting. */
+.pztpro-checkout-bar--nightpie {
+    margin-top:     14px;
+    padding:        14px 16px;
+    background:     linear-gradient(145deg, var(--np-surface, #18181f) 0%, var(--np-surface-2, #22222c) 100%);
+    border:         1px solid var(--np-border, rgba(255,255,255,0.08));
+    border-radius:  var(--np-radius, 16px);
+    box-shadow:     0 8px 32px rgba(0,0,0,0.45), inset 0 1px 0 rgba(255,255,255,0.04);
+}
+.pztpro-checkout-bar--nightpie .pztpro-bar-row {
+    display:     flex;
+    align-items: center;
+    gap:         14px;
+    flex-wrap:   wrap;
+}
+
+/* Summary + glowing price */
+.pztpro-checkout-bar--nightpie .pztpro-bar-row__summary {
+    display:        flex;
+    flex-direction: column;
+    gap:            2px;
+    min-width:      0;
+}
+.pztpro-checkout-bar--nightpie .pztpro-bar-row__size-label {
+    font-size:      11px;
+    font-weight:    600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color:          var(--np-text-muted, #888898);
+}
+.pztpro-checkout-bar--nightpie .pztpro-bar-row__price {
+    font-size:    22px;
+    font-weight:  800;
+    line-height:  1.1;
+    color:        var(--np-accent, #ff5722);
+    text-shadow:  0 0 18px var(--np-accent-glow, rgba(255,87,34,0.35));
+}
+
+/* Quantity stepper */
+.pztpro-checkout-bar--nightpie .pztpro-bar-qty {
+    display:       inline-flex;
+    align-items:   center;
+    gap:           2px;
+    background:    var(--np-surface-2, #22222c);
+    border:        1px solid var(--np-border, rgba(255,255,255,0.08));
+    border-radius: var(--np-radius-pill, 999px);
+    padding:       3px;
+}
+.pztpro-checkout-bar--nightpie .pztpro-qty-btn {
+    width:         30px;
+    height:        30px;
+    border:        none;
+    border-radius: var(--np-radius-pill, 999px);
+    background:    transparent;
+    color:        var(--np-text, #f0f0f4);
+    font-size:    18px;
+    line-height:  1;
+    cursor:       pointer;
+    display:         inline-flex;
+    align-items:     center;
+    justify-content: center;
+    transition:   background 0.18s, color 0.18s;
+}
+.pztpro-checkout-bar--nightpie .pztpro-qty-btn:hover:not(:disabled) {
+    background: var(--np-accent-dim, rgba(255,87,34,0.15));
+    color:      var(--np-accent, #ff5722);
+}
+.pztpro-checkout-bar--nightpie .pztpro-qty-btn:disabled { opacity: 0.35; cursor: default; }
+.pztpro-checkout-bar--nightpie .pztpro-qty-value {
+    min-width:   24px;
+    text-align:  center;
+    font-size:   14px;
+    font-weight: 700;
+    color:       var(--np-text, #f0f0f4);
+}
+
+/* The Add-to-Cart CTA button */
+.pztpro-checkout-bar--nightpie .pztpro-bar-row__btn,
+.pztpro-checkout-bar--nightpie .pztpro-add-to-cart-btn {
+    margin-left:     auto;
+    display:         inline-flex;
+    align-items:     center;
+    justify-content: center;
+    gap:             9px;
+    padding:         13px 28px;
+    border:          none;
+    border-radius:   var(--np-radius-pill, 999px);
+    background:      linear-gradient(135deg, var(--np-accent, #ff5722) 0%, #ff7043 100%);
+    color:           #fff;
+    font-size:       15px;
+    font-weight:     700;
+    letter-spacing:  0.02em;
+    cursor:          pointer;
+    line-height:     1;
+    box-shadow:      0 6px 22px var(--np-accent-glow, rgba(255,87,34,0.35));
+    transition:      transform 0.12s ease, box-shadow 0.18s ease, filter 0.18s ease;
+}
+.pztpro-checkout-bar--nightpie .pztpro-bar-row__btn svg,
+.pztpro-checkout-bar--nightpie .pztpro-add-to-cart-btn svg {
+    width:  18px;
+    height: 18px;
+    flex-shrink: 0;
+}
+.pztpro-checkout-bar--nightpie .pztpro-bar-row__btn:hover,
+.pztpro-checkout-bar--nightpie .pztpro-add-to-cart-btn:hover {
+    filter:     brightness(1.06);
+    box-shadow: 0 8px 30px var(--np-accent-glow, rgba(255,87,34,0.50));
+    transform:  translateY(-1px);
+}
+.pztpro-checkout-bar--nightpie .pztpro-bar-row__btn:active,
+.pztpro-checkout-bar--nightpie .pztpro-add-to-cart-btn:active { transform: translateY(0) scale(0.98); }
+.pztpro-checkout-bar--nightpie .pztpro-bar-row__btn:disabled,
+.pztpro-checkout-bar--nightpie .pztpro-add-to-cart-btn:disabled {
+    filter:    grayscale(0.4);
+    opacity:   0.6;
+    box-shadow: none;
+    cursor:    default;
+    transform: none;
+}
+
+/* Order-note textarea */
+.pztpro-checkout-bar--nightpie .pztpro-bar-notes__input {
+    width:         100%;
+    margin-top:    4px;
+    padding:       10px 12px;
+    background:    var(--np-surface-2, #22222c);
+    border:        1px solid var(--np-border, rgba(255,255,255,0.08));
+    border-radius: var(--np-radius-sm, 10px);
+    color:         var(--np-text, #f0f0f4);
+    font-family:   inherit;
+    font-size:     13px;
+    resize:        vertical;
+    transition:    border-color 0.18s;
+}
+.pztpro-checkout-bar--nightpie .pztpro-bar-notes__input::placeholder { color: var(--np-text-faint, #444456); }
+.pztpro-checkout-bar--nightpie .pztpro-bar-notes__input:focus {
+    outline:      none;
+    border-color: var(--np-accent, #ff5722);
+}
+
+/* 6. Dark panels background */
+.np-tabs-col,
+.np-builder {
+    background: var(--np-bg, #0e0e12);
+}
+.np-panels {
+    background: var(--np-surface, #18181f);
+}
