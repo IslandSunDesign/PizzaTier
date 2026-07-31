@@ -9,7 +9,7 @@ if ( ! defined( 'WP_UNINSTALL_PLUGIN' ) ) { exit; }
  */
 
 // ── Core plugin options (mirrors Settings::OPTIONS) ────────────────────
-$pizzatier_options = [
+$pizzatier_option_keys = [
 	// Template
 	'pizzatier_setting_global_template',
 	// Pizza display
@@ -366,13 +366,36 @@ $pizzatier_options = [
 
 	// ── Plugin state / UI flags ────────────────────────────────────
 	'pizzatier_setup_done',
+	// Cart & pricing settings, stored as one array option rather than as
+	// discrete keys, which is why the loop above never reached it.
+	'pizzatier_options',
+	// Schema version written by the upgrade routine.
+	'pizzatier_db_version',
 	'pizzatier_builder_viewed',
 	'pizzatier_setting_dark_mode',
 	'pizzatier_wizard_done',
 ];
 
-foreach ( $pizzatier_options as $pizzatier_opt ) {
+foreach ( $pizzatier_option_keys as $pizzatier_opt ) {
 	delete_option( $pizzatier_opt );
+}
+
+// ── Options discovered from the canonical registry ─────────────────────
+// The hard-coded list above is retained so uninstall still works if the
+// registry file is missing, but it had drifted out of step with the plugin:
+// 34 template settings (Colorbox and Command Center in particular) were left
+// behind in wp_options, and the ordering settings were never removed at all.
+// OptionRegistry reads each template's own pztp-template-options.php, so the
+// two can no longer disagree.
+$pizzatier_registry = __DIR__ . '/src/Core/OptionRegistry.php';
+if ( file_exists( $pizzatier_registry ) ) {
+	require_once $pizzatier_registry;
+
+	if ( class_exists( '\PizzaTier\Core\OptionRegistry' ) ) {
+		foreach ( \PizzaTier\Core\OptionRegistry::uninstall_keys() as $pizzatier_opt ) {
+			delete_option( $pizzatier_opt );
+		}
+	}
 }
 
 // ── Delete all CPT posts and their postmeta ────────────────────────────
@@ -384,19 +407,49 @@ $pizzatier_cpt_slugs = [
 	'pizzatier_drizzles',
 	'pizzatier_cuts',
 	'pizzatier_sizes',
+	'pizzatier_presets',
 ];
 
-foreach ( $pizzatier_cpt_slugs as $post_type ) {
-	$posts = get_posts( [
-		'post_type'      => $post_type,
+foreach ( $pizzatier_cpt_slugs as $pizzatier_post_type ) {
+	$pizzatier_posts = get_posts( [
+		'post_type'      => $pizzatier_post_type,
 		'post_status'    => 'any',
 		'posts_per_page' => -1,
 		'fields'         => 'ids',
 	] );
 
-	foreach ( $posts as $post_id ) {
-		wp_delete_post( (int) $post_id, true ); // true = force-delete, skip trash
+	foreach ( $pizzatier_posts as $pizzatier_post_id ) {
+		wp_delete_post( (int) $pizzatier_post_id, true ); // true = force-delete, skip trash
 	}
+}
+
+// ── Pizza orders ──────────────────────────────────────────────────────
+// Orders are customer transaction records, so they are NOT removed by
+// default — a site may still need them for accounting or dispute history
+// after the plugin is gone. Deletion is strictly opt-in via
+// Settings → Orders ("Delete order history when uninstalling").
+if ( get_option( 'pizzatier_setting_delete_orders_on_uninstall', 'no' ) === 'yes' ) {
+	// The pzt-* order statuses are registered by the plugin, which is not
+	// loaded during uninstall. A get_posts() call with 'any' would therefore
+	// resolve to an empty status list and match nothing, so query directly.
+	global $wpdb;
+	// phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.NotPrepared
+	$pizzatier_order_ids = $wpdb->get_col(
+		"SELECT ID FROM {$wpdb->posts} WHERE post_type = 'pizzatier_order'"
+	);
+
+	foreach ( $pizzatier_order_ids as $pizzatier_order_id ) {
+		wp_delete_post( (int) $pizzatier_order_id, true );
+	}
+
+	// Private customer notes are part of the same store-records set, so they
+	// follow the same opt-in rather than lingering as orphaned user meta.
+	// phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.NotPrepared
+	$wpdb->query(
+		"DELETE FROM {$wpdb->usermeta} WHERE meta_key = '_pzt_customer_private_notes'"
+	);
+
+	delete_option( 'pizzatier_order_sequence' );
 }
 
 // ── Delete any plugin transients ──────────────────────────────────────
@@ -409,7 +462,7 @@ $wpdb->query(
 );
 
 // ── Clean up legacy pricing post meta (1.1.x and earlier) ─────────────
-// The 1.2.0 release moved all pricing into PizzaTierPro. These keys
+// The 1.2.0 release moved all pricing into PizzaTier. These keys
 // are no longer written, but may exist on layer CPT posts if the site
 // previously used the old free-plugin Price Modifier field or the
 // dead "Pricing Grid (CSV)" meta box. The CPT delete loop above
@@ -428,3 +481,70 @@ $wpdb->query( "DELETE FROM {$wpdb->postmeta} WHERE meta_key IN (
 	'_pizzatier_is_vegetarian','_pizzatier_is_vegan','_pizzatier_is_gluten_free','_pizzatier_is_dairy_free'
 )" );
 // phpcs:enable WordPress.DB.DirectDatabaseQuery
+
+// ── Ordering settings ─────────────────────────────────────────────────
+// Written with a shared prefix by OrderSettings rather than enumerated, so
+// they are removed by prefix rather than by name.
+// phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.NotPrepared
+$wpdb->query(
+	$wpdb->prepare(
+		"DELETE FROM {$wpdb->options} WHERE option_name LIKE %s",
+		$wpdb->esc_like( 'pizzatier_setting_orders_' ) . '%'
+	)
+);
+
+// ── Cart & pricing post meta ──────────────────────────────────────────
+// Product configuration, price grids, presets and the per-serving nutrition
+// fields. The CPT loop above removes meta belonging to PizzaTier's own post
+// types, but product configuration lives on WooCommerce products, which are
+// not ours to delete — so the keys are removed directly.
+// phpcs:disable WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.NotPrepared
+$wpdb->query(
+	"DELETE FROM {$wpdb->postmeta} WHERE meta_key IN (
+		'_pizzatier_builder_template',
+		'_pizzatier_builder_position',
+		'_pizzatier_default_layers',
+		'_pizzatier_enabled_layers',
+		'_pizzatier_preselected_layers',
+		'_pizzatier_pricing_mode',
+		'_pizzatier_price_grid',
+		'_pizzatier_price_grid_flat',
+		'_pizzatier_layer_grid',
+		'_pizzatier_preset_layers',
+		'_pizzatier_layer_image_id',
+		'_pizzatier_fat',
+		'_pizzatier_carbs',
+		'_pizzatier_protein',
+		'_pizzatier_sodium',
+		'_pizzatier_allergens'
+	)"
+);
+
+// ── WooCommerce order line-item meta ──────────────────────────────────
+// The pizza build recorded against each order line. Removed only when the
+// site opted into deleting order records above; otherwise a store that keeps
+// its order history would be left with orders whose contents had vanished.
+if ( 'yes' === get_option( 'pizzatier_setting_delete_orders_on_uninstall', 'no' ) ) {
+	$pizzatier_itemmeta = $wpdb->prefix . 'woocommerce_order_itemmeta';
+	if ( $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $pizzatier_itemmeta ) ) ) {
+		// The table name is interpolated from $wpdb->prefix and a string literal
+		// rather than from the variable above, so no user-controlled value can
+		// reach the statement. MySQL has no placeholder form for identifiers.
+		$wpdb->query(
+			$wpdb->prepare(
+				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Identifier built from $wpdb->prefix and a literal, never from input. The compared value is prepared.
+				"DELETE FROM {$wpdb->prefix}woocommerce_order_itemmeta WHERE meta_key LIKE %s",
+				$wpdb->esc_like( '_pizzatier_' ) . '%'
+			)
+		);
+	}
+}
+
+// ── Per-user admin state ──────────────────────────────────────────────
+$wpdb->query(
+	$wpdb->prepare(
+		"DELETE FROM {$wpdb->usermeta} WHERE meta_key LIKE %s",
+		$wpdb->esc_like( 'pizzatier_' ) . '%'
+	)
+);
+// phpcs:enable WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.NotPrepared

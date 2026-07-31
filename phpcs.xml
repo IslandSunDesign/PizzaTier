@@ -1,0 +1,86 @@
+<?xml version="1.0"?>
+<ruleset name="PizzaTier">
+	<description>Coding standards for PizzaTier. Run: phpcs --standard=phpcs.xml</description>
+
+	<file>.</file>
+
+	<exclude-pattern>*/node_modules/*</exclude-pattern>
+	<exclude-pattern>*/vendor/*</exclude-pattern>
+	<exclude-pattern>*/languages/*</exclude-pattern>
+	<exclude-pattern>*/assets/js/*.min.js</exclude-pattern>
+
+	<arg name="extensions" value="php"/>
+	<arg name="colors"/>
+	<arg value="sp"/>
+
+	<!--
+		The sniffs that decide whether WordPress.org accepts a plugin.
+
+		Deliberately not the whole WordPress standard: that also enforces
+		formatting — brace placement, alignment, Yoda conditions — which is
+		worth arguing about separately and would bury the findings that
+		actually block a review under thousands that do not.
+	-->
+	<rule ref="WordPress.Security"/>
+	<rule ref="WordPress.DB"/>
+	<rule ref="WordPress.WP.I18n"/>
+	<rule ref="WordPress.WP.DeprecatedFunctions"/>
+	<rule ref="WordPress.WP.AlternativeFunctions"/>
+	<rule ref="WordPress.WP.GlobalVariablesOverride"/>
+	<rule ref="WordPress.WP.EnqueuedResources"/>
+	<rule ref="WordPress.WP.EnqueuedResourceParameters"/>
+	<rule ref="WordPress.WP.CapitalPDangit"/>
+	<rule ref="WordPress.PHP.NoSilencedErrors"/>
+	<rule ref="WordPress.PHP.DiscouragedPHPFunctions"/>
+	<rule ref="WordPress.PHP.DevelopmentFunctions"/>
+	<rule ref="WordPress.NamingConventions.PrefixAllGlobals"/>
+	<rule ref="WordPress.Security.PluginMenuSlug"/>
+
+	<properties>
+		<!-- Everything global this plugin declares carries one of these. -->
+		<property name="prefixes" type="array">
+			<element value="pizzatier"/>
+			<element value="PizzaTier"/>
+			<element value="PIZZATIER"/>
+			<element value="pzt"/>
+			<element value="pztc"/>
+		</property>
+		<property name="text_domain" type="array">
+			<element value="pizzatier"/>
+		</property>
+	</properties>
+
+	<!--
+		Guard helpers that PHPCS cannot follow.
+
+		Several handlers verify the nonce through a helper that wp_die()s on
+		failure rather than inline. Naming them here is more honest than
+		scattering suppressions, though the per-line annotations stay too:
+		WordPress.org's Plugin Check runs its own configuration and will not
+		read this file.
+	-->
+	<rule ref="WordPress.Security.NonceVerification">
+		<properties>
+			<property name="customNonceVerificationFunctions" type="array">
+				<element value="verify_nonce"/>
+				<element value="verify_capability"/>
+			</property>
+		</properties>
+	</rule>
+
+	<!--
+		Meta-key and taxonomy queries are flagged as slow. They are, but they
+		are also the only way to do what this plugin does: WooCommerce pizza
+		products are identified by a product_type term, and layer posts by their
+		meta. The queries involved are bounded, admin-side, and not on any
+		front-end hot path. Excluded so the report stays about correctness;
+		WordPress.org's own check will still surface them as warnings.
+	-->
+	<rule ref="WordPress.DB.SlowDBQuery">
+		<severity>0</severity>
+	</rule>
+
+	<!-- Minimum supported PHP. -->
+	<config name="testVersion" value="7.4-"/>
+	<rule ref="PHPCompatibility"/>
+</ruleset>

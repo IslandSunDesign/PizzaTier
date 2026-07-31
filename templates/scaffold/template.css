@@ -339,15 +339,15 @@
    SCAFFOLD — CHECKOUT BAR RESPONSIVE
    ══════════════════════════════════════════════════════════════ */
 @media (max-width: 540px) {
-    .pztpro-checkout-bar--scaffold .pztpro-bar-row {
+    .pztc-checkout-bar--scaffold .pztc-bar-row {
         flex-wrap: wrap;
         gap: 8px;
     }
-    .pztpro-checkout-bar--scaffold .pztpro-bar-row__summary {
+    .pztc-checkout-bar--scaffold .pztc-bar-row__summary {
         width: 100%;
         flex: none;
     }
-    .pztpro-checkout-bar--scaffold .pztpro-bar-row__btn {
+    .pztc-checkout-bar--scaffold .pztc-bar-row__btn {
         flex: 1 1 auto;
         justify-content: center;
     }
@@ -370,7 +370,7 @@
 
 /* 2. Minimal checkout bar — matches Scaffold's token-driven skeleton.
       All colours/geometry inherit the builder instance's --sc-* tokens. */
-.pztpro-checkout-bar--scaffold {
+.pztc-checkout-bar--scaffold {
     background: var(--sc-bg, transparent);
     border: 1px solid var(--sc-border, #cccccc);
     border-radius: var(--sc-card-radius, 6px);
@@ -380,39 +380,39 @@
     font-size: var(--sc-font-size, 14px);
     color: var(--sc-text, inherit);
 }
-.pztpro-checkout-bar--scaffold .pztpro-bar-row {
+.pztc-checkout-bar--scaffold .pztc-bar-row {
     width: 100%;
     display: flex;
     align-items: center;
     gap: 10px;
     flex-wrap: wrap;
 }
-.pztpro-checkout-bar--scaffold .pztpro-bar-row__summary {
+.pztc-checkout-bar--scaffold .pztc-bar-row__summary {
     display: flex;
     align-items: baseline;
     gap: 8px;
     flex: 1 1 auto;
     min-width: 0;
 }
-.pztpro-checkout-bar--scaffold .pztpro-bar-row__size-label {
+.pztc-checkout-bar--scaffold .pztc-bar-row__size-label {
     font-size: 0.875em;
     opacity: 0.7;
 }
-.pztpro-checkout-bar--scaffold .pztpro-bar-row__price {
+.pztc-checkout-bar--scaffold .pztc-bar-row__price {
     font-size: 18px;
     font-weight: 700;
     color: var(--sc-accent, #333);
 }
 
 /* Quantity stepper — token-driven, no decorative flourish */
-.pztpro-checkout-bar--scaffold .pztpro-bar-qty {
+.pztc-checkout-bar--scaffold .pztc-bar-qty {
     display: inline-flex;
     align-items: center;
     border: 1px solid var(--sc-border, #cccccc);
     border-radius: var(--sc-card-radius, 4px);
     overflow: hidden;
 }
-.pztpro-checkout-bar--scaffold .pztpro-qty-btn {
+.pztc-checkout-bar--scaffold .pztc-qty-btn {
     font: inherit;
     line-height: 1;
     cursor: pointer;
@@ -423,14 +423,14 @@
     height: 32px;
     transition: background var(--sc-anim-speed, 200ms);
 }
-.pztpro-checkout-bar--scaffold .pztpro-qty-btn:hover:not(:disabled) {
+.pztc-checkout-bar--scaffold .pztc-qty-btn:hover:not(:disabled) {
     background: var(--sc-border, #eee);
 }
-.pztpro-checkout-bar--scaffold .pztpro-qty-btn:disabled {
+.pztc-checkout-bar--scaffold .pztc-qty-btn:disabled {
     opacity: 0.4;
     cursor: default;
 }
-.pztpro-checkout-bar--scaffold .pztpro-qty-value {
+.pztc-checkout-bar--scaffold .pztc-qty-value {
     min-width: 28px;
     text-align: center;
     font-size: 0.875em;
@@ -439,7 +439,7 @@
 /* ── Add to Cart CTA ──────────────────────────────────────────────────────
    Button styling is kept entirely here in template.css (no inline styles).
    Customise the look here, or the label/icon from the Scaffold settings page. */
-.pztpro-checkout-bar--scaffold .pztpro-bar-row__btn {
+.pztc-checkout-bar--scaffold .pztc-bar-row__btn {
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -461,33 +461,33 @@
                 background var(--sc-anim-speed, 200ms),
                 transform var(--sc-anim-speed, 200ms);
 }
-.pztpro-checkout-bar--scaffold .pztpro-bar-row__icon {
+.pztc-checkout-bar--scaffold .pztc-bar-row__icon {
     width: 18px;
     height: 18px;
     flex-shrink: 0;
 }
-.pztpro-checkout-bar--scaffold .pztpro-bar-row__btn:hover {
+.pztc-checkout-bar--scaffold .pztc-bar-row__btn:hover {
     opacity: 0.9;
 }
-.pztpro-checkout-bar--scaffold .pztpro-bar-row__btn:active {
+.pztc-checkout-bar--scaffold .pztc-bar-row__btn:active {
     transform: scale(0.98);
 }
-.pztpro-checkout-bar--scaffold .pztpro-bar-row__btn:focus-visible {
+.pztc-checkout-bar--scaffold .pztc-bar-row__btn:focus-visible {
     outline: 2px solid var(--sc-accent, #333);
     outline-offset: 2px;
 }
-.pztpro-checkout-bar--scaffold .pztpro-bar-row__btn:disabled,
-.pztpro-checkout-bar--scaffold .pztpro-bar-row__btn[aria-disabled="true"] {
+.pztc-checkout-bar--scaffold .pztc-bar-row__btn:disabled,
+.pztc-checkout-bar--scaffold .pztc-bar-row__btn[aria-disabled="true"] {
     opacity: 0.5;
     cursor: default;
     transform: none;
 }
 
 /* Order notes textarea */
-.pztpro-checkout-bar--scaffold .pztpro-bar-notes {
+.pztc-checkout-bar--scaffold .pztc-bar-notes {
     margin-top: 10px;
 }
-.pztpro-checkout-bar--scaffold .pztpro-bar-notes__input {
+.pztc-checkout-bar--scaffold .pztc-bar-notes__input {
     width: 100%;
     font: inherit;
     font-size: 0.875em;
@@ -498,7 +498,7 @@
     padding: 6px 8px;
     resize: vertical;
 }
-.pztpro-checkout-bar--scaffold .pztpro-bar-notes__input:focus-visible {
+.pztc-checkout-bar--scaffold .pztc-bar-notes__input:focus-visible {
     outline: none;
     border-color: var(--sc-accent, #333);
 }

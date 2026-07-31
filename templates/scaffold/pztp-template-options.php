@@ -190,18 +190,18 @@ return [
     ],
 
     /* ══════════════════════════════════════════════════════════════════
-       GROUP: Add to Cart (PizzaTierPro)
-       Controls the checkout-bar CTA rendered by PizzaTierPro. These have no
-       effect unless PizzaTierPro is active and WooCommerce is in use. Button
+       GROUP: Add to Cart (PizzaTier)
+       Controls the checkout-bar CTA rendered by PizzaTier. These have no
+       effect unless PizzaTier is active and WooCommerce is in use. Button
        styling lives entirely in this template's template.css
-       (.pztpro-checkout-bar--scaffold).
+       (.pztc-checkout-bar--scaffold).
        ══════════════════════════════════════════════════════════════════ */
 
     [
         'key'         => 'scaffold_setting_cta_text',
         'type'        => 'text',
         'label'       => 'Add to Cart Button Text',
-        'desc'        => 'Label shown on the Add to Cart button in the checkout bar (PizzaTierPro). Leave blank to use the default "Add to Cart".',
+        'desc'        => 'Label shown on the Add to Cart button in the checkout bar (PizzaTier). Leave blank to use the default "Add to Cart".',
         'default'     => '',
         'placeholder' => 'Add to Cart',
     ],

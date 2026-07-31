@@ -67,7 +67,7 @@
 			if ( tops.length ) { attrs.push( 'toppings="' + tops.join( ',' ) + '"' ); }
 			if ( preset ) {
 				// A preset defines the entire pizza (incl. toppings) and renders via the
-				// [pizza_preset] shortcode (PizzaTierPro), keyed by the preset's post ID.
+				// [pizza_preset] shortcode (PizzaTier), keyed by the preset's post ID.
 				sc = '[pizza_preset id="' + preset + '"]';
 			} else {
 				sc = '[pizza_static' + ( attrs.length ? ' ' + attrs.join( ' ' ) : '' ) + ']';

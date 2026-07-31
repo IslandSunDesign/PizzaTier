@@ -49,32 +49,36 @@ $layer_anim_speed = isset( $atts['layer_anim_speed'] ) && (int) $atts['layer_ani
 	: max( 80, min( 800, (int) get_option( 'pizzatier_setting_layer_anim_speed', 320 ) ) );
 
 
-// ── PizzaTierPro: inline size selector ──────────────────────────────────────
+// ── Add-on: inline size selector ──────────────────────────────────────
 if ( ! function_exists( 'pzt_get_pro_sizes' ) ) :
 function pzt_get_pro_sizes(): array {
-	if ( ! function_exists( 'pztpro_get_setting' ) || ! class_exists( 'PizzaTierPro\\Pro\\PriceGrid\\Grid' ) ) { return []; }
+	// Sizes come from a pricing add-on when one is installed; pzt_addon_sizes()
+	// returns an empty array otherwise and the selector simply does not render.
 	$product_id = ( function_exists( 'get_queried_object_id' ) ? (int) get_queried_object_id() : 0 );
-	if ( ! $product_id ) { global $post; if ( $post instanceof \WP_Post ) { $product_id = $post->ID; } }
-	$grid = new \PizzaTierPro\Pro\PriceGrid\Grid(); return $grid->get_sizes( $product_id );
+	if ( ! $product_id ) {
+		global $post;
+		if ( $post instanceof \WP_Post ) { $product_id = $post->ID; }
+	}
+	return pzt_addon_sizes( $product_id );
 }
 endif;
 if ( ! function_exists( 'pzt_render_inline_size_selector' ) ) :
 function pzt_render_inline_size_selector( array $sizes, string $instance_id, string $css_prefix = 'cb' ): void {
 	if ( empty( $sizes ) ) { return; }
-	// Extract numeric suffix from instance_id (handles pztpro-1, pizzabuilder-1, pztpro-1-2, etc)
+	// Extract numeric suffix from instance_id (handles pztc-1, pizzabuilder-1, pztc-1-2, etc)
 	preg_match( '/-(\d+)$/', $instance_id, $_m_suf );
 	$radio_name_raw = ! empty( $_m_suf[1] ) ? $_m_suf[1] : preg_replace( '/[^a-zA-Z0-9_]/', '_', $instance_id );
-	$radio_name = 'pztpro_size_' . $radio_name_raw;
-	$heading = function_exists( 'pztpro_get_setting' ) ? (string) pztpro_get_setting( 'size_selector_label', '' ) : '';
+	$radio_name = 'pizzatier_commerce_size_' . $radio_name_raw;
+	$heading = (string) pzt_addon_setting( 'size_selector_label', '' );
 	if ( '' === $heading ) { $heading = __( 'Choose a Size', 'pizzatier' ); }
 	?>
-	<div class="<?php echo esc_attr( $css_prefix ); ?>-size-selector pztpro-inline-size-selector" id="<?php echo esc_attr( $instance_id ); ?>-size-selector" role="group" aria-label="<?php echo esc_attr( $heading ); ?>">
+	<div class="<?php echo esc_attr( $css_prefix ); ?>-size-selector pztc-inline-size-selector" id="<?php echo esc_attr( $instance_id ); ?>-size-selector" role="group" aria-label="<?php echo esc_attr( $heading ); ?>">
 		<p class="<?php echo esc_attr( $css_prefix ); ?>-size-selector__heading"><?php echo esc_html( $heading ); ?></p>
 		<div class="<?php echo esc_attr( $css_prefix ); ?>-size-selector__options">
 			<?php foreach ( $sizes as $i => $size ) :
 				$inp_id = esc_attr( $instance_id ) . '-sz-' . sanitize_html_class( strtolower( $size ) ); ?>
-			<label class="<?php echo esc_attr( $css_prefix ); ?>-size-option pztpro-size-option<?php echo 0 === $i ? ' pztpro-size-option--active' : ''; ?>" for="<?php echo esc_attr( $inp_id ); ?>">
-				<input type="radio" id="<?php echo esc_attr( $inp_id ); ?>" name="<?php echo esc_attr( $radio_name ); ?>" value="<?php echo esc_attr( $size ); ?>" class="pztpro-size-radio" <?php checked( 0, $i ); ?> />
+			<label class="<?php echo esc_attr( $css_prefix ); ?>-size-option pztc-size-option<?php echo 0 === $i ? ' pztc-size-option--active' : ''; ?>" for="<?php echo esc_attr( $inp_id ); ?>">
+				<input type="radio" id="<?php echo esc_attr( $inp_id ); ?>" name="<?php echo esc_attr( $radio_name ); ?>" value="<?php echo esc_attr( $size ); ?>" class="pztc-size-radio" <?php checked( 0, $i ); ?> />
 				<span class="<?php echo esc_attr( $css_prefix ); ?>-size-option__name"><?php echo esc_html( $size ); ?></span>
 			</label>
 			<?php endforeach; ?>
@@ -161,7 +165,9 @@ function pzt_rustic_exclusive_card( $post, string $layer_type, string $rp_var, i
     $js_add    = "window['{$rp_var}']&&window['{$rp_var}'].swapBase('{$layer_type}','{$slug}','{$js_title}','{$js_layer}',this)";
     $js_remove = "window['{$rp_var}']&&window['{$rp_var}'].removeBase('{$layer_type}','{$slug}',this)";
 
-    ob_start();
+    $card_html = '';
+	ob_start();
+	try {
     do_action( 'pizzatier_before_layer_card', $post, $layer_type );
     ?>
     <div class="rp-card rp-card--exclusive"
@@ -192,7 +198,11 @@ function pzt_rustic_exclusive_card( $post, string $layer_type, string $rp_var, i
     </div>
     <?php
     do_action( 'pizzatier_after_layer_card', $post, $layer_type );
-    return apply_filters( 'pizzatier_card_html', ob_get_clean(), $post, $layer_type );
+    $card_html = ob_get_contents();
+	} finally {
+		ob_end_clean();
+	}
+	return apply_filters( 'pizzatier_card_html', $card_html, $post, $layer_type  );
 }
 endif;
 
@@ -217,7 +227,9 @@ function pzt_rustic_topping_card( $post, string $rp_var, int $zindex, string $ad
     $js_add    = "window['{$rp_var}']&&window['{$rp_var}'].addTopping({$zindex},'{$js_slug}','{$js_layer}','{$js_title}','{$layer_id}','{$layer_id}',this)";
     $js_remove = "window['{$rp_var}']&&window['{$rp_var}'].removeTopping('pizzatier-topping-{$js_slug}','{$js_slug}',this)";
 
-    ob_start();
+    $card_html = '';
+	ob_start();
+	try {
     do_action( 'pizzatier_before_layer_card', $post, 'toppings' );
     ?>
     <div class="rp-card rp-card--topping"
@@ -275,34 +287,38 @@ function pzt_rustic_topping_card( $post, string $rp_var, int $zindex, string $ad
     </div>
     <?php
     do_action( 'pizzatier_after_layer_card', $post, 'toppings' );
-    return apply_filters( 'pizzatier_card_html', ob_get_clean(), $post, 'toppings' );
+    $card_html = ob_get_contents();
+	} finally {
+		ob_end_clean();
+	}
+	return apply_filters( 'pizzatier_card_html', $card_html, $post, 'toppings'  );
 }
 endif;
 
 // Render card HTML for each tab
 $crusts_html = '';
-foreach ( $crusts as $post ) { $crusts_html .= pzt_rustic_exclusive_card( $post, 'crust', $rp_var, 100, $rp_label_choose, $rp_label_remove ); }
+foreach ( $crusts as $pzt_layer ) { $crusts_html .= pzt_rustic_exclusive_card( $pzt_layer, 'crust', $rp_var, 100, $rp_label_choose, $rp_label_remove ); }
 if ( ! $crusts_html ) { $crusts_html = '<p class="rp-empty"><i class="fa fa-circle-exclamation"></i> ' . esc_html__( 'No crusts found.', 'pizzatier' ) . '</p>'; }
 
 $sauces_html = '';
-foreach ( $sauces as $post ) { $sauces_html .= pzt_rustic_exclusive_card( $post, 'sauce', $rp_var, 150, $rp_label_choose, $rp_label_remove ); }
+foreach ( $sauces as $pzt_layer ) { $sauces_html .= pzt_rustic_exclusive_card( $pzt_layer, 'sauce', $rp_var, 150, $rp_label_choose, $rp_label_remove ); }
 if ( ! $sauces_html ) { $sauces_html = '<p class="rp-empty">' . esc_html__( 'No sauces found.', 'pizzatier' ) . '</p>'; }
 
 $cheeses_html = '';
-foreach ( $cheeses as $post ) { $cheeses_html .= pzt_rustic_exclusive_card( $post, 'cheese', $rp_var, 200, $rp_label_choose, $rp_label_remove ); }
+foreach ( $cheeses as $pzt_layer ) { $cheeses_html .= pzt_rustic_exclusive_card( $pzt_layer, 'cheese', $rp_var, 200, $rp_label_choose, $rp_label_remove ); }
 if ( ! $cheeses_html ) { $cheeses_html = '<p class="rp-empty">' . esc_html__( 'No cheeses found.', 'pizzatier' ) . '</p>'; }
 
 $drizzles_html = '';
-foreach ( $drizzles as $post ) { $drizzles_html .= pzt_rustic_exclusive_card( $post, 'drizzle', $rp_var, 900, $rp_label_choose, $rp_label_remove ); }
+foreach ( $drizzles as $pzt_layer ) { $drizzles_html .= pzt_rustic_exclusive_card( $pzt_layer, 'drizzle', $rp_var, 900, $rp_label_choose, $rp_label_remove ); }
 if ( ! $drizzles_html ) { $drizzles_html = '<p class="rp-empty">' . esc_html__( 'No drizzles found.', 'pizzatier' ) . '</p>'; }
 
 $toppings_html = '';
 $t_z = 400;
-foreach ( $toppings as $post ) { $toppings_html .= pzt_rustic_topping_card( $post, $rp_var, $t_z, $rp_label_add, $rp_label_remove ); $t_z += 10; }
+foreach ( $toppings as $pzt_layer ) { $toppings_html .= pzt_rustic_topping_card( $pzt_layer, $rp_var, $t_z, $rp_label_add, $rp_label_remove ); $t_z += 10; }
 if ( ! $toppings_html ) { $toppings_html = '<p class="rp-empty">' . esc_html__( 'No toppings found.', 'pizzatier' ) . '</p>'; }
 
 $cuts_html = '';
-foreach ( $cuts as $post ) { $cuts_html .= pzt_rustic_exclusive_card( $post, 'cut', $rp_var, 950, $rp_label_choose, $rp_label_remove ); }
+foreach ( $cuts as $pzt_layer ) { $cuts_html .= pzt_rustic_exclusive_card( $pzt_layer, 'cut', $rp_var, 950, $rp_label_choose, $rp_label_remove ); }
 if ( ! $cuts_html ) { $cuts_html = '<p class="rp-empty">' . esc_html__( 'No cut styles found.', 'pizzatier' ) . '</p>'; }
 
 // Initial pizza via PizzaBuilder
@@ -353,7 +369,7 @@ $initial_pizza = $builder->build_dynamic(
 
                     <!-- Pizza canvas -->
                     <div class="rp-pizza-canvas" id="<?php echo esc_attr( $instance_id ); ?>-canvas">
-                        <?php echo $initial_pizza; // phpcs:ignore WordPress.Security.EscapeOutput ?>
+                        <?php echo wp_kses( $initial_pizza, pzt_card_allowed_html() );?>
                     </div>
 
                     <!-- Topping counter -->
@@ -393,18 +409,18 @@ $initial_pizza = $builder->build_dynamic(
                         ];
                         $step_num  = 1;
                         $first_tab = true;
-                        foreach ( $visible_tabs as $tab ) :
-                            if ( ! isset( $step_meta[ $tab ] ) ) { continue; }
-                            [ $icon, $label ] = $step_meta[ $tab ];
+                        foreach ( $visible_tabs as $pzt_tab ) :
+                            if ( ! isset( $step_meta[ $pzt_tab ] ) ) { continue; }
+                            [ $icon, $label ] = $step_meta[ $pzt_tab ];
                             $active   = $first_tab ? 'active' : '';
                             $selected = $first_tab ? 'true' : 'false';
                             $first_tab = false;
                         ?>
                         <button class="rp-step <?php echo esc_attr( $active ); ?>"
-                                data-tab="<?php echo esc_attr( $tab ); ?>"
+                                data-tab="<?php echo esc_attr( $pzt_tab ); ?>"
                                 data-instance="<?php echo esc_attr( $instance_id ); ?>"
                                 role="tab" aria-selected="<?php echo esc_attr( $selected ); ?>"
-                                aria-controls="<?php echo esc_attr( $instance_id . '-panel-' . $tab ); ?>">
+                                aria-controls="<?php echo esc_attr( $instance_id . '-panel-' . $pzt_tab ); ?>">
                             <span class="rp-step__num"><?php echo esc_html( (string) $step_num++ ); ?></span>
                             <span class="rp-step__icon"><i class="fa <?php echo esc_attr( $icon ); ?>"></i></span>
                             <span class="rp-step__label"><?php echo esc_html( $label ); ?></span>
@@ -451,7 +467,7 @@ $initial_pizza = $builder->build_dynamic(
                                     </div>
                                 </div>
                             </div>
-                            <div class="rp-cards-grid rp-cards-grid--exclusive"><?php echo $crusts_html; // phpcs:ignore ?></div>
+                            <div class="rp-cards-grid rp-cards-grid--exclusive"><?php echo wp_kses( $crusts_html, pzt_card_allowed_html() );?></div>
                             <div class="rp-panel__nav">
                                 <span></span>
                                 <button class="rp-btn rp-btn--next" onclick="<?php echo esc_js( $rp_var ); ?>.goTab('sauce')"><?php esc_html_e( 'Next: Sauce', 'pizzatier' ); ?> <i class="fa fa-arrow-right"></i></button>
@@ -472,7 +488,7 @@ $initial_pizza = $builder->build_dynamic(
                                     </div>
                                 </div>
                             </div>
-                            <div class="rp-cards-grid rp-cards-grid--exclusive"><?php echo $sauces_html; // phpcs:ignore ?></div>
+                            <div class="rp-cards-grid rp-cards-grid--exclusive"><?php echo wp_kses( $sauces_html, pzt_card_allowed_html() );?></div>
                             <div class="rp-panel__nav">
                                 <button class="rp-btn rp-btn--prev" onclick="<?php echo esc_js( $rp_var ); ?>.goTab('crust')"><i class="fa fa-arrow-left"></i> <?php esc_html_e( 'Crust', 'pizzatier' ); ?></button>
                                 <button class="rp-btn rp-btn--next" onclick="<?php echo esc_js( $rp_var ); ?>.goTab('cheese')"><?php esc_html_e( 'Next: Cheese', 'pizzatier' ); ?> <i class="fa fa-arrow-right"></i></button>
@@ -493,7 +509,7 @@ $initial_pizza = $builder->build_dynamic(
                                     </div>
                                 </div>
                             </div>
-                            <div class="rp-cards-grid rp-cards-grid--exclusive"><?php echo $cheeses_html; // phpcs:ignore ?></div>
+                            <div class="rp-cards-grid rp-cards-grid--exclusive"><?php echo wp_kses( $cheeses_html, pzt_card_allowed_html() );?></div>
                             <div class="rp-panel__nav">
                                 <button class="rp-btn rp-btn--prev" onclick="<?php echo esc_js( $rp_var ); ?>.goTab('sauce')"><i class="fa fa-arrow-left"></i> <?php esc_html_e( 'Sauce', 'pizzatier' ); ?></button>
                                 <button class="rp-btn rp-btn--next" onclick="<?php echo esc_js( $rp_var ); ?>.goTab('toppings')"><?php esc_html_e( 'Next: Toppings', 'pizzatier' ); ?> <i class="fa fa-arrow-right"></i></button>
@@ -516,7 +532,7 @@ $initial_pizza = $builder->build_dynamic(
                                     </div>
                                 </div>
                             </div>
-                            <div class="rp-cards-grid rp-cards-grid--toppings"><?php echo $toppings_html; // phpcs:ignore ?></div>
+                            <div class="rp-cards-grid rp-cards-grid--toppings"><?php echo wp_kses( $toppings_html, pzt_card_allowed_html() );?></div>
                             <div class="rp-panel__nav">
                                 <button class="rp-btn rp-btn--prev" onclick="<?php echo esc_js( $rp_var ); ?>.goTab('cheese')"><i class="fa fa-arrow-left"></i> <?php esc_html_e( 'Cheese', 'pizzatier' ); ?></button>
                                 <button class="rp-btn rp-btn--next" onclick="<?php echo esc_js( $rp_var ); ?>.goTab('drizzle')"><?php esc_html_e( 'Next: Drizzle', 'pizzatier' ); ?> <i class="fa fa-arrow-right"></i></button>
@@ -537,7 +553,7 @@ $initial_pizza = $builder->build_dynamic(
                                     </div>
                                 </div>
                             </div>
-                            <div class="rp-cards-grid rp-cards-grid--exclusive"><?php echo $drizzles_html; // phpcs:ignore ?></div>
+                            <div class="rp-cards-grid rp-cards-grid--exclusive"><?php echo wp_kses( $drizzles_html, pzt_card_allowed_html() );?></div>
                             <div class="rp-panel__nav">
                                 <button class="rp-btn rp-btn--prev" onclick="<?php echo esc_js( $rp_var ); ?>.goTab('toppings')"><i class="fa fa-arrow-left"></i> <?php esc_html_e( 'Toppings', 'pizzatier' ); ?></button>
                                 <button class="rp-btn rp-btn--next" onclick="<?php echo esc_js( $rp_var ); ?>.goTab('slicing')"><?php esc_html_e( 'Next: Slicing', 'pizzatier' ); ?> <i class="fa fa-arrow-right"></i></button>
@@ -558,7 +574,7 @@ $initial_pizza = $builder->build_dynamic(
                                     </div>
                                 </div>
                             </div>
-                            <div class="rp-cards-grid rp-cards-grid--exclusive"><?php echo $cuts_html; // phpcs:ignore ?></div>
+                            <div class="rp-cards-grid rp-cards-grid--exclusive"><?php echo wp_kses( $cuts_html, pzt_card_allowed_html() );?></div>
                             <div class="rp-panel__nav">
                                 <button class="rp-btn rp-btn--prev" onclick="<?php echo esc_js( $rp_var ); ?>.goTab('drizzle')"><i class="fa fa-arrow-left"></i> <?php esc_html_e( 'Drizzle', 'pizzatier' ); ?></button>
                                 <button class="rp-btn rp-btn--next rp-btn--cta" onclick="<?php echo esc_js( $rp_var ); ?>.goTab('yourpizza')"><i class="fa fa-scroll"></i> <?php esc_html_e( 'Review Your Order', 'pizzatier' ); ?></button>

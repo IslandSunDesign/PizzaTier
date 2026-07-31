@@ -1,0 +1,598 @@
+/**
+ * PizzaTier — Native Order Checkout styles
+ *
+ * Everything is driven by custom properties declared on .pzt-order-bar and
+ * .pzt-order-panel, so a template stylesheet can restyle the whole thing by
+ * redefining a handful of variables under its own modifier class, e.g.
+ *
+ *   .pzt-order-bar--nightpie { --pzt-order-accent: #e8b04b; --pzt-order-bg: #16161a; }
+ *
+ * Selectors are namespaced with pzt-order- and never bare element rules, so
+ * this file cannot leak into the surrounding theme.
+ */
+
+:root,
+.pzt-order-bar,
+.pzt-order-panel {
+	--pzt-order-accent: #ff6b35;
+	--pzt-order-accent-ink: #ffffff;
+	--pzt-order-bg: #ffffff;
+	--pzt-order-ink: #1d2327;
+	--pzt-order-muted: #646970;
+	--pzt-order-border: #dcdcde;
+	--pzt-order-radius: 10px;
+	--pzt-order-gap: 12px;
+	--pzt-order-error: #d63638;
+	--pzt-order-success: #1a7f37;
+	--pzt-order-shadow: 0 6px 24px rgba( 0, 0, 0, 0.14 );
+}
+
+/* ==========================================================================
+   Order bar
+   ========================================================================== */
+
+.pzt-order-bar {
+	display: flex;
+	align-items: center;
+	flex-wrap: wrap;
+	gap: var( --pzt-order-gap );
+	box-sizing: border-box;
+	width: 100%;
+	margin: 16px 0 0;
+	padding: 14px 16px;
+	background: var( --pzt-order-bg );
+	border: 1px solid var( --pzt-order-border );
+	border-radius: var( --pzt-order-radius );
+	color: var( --pzt-order-ink );
+	font-size: 15px;
+	line-height: 1.4;
+}
+
+.pzt-order-bar.is-warning {
+	border-color: var( --pzt-order-accent );
+}
+
+.pzt-order-bar__summary {
+	display: flex;
+	flex-direction: column;
+	flex: 1 1 220px;
+	min-width: 0;
+}
+
+.pzt-order-bar__title {
+	font-size: 12px;
+	font-weight: 600;
+	letter-spacing: 0.04em;
+	text-transform: uppercase;
+	color: var( --pzt-order-muted );
+}
+
+.pzt-order-bar__detail {
+	overflow: hidden;
+	font-weight: 600;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.pzt-order-bar__notice {
+	flex: 1 1 100%;
+	margin: 0;
+	color: var( --pzt-order-muted );
+	font-size: 14px;
+}
+
+/* Quantity stepper ------------------------------------------------------- */
+
+.pzt-order-bar__qty {
+	display: flex;
+	align-items: center;
+	gap: 2px;
+	border: 1px solid var( --pzt-order-border );
+	border-radius: 999px;
+	overflow: hidden;
+}
+
+.pzt-order-qty-btn {
+	width: 34px;
+	height: 34px;
+	padding: 0;
+	border: 0;
+	background: transparent;
+	color: var( --pzt-order-ink );
+	font-size: 18px;
+	line-height: 1;
+	cursor: pointer;
+}
+
+.pzt-order-qty-btn:hover:not( :disabled ) {
+	background: rgba( 0, 0, 0, 0.06 );
+}
+
+.pzt-order-qty-btn:disabled {
+	opacity: 0.35;
+	cursor: not-allowed;
+}
+
+.pzt-order-qty-value {
+	min-width: 26px;
+	text-align: center;
+	font-weight: 700;
+	font-variant-numeric: tabular-nums;
+}
+
+/* Call to action --------------------------------------------------------- */
+
+.pzt-order-bar__btn {
+	display: inline-flex;
+	align-items: center;
+	gap: 8px;
+	padding: 11px 20px;
+	border: 0;
+	border-radius: 999px;
+	background: var( --pzt-order-accent );
+	color: var( --pzt-order-accent-ink );
+	font-size: 15px;
+	font-weight: 700;
+	line-height: 1;
+	cursor: pointer;
+	transition: transform 0.12s ease, filter 0.12s ease;
+}
+
+.pzt-order-bar__btn:hover {
+	filter: brightness( 1.06 );
+}
+
+.pzt-order-bar__btn:active {
+	transform: translateY( 1px );
+}
+
+.pzt-order-bar__icon {
+	width: 18px;
+	height: 18px;
+	flex: 0 0 auto;
+}
+
+/* ==========================================================================
+   Checkout panel
+   ========================================================================== */
+
+body.pzt-order-open {
+	overflow: hidden;
+}
+
+.pzt-order-panel {
+	position: fixed;
+	inset: 0;
+	z-index: 100000;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	padding: 20px;
+	box-sizing: border-box;
+}
+
+.pzt-order-panel[hidden] {
+	display: none;
+}
+
+.pzt-order-panel__backdrop {
+	position: absolute;
+	inset: 0;
+	background: rgba( 0, 0, 0, 0.55 );
+}
+
+.pzt-order-panel__dialog {
+	position: relative;
+	display: flex;
+	flex-direction: column;
+	width: 100%;
+	max-width: 560px;
+	max-height: 90vh;
+	background: var( --pzt-order-bg );
+	border-radius: calc( var( --pzt-order-radius ) * 1.4 );
+	box-shadow: var( --pzt-order-shadow );
+	color: var( --pzt-order-ink );
+	overflow: hidden;
+}
+
+.pzt-order-panel__header {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 12px;
+	padding: 18px 20px;
+	border-bottom: 1px solid var( --pzt-order-border );
+}
+
+.pzt-order-panel__title {
+	margin: 0;
+	font-size: 19px;
+	font-weight: 700;
+}
+
+.pzt-order-panel__close {
+	width: 34px;
+	height: 34px;
+	padding: 0;
+	border: 0;
+	border-radius: 50%;
+	background: transparent;
+	color: var( --pzt-order-muted );
+	font-size: 26px;
+	line-height: 1;
+	cursor: pointer;
+}
+
+.pzt-order-panel__close:hover {
+	background: rgba( 0, 0, 0, 0.06 );
+	color: var( --pzt-order-ink );
+}
+
+.pzt-order-panel__body {
+	flex: 1 1 auto;
+	padding: 4px 20px 20px;
+	overflow-y: auto;
+}
+
+.pzt-order-panel__footer {
+	display: flex;
+	gap: 10px;
+	justify-content: flex-end;
+	padding: 14px 20px;
+	border-top: 1px solid var( --pzt-order-border );
+}
+
+/* Sections --------------------------------------------------------------- */
+
+.pzt-order-section {
+	padding: 16px 0;
+	border-bottom: 1px solid var( --pzt-order-border );
+}
+
+.pzt-order-section:last-of-type {
+	border-bottom: 0;
+}
+
+.pzt-order-section__title {
+	margin: 0 0 10px;
+	font-size: 13px;
+	font-weight: 700;
+	letter-spacing: 0.04em;
+	text-transform: uppercase;
+	color: var( --pzt-order-muted );
+}
+
+/* Review list ------------------------------------------------------------ */
+
+.pzt-order-review__list {
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+
+.pzt-order-review__item {
+	display: flex;
+	align-items: baseline;
+	justify-content: space-between;
+	gap: 10px;
+	padding: 5px 0;
+	border-bottom: 1px dashed var( --pzt-order-border );
+}
+
+.pzt-order-review__item:last-child {
+	border-bottom: 0;
+}
+
+.pzt-order-review__name {
+	font-weight: 600;
+}
+
+.pzt-order-review__coverage {
+	flex: 0 0 auto;
+	padding: 2px 8px;
+	border-radius: 999px;
+	background: rgba( 0, 0, 0, 0.06 );
+	color: var( --pzt-order-muted );
+	font-size: 12px;
+}
+
+.pzt-order-review__empty {
+	margin: 0;
+	color: var( --pzt-order-muted );
+}
+
+/* Choice buttons --------------------------------------------------------- */
+
+.pzt-order-methods,
+.pzt-order-sizes {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px;
+}
+
+.pzt-order-method,
+.pzt-order-size {
+	display: inline-flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 2px;
+	padding: 9px 16px;
+	border: 1px solid var( --pzt-order-border );
+	border-radius: var( --pzt-order-radius );
+	background: transparent;
+	color: var( --pzt-order-ink );
+	font-size: 14px;
+	font-weight: 600;
+	cursor: pointer;
+}
+
+.pzt-order-method:hover,
+.pzt-order-size:hover {
+	border-color: var( --pzt-order-accent );
+}
+
+.pzt-order-method.is-selected,
+.pzt-order-size.is-selected {
+	border-color: var( --pzt-order-accent );
+	background: var( --pzt-order-accent );
+	color: var( --pzt-order-accent-ink );
+}
+
+.pzt-order-size__meta {
+	font-size: 11px;
+	font-weight: 500;
+	opacity: 0.75;
+}
+
+/* Fields ----------------------------------------------------------------- */
+
+.pzt-order-fields {
+	margin-top: 12px;
+}
+
+.pzt-order-fields[hidden] {
+	display: none;
+}
+
+.pzt-order-field {
+	display: block;
+	margin-top: 12px;
+}
+
+.pzt-order-field-row {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 10px;
+}
+
+.pzt-order-field-row .pzt-order-field {
+	flex: 1 1 140px;
+	min-width: 0;
+}
+
+.pzt-order-field__label {
+	display: block;
+	margin-bottom: 4px;
+	font-size: 13px;
+	font-weight: 600;
+	color: var( --pzt-order-muted );
+}
+
+.pzt-order-field__label--sr {
+	position: absolute;
+	width: 1px;
+	height: 1px;
+	margin: -1px;
+	padding: 0;
+	border: 0;
+	overflow: hidden;
+	clip: rect( 0 0 0 0 );
+	white-space: nowrap;
+}
+
+.pzt-order-required {
+	color: var( --pzt-order-error );
+}
+
+.pzt-order-input {
+	box-sizing: border-box;
+	width: 100%;
+	padding: 9px 12px;
+	border: 1px solid var( --pzt-order-border );
+	border-radius: 8px;
+	background: var( --pzt-order-bg );
+	color: var( --pzt-order-ink );
+	font-family: inherit;
+	font-size: 15px;
+	line-height: 1.4;
+}
+
+.pzt-order-input:focus {
+	outline: 2px solid var( --pzt-order-accent );
+	outline-offset: 1px;
+	border-color: var( --pzt-order-accent );
+}
+
+.pzt-order-input.has-error {
+	border-color: var( --pzt-order-error );
+}
+
+.pzt-order-input--textarea {
+	resize: vertical;
+	min-height: 76px;
+}
+
+.pzt-order-field__error {
+	display: block;
+	margin-top: 4px;
+	color: var( --pzt-order-error );
+	font-size: 13px;
+}
+
+.pzt-order-field__hint {
+	display: block;
+	margin-top: 4px;
+	color: var( --pzt-order-muted );
+	font-size: 12px;
+	text-align: right;
+}
+
+/* Honeypot. Removed from the layout and from the accessibility tree, but
+   still focusable-free and present in the DOM for bots to fill. */
+.pzt-order-trap {
+	position: absolute;
+	left: -9999px;
+	width: 1px;
+	height: 1px;
+	overflow: hidden;
+}
+
+/* Errors ----------------------------------------------------------------- */
+
+.pzt-order-panel__error {
+	margin-top: 14px;
+	padding: 10px 12px;
+	border-radius: 8px;
+	background: rgba( 214, 54, 56, 0.08 );
+	color: var( --pzt-order-error );
+	font-size: 14px;
+}
+
+.pzt-order-panel__error[hidden] {
+	display: none;
+}
+
+/* Footer buttons --------------------------------------------------------- */
+
+.pzt-order-cancel,
+.pzt-order-submit,
+.pzt-order-done__btn {
+	padding: 11px 20px;
+	border: 1px solid var( --pzt-order-border );
+	border-radius: 999px;
+	background: transparent;
+	color: var( --pzt-order-ink );
+	font-size: 15px;
+	font-weight: 600;
+	cursor: pointer;
+}
+
+.pzt-order-submit,
+.pzt-order-done__btn {
+	border-color: var( --pzt-order-accent );
+	background: var( --pzt-order-accent );
+	color: var( --pzt-order-accent-ink );
+	font-weight: 700;
+}
+
+.pzt-order-submit:disabled {
+	opacity: 0.7;
+	cursor: progress;
+}
+
+.pzt-order-cancel:hover {
+	background: rgba( 0, 0, 0, 0.05 );
+}
+
+/* Confirmation ----------------------------------------------------------- */
+
+.pzt-order-panel__done {
+	padding: 40px 24px;
+	text-align: center;
+}
+
+.pzt-order-panel__done[hidden] {
+	display: none;
+}
+
+.pzt-order-done__icon svg {
+	width: 56px;
+	height: 56px;
+	color: var( --pzt-order-success );
+}
+
+.pzt-order-done__message {
+	margin: 14px 0 4px;
+	font-size: 18px;
+	font-weight: 700;
+}
+
+.pzt-order-done__number {
+	margin: 0 0 22px;
+	color: var( --pzt-order-muted );
+	font-variant-numeric: tabular-nums;
+}
+
+/* Route outcome — what happened beyond the order record itself, e.g. that the
+   pizza is also sitting in the customer's WooCommerce cart. Injected by
+   pizzatier-orders.js after a successful submission. */
+
+.pzt-order-done__route {
+	margin: 0 0 18px;
+	padding: 10px 14px;
+	border-radius: 8px;
+	background: var( --pzt-order-surface-alt, rgba( 0, 0, 0, 0.04 ) );
+	color: var( --pzt-order-muted );
+	font-size: 14px;
+	line-height: 1.45;
+}
+
+.pzt-order-done__route--warning {
+	background: var( --pzt-order-warning-bg, rgba( 214, 137, 16, 0.12 ) );
+	color: var( --pzt-order-warning-text, #8a5a00 );
+}
+
+.pzt-order-done__cart-link {
+	font-weight: 600;
+	text-decoration: underline;
+	white-space: nowrap;
+}
+
+/* ==========================================================================
+   Responsive
+   ========================================================================== */
+
+@media ( max-width: 600px ) {
+
+	.pzt-order-bar {
+		align-items: stretch;
+		flex-direction: column;
+	}
+
+	.pzt-order-bar__btn {
+		justify-content: center;
+		width: 100%;
+	}
+
+	.pzt-order-bar__qty {
+		align-self: flex-start;
+	}
+
+	.pzt-order-panel {
+		padding: 0;
+	}
+
+	.pzt-order-panel__dialog {
+		max-width: none;
+		max-height: 100vh;
+		height: 100%;
+		border-radius: 0;
+	}
+
+	.pzt-order-panel__footer {
+		flex-direction: column-reverse;
+	}
+
+	.pzt-order-cancel,
+	.pzt-order-submit {
+		width: 100%;
+	}
+}
+
+/* Respect reduced-motion preferences. */
+@media ( prefers-reduced-motion: reduce ) {
+
+	.pzt-order-bar__btn {
+		transition: none;
+	}
+}

@@ -229,7 +229,7 @@ add_action( 'wp_enqueue_scripts', function() use (
 	}
 
 	// Note: ingredient price display removed in PizzaTier 1.2.0 — pricing
-	// is now provided by PizzaTierPro and rendered separately by Pro.
+	// is now provided by PizzaTier and rendered separately by Pro.
 
 	// Layout mode classes
 	if ( $mt_layout === 'side-by-side' ) {

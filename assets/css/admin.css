@@ -1,0 +1,1520 @@
+/**
+ * PizzaTier — Admin Styles
+ *
+ * Design tokens intentionally mirror PizzaTier's own admin CSS variables
+ * (np-* prefix) so the Pro UI feels native alongside the core plugin.
+ *
+ * Scope: all styles are prefixed with .pztc- to avoid collision with
+ * WooCommerce or other plugins.
+ */
+
+/* ============================================================
+   Tokens — inherit from PizzaTier if present, define fallbacks
+   ============================================================ */
+:root {
+	--pztc-accent:        var(--np-accent,        #ff6b35);
+	--pztc-accent-hover:  var(--np-accent-hover,  #e05a28);
+	--pztc-dark:          var(--np-dark,          #1a1e23);
+	--pztc-text:          var(--np-text,          #333333);
+	--pztc-muted:         var(--np-muted,         #666666);
+	--pztc-border:        var(--np-border,        #dddddd);
+	--pztc-bg-light:      var(--np-bg-light,      #f9f9f9);
+	--pztc-bg-panel:      var(--np-bg-panel,      #ffffff);
+	--pztc-radius:        var(--np-radius,        6px);
+	--pztc-shadow:        var(--np-shadow,        0 2px 8px rgba(0,0,0,.08));
+	--pztc-font:          var(--np-font,          -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif);
+}
+
+/* ============================================================
+   Panel wrapper
+   ============================================================ */
+#pizzatier_configurator_panel {
+	padding: 0;
+	background: var(--pztc-bg-light);
+}
+
+/* ============================================================
+   Panel header
+   ============================================================ */
+.pztc-panel__header {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	padding: 18px 24px 14px;
+	background: linear-gradient(135deg, #1a1e23 0%, #2d3748 100%);
+	border-bottom: 3px solid var(--pztc-accent);
+}
+
+.pztc-panel__icon {
+	font-size: 22px;
+	color: var(--pztc-accent);
+	flex-shrink: 0;
+}
+
+.pztc-panel__title {
+	margin: 0;
+	font-size: 16px;
+	font-weight: 600;
+	color: #ffffff;
+	font-family: var(--pztc-font);
+}
+
+.pztc-panel__subtitle {
+	margin: 0 0 0 auto;
+	font-size: 12px;
+	color: rgba(255,255,255,.55);
+	font-family: var(--pztc-font);
+}
+
+/* ============================================================
+   Sections
+   ============================================================ */
+.pztc-section {
+	padding: 20px 24px;
+	border-bottom: 1px solid var(--pztc-border);
+	background: var(--pztc-bg-panel);
+}
+
+.pztc-section:last-child {
+	border-bottom: none;
+}
+
+.pztc-section__heading {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	margin-bottom: 16px;
+}
+
+.pztc-section__heading .dashicons {
+	color: var(--pztc-accent);
+	font-size: 18px;
+	width: 18px;
+	height: 18px;
+}
+
+.pztc-section__heading h3 {
+	margin: 0;
+	font-size: 14px;
+	font-weight: 600;
+	color: var(--pztc-dark);
+	font-family: var(--pztc-font);
+}
+
+.pztc-section__description {
+	margin: 0 0 0 26px;
+	font-size: 12px;
+	color: var(--pztc-muted);
+	font-style: italic;
+	align-self: center;
+}
+
+/* ============================================================
+   Field rows
+   ============================================================ */
+.pztc-field-row {
+	display: flex;
+	align-items: flex-start;
+	gap: 16px;
+	margin-bottom: 14px;
+}
+
+.pztc-field-row:last-child {
+	margin-bottom: 0;
+}
+
+.pztc-label {
+	min-width: 180px;
+	font-size: 13px;
+	font-weight: 500;
+	color: var(--pztc-text);
+	padding-top: 6px;
+	font-family: var(--pztc-font);
+	flex-shrink: 0;
+}
+
+.pztc-required {
+	color: var(--pztc-accent);
+	margin-left: 2px;
+}
+
+.pztc-field-wrap {
+	flex: 1;
+}
+
+.pztc-select {
+	width: 100%;
+	max-width: 380px;
+	padding: 6px 10px;
+	border: 1px solid var(--pztc-border);
+	border-radius: var(--pztc-radius);
+	font-size: 13px;
+	color: var(--pztc-text);
+	background-color: #fff;
+	font-family: var(--pztc-font);
+	transition: border-color .15s;
+}
+
+.pztc-select:focus {
+	border-color: var(--pztc-accent);
+	outline: none;
+	box-shadow: 0 0 0 2px rgba(232,105,42,.18);
+}
+
+.pztc-field-description {
+	margin: 6px 0 0;
+	font-size: 12px;
+	color: var(--pztc-muted);
+	font-family: var(--pztc-font);
+}
+
+/* ============================================================
+   Notices
+   ============================================================ */
+.pztc-notice {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	padding: 10px 14px;
+	border-radius: var(--pztc-radius);
+	font-size: 13px;
+	font-family: var(--pztc-font);
+	margin: 0;
+}
+
+.pztc-notice--warning {
+	background: #fff8e5;
+	border-left: 4px solid #f0b429;
+	color: #5a4200;
+}
+
+.pztc-notice--info {
+	background: #e8f4fd;
+	border-left: 4px solid #2196f3;
+	color: #0d47a1;
+}
+
+.pztc-notice .dashicons {
+	flex-shrink: 0;
+}
+
+/* ============================================================
+   Layer grid
+   ============================================================ */
+.pztc-layers-toolbar {
+	display: flex;
+	gap: 8px;
+	margin-bottom: 12px;
+}
+
+.pztc-btn-sm {
+	font-size: 12px !important;
+	padding: 4px 10px !important;
+	height: auto !important;
+	line-height: 1.5 !important;
+}
+
+.pztc-layers-grid {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+	gap: 10px;
+}
+
+.pztc-layer-item {
+	position: relative;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 6px;
+	padding: 10px 8px;
+	background: var(--pztc-bg-light);
+	border: 2px solid var(--pztc-border);
+	border-radius: var(--pztc-radius);
+	cursor: pointer;
+	transition: border-color .15s, background .15s;
+	text-align: center;
+	font-family: var(--pztc-font);
+}
+
+.pztc-layer-item:hover {
+	border-color: var(--pztc-accent);
+	background: #fff;
+}
+
+.pztc-layer-item--checked {
+	border-color: var(--pztc-accent);
+	background: #fff3ec;
+}
+
+.pztc-layer-item input[type="checkbox"] {
+	position: absolute;
+	top: 6px;
+	right: 6px;
+	margin: 0;
+	accent-color: var(--pztc-accent);
+}
+
+.pztc-layer-thumb {
+	width: 56px;
+	height: 56px;
+	object-fit: cover;
+	border-radius: 4px;
+	display: block;
+}
+
+.pztc-layer-thumb--placeholder {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	background: var(--pztc-border);
+	border-radius: 4px;
+}
+
+.pztc-layer-thumb--placeholder .dashicons {
+	color: var(--pztc-muted);
+	font-size: 24px;
+	width: 24px;
+	height: 24px;
+}
+
+.pztc-layer-name {
+	font-size: 12px;
+	font-weight: 500;
+	color: var(--pztc-text);
+	word-break: break-word;
+	line-height: 1.3;
+}
+
+.pztc-layer-type {
+	font-size: 10px;
+	color: var(--pztc-muted);
+	background: var(--pztc-border);
+	padding: 1px 6px;
+	border-radius: 10px;
+	text-transform: uppercase;
+	letter-spacing: .04em;
+}
+
+/* ============================================================
+   Price grid placeholder / coming-soon — removed in Phase 2
+   ============================================================ */
+
+/* ============================================================
+   WC product tab icon
+   ============================================================ */
+#woocommerce-product-data ul.wc-tabs li.pizza_configurator_options a::before {
+	/* Use a pizza / food icon from the dashicons set.
+	   dashicons-food is not available in older WP; fall back to grid-view. */
+	content: "\f539"; /* dashicons-grid-view */
+	font-family: dashicons;
+}
+
+
+/* ============================================================
+   Price Grid — toolbar
+   ============================================================ */
+.pztc-grid-toolbar {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 8px;
+	margin-bottom: 14px;
+	flex-wrap: wrap;
+}
+
+.pztc-grid-toolbar__left,
+.pztc-grid-toolbar__right {
+	display: flex;
+	gap: 8px;
+	align-items: center;
+}
+
+.pztc-btn--accent {
+	background: var(--pztc-accent) !important;
+	border-color: var(--pztc-accent-hover) !important;
+	color: #fff !important;
+}
+
+.pztc-btn--accent:hover {
+	background: var(--pztc-accent-hover) !important;
+}
+
+/* ============================================================
+   Price Grid — table
+   ============================================================ */
+.pztc-grid-table-container {
+	overflow-x: auto;
+	border: 1px solid var(--pztc-border);
+	border-radius: var(--pztc-radius);
+}
+
+.pztc-grid-table {
+	border-collapse: collapse;
+	width: 100%;
+	min-width: 400px;
+	font-family: var(--pztc-font);
+	font-size: 13px;
+}
+
+/* Corner cell */
+.pztc-grid-corner {
+	background: linear-gradient(135deg, #1a1e23 0%, #2d3748 100%);
+	padding: 8px 12px;
+	text-align: center;
+	min-width: 100px;
+	vertical-align: middle;
+}
+
+.pztc-grid-corner-row,
+.pztc-grid-corner-col {
+	display: block;
+	font-size: 11px;
+	color: rgba(255,255,255,.7);
+	font-weight: 500;
+}
+
+.pztc-grid-corner-sep {
+	display: block;
+	font-size: 14px;
+	color: var(--pztc-accent);
+	line-height: 1;
+	margin: 2px 0;
+}
+
+/* Column header cells (fractions) */
+.pztc-grid-th--fraction {
+	background: linear-gradient(135deg, #1a1e23 0%, #2d3748 100%);
+	padding: 0;
+	text-align: center;
+	min-width: 120px;
+}
+
+/* Row header cells (sizes) */
+.pztc-grid-th--size {
+	background: #242938;
+	padding: 0;
+	text-align: right;
+	min-width: 100px;
+}
+
+/* Shared header cell layout */
+.pztc-header-cell {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	gap: 4px;
+	padding: 8px 10px;
+	position: relative;
+}
+
+.pztc-grid-th--size .pztc-header-cell {
+	justify-content: flex-end;
+}
+
+/* Editable labels */
+.pztc-editable-label {
+	color: #fff;
+	font-weight: 600;
+	font-size: 12px;
+	min-width: 40px;
+	max-width: 120px;
+	outline: none;
+	border-bottom: 1px dashed rgba(255,255,255,.3);
+	cursor: text;
+	padding: 1px 3px;
+	border-radius: 2px;
+	transition: background .15s, border-color .15s;
+	white-space: nowrap;
+}
+
+.pztc-editable-label:focus {
+	background: rgba(255,255,255,.1);
+	border-bottom-color: var(--pztc-accent);
+}
+
+/* Remove buttons on headers */
+.pztc-grid-remove-btn {
+	background: none !important;
+	border: none !important;
+	box-shadow: none !important;
+	padding: 0 !important;
+	width: 16px !important;
+	height: 16px !important;
+	min-height: 0 !important;
+	cursor: pointer;
+	opacity: 0;
+	transition: opacity .15s;
+	flex-shrink: 0;
+}
+
+.pztc-grid-remove-btn .dashicons {
+	font-size: 14px;
+	width: 14px;
+	height: 14px;
+	color: #ff6b6b;
+	line-height: 14px;
+}
+
+.pztc-header-cell:hover .pztc-grid-remove-btn {
+	opacity: 1;
+}
+
+/* Data cells */
+.pztc-grid-cell {
+	padding: 6px 8px;
+	background: #fff;
+	border: 1px solid var(--pztc-border);
+}
+
+.pztc-grid-row:nth-child(even) .pztc-grid-cell {
+	background: var(--pztc-bg-light);
+}
+
+.pztc-cell-wrap {
+	display: flex;
+	align-items: center;
+	gap: 2px;
+}
+
+.pztc-cell-currency {
+	color: var(--pztc-muted);
+	font-size: 12px;
+	flex-shrink: 0;
+}
+
+.pztc-price-input {
+	width: 80px !important;
+	padding: 4px 6px !important;
+	border: 1px solid var(--pztc-border) !important;
+	border-radius: 4px !important;
+	font-size: 13px !important;
+	text-align: right;
+	font-family: var(--pztc-font) !important;
+	transition: border-color .15s !important;
+}
+
+.pztc-price-input:focus {
+	border-color: var(--pztc-accent) !important;
+	outline: none !important;
+	box-shadow: 0 0 0 2px rgba(232,105,42,.15) !important;
+}
+
+/* Highlight newly-added rows/cols */
+.pztc-grid-row--new .pztc-grid-cell,
+.pztc-grid-cell--new {
+	background: #fff8e5 !important;
+	animation: pztc-flash 1.2s ease forwards;
+}
+
+@keyframes pztc-flash {
+	0%   { background: #fff0cc; }
+	100% { background: transparent; }
+}
+
+/* ============================================================
+   Import feedback
+   ============================================================ */
+.pztc-grid-import-feedback {
+	margin-bottom: 12px;
+	padding: 10px 14px;
+	border-radius: var(--pztc-radius);
+	font-size: 13px;
+	font-family: var(--pztc-font);
+}
+
+.pztc-grid-import-feedback.is-success {
+	background: #edf7ed;
+	border-left: 4px solid #4caf50;
+	color: #1b5e20;
+}
+
+.pztc-grid-import-feedback.is-error {
+	background: #fdecea;
+	border-left: 4px solid #f44336;
+	color: #b71c1c;
+}
+
+/* ============================================================
+   Import help text
+   ============================================================ */
+.pztc-import-help {
+	margin-top: 10px;
+}
+
+
+/* ============================================================
+   Settings page — page wrap
+   ============================================================ */
+.pztc-settings-wrap {
+	max-width: 960px;
+	margin: 0;
+	padding: 0 0 40px;
+	font-family: var(--pztc-font);
+}
+
+/* ============================================================
+   Settings page — header
+   ============================================================ */
+.pztc-settings-header {
+	background: linear-gradient(135deg, #1a1e23 0%, #2d3748 100%);
+	border-bottom: 3px solid var(--pztc-accent);
+	margin: 0 0 28px;
+	padding: 22px 28px;
+	border-radius: 0 0 var(--pztc-radius) var(--pztc-radius);
+}
+
+.pztc-settings-header__inner {
+	display: flex;
+	align-items: center;
+	gap: 16px;
+}
+
+.pztc-settings-header__icon {
+	font-size: 36px;
+	width: 36px;
+	height: 36px;
+	color: var(--pztc-accent);
+	flex-shrink: 0;
+}
+
+.pztc-settings-header__title {
+	font-size: 22px;
+	font-weight: 700;
+	color: #fff;
+	margin: 0 0 4px;
+	line-height: 1.2;
+}
+
+.pztc-settings-header__subtitle {
+	font-size: 13px;
+	color: rgba(255,255,255,.65);
+	margin: 0;
+}
+
+/* ============================================================
+   Settings page — body layout (sidebar tabs + panels)
+   ============================================================ */
+.pztc-settings-body {
+	display: flex;
+	gap: 24px;
+	align-items: flex-start;
+}
+
+/* ============================================================
+   Settings page — tab navigation
+   ============================================================ */
+.pztc-settings-tabs {
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+	width: 190px;
+	flex-shrink: 0;
+	position: sticky;
+	top: 32px;
+}
+
+.pztc-settings-tab {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	padding: 10px 14px;
+	border-radius: var(--pztc-radius);
+	color: var(--pztc-text);
+	font-size: 13px;
+	font-weight: 500;
+	text-decoration: none;
+	border: 1px solid transparent;
+	transition: background .15s, border-color .15s, color .15s;
+}
+
+.pztc-settings-tab:hover {
+	background: var(--pztc-bg-light);
+	border-color: var(--pztc-border);
+	color: var(--pztc-accent);
+}
+
+.pztc-settings-tab .dashicons {
+	font-size: 16px;
+	width: 16px;
+	height: 16px;
+	color: var(--pztc-muted);
+	flex-shrink: 0;
+	transition: color .15s;
+}
+
+.pztc-settings-tab:hover .dashicons,
+.pztc-settings-tab--active .dashicons {
+	color: var(--pztc-accent);
+}
+
+.pztc-settings-tab--active {
+	background: var(--pztc-bg-panel);
+	border-color: var(--pztc-accent);
+	color: var(--pztc-accent);
+	font-weight: 600;
+	box-shadow: var(--pztc-shadow);
+}
+
+/* ============================================================
+   Settings page — panels
+   ============================================================ */
+.pztc-settings-panels {
+	flex: 1;
+	min-width: 0;
+}
+
+.pztc-settings-panel {
+	background: var(--pztc-bg-panel);
+	border: 1px solid var(--pztc-border);
+	border-radius: var(--pztc-radius);
+	box-shadow: var(--pztc-shadow);
+	overflow: hidden;
+	/* Hidden by default — JS activates the correct one */
+	display: none;
+}
+
+.pztc-settings-panel--active {
+	display: block;
+}
+
+/* Fallback: show all panels when JS is unavailable */
+.no-js .pztc-settings-panel {
+	display: block;
+	margin-bottom: 24px;
+}
+
+.pztc-settings-panel__heading {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	padding: 16px 22px;
+	background: linear-gradient(135deg, #1a1e23 0%, #2d3748 100%);
+	border-bottom: 3px solid var(--pztc-accent);
+}
+
+.pztc-settings-panel__heading .dashicons {
+	font-size: 20px;
+	width: 20px;
+	height: 20px;
+	color: var(--pztc-accent);
+}
+
+.pztc-settings-panel__heading h2 {
+	font-size: 15px;
+	font-weight: 700;
+	color: #fff;
+	margin: 0;
+}
+
+.pztc-settings-panel__body {
+	padding: 20px 22px 8px;
+}
+
+/* ============================================================
+   Settings page — form table overrides
+   ============================================================ */
+.pztc-form-table th {
+	width: 220px;
+	padding: 16px 20px 16px 0;
+	font-size: 13px;
+	font-weight: 600;
+	color: var(--pztc-text);
+	vertical-align: top;
+}
+
+.pztc-form-table td {
+	padding: 12px 0 16px;
+	vertical-align: top;
+}
+
+.pztc-settings-section-desc {
+	margin: 0 0 16px;
+	color: var(--pztc-muted);
+	font-size: 13px;
+}
+
+.pztc-field-desc {
+	margin-top: 6px !important;
+	color: var(--pztc-muted) !important;
+	font-size: 12px !important;
+	max-width: 500px;
+}
+
+/* ============================================================
+   Settings fields — text & select
+   ============================================================ */
+.pztc-text-input,
+.pztc-select-input {
+	font-family: var(--pztc-font) !important;
+	font-size: 13px !important;
+	border: 1px solid var(--pztc-border) !important;
+	border-radius: 4px !important;
+	padding: 6px 10px !important;
+	transition: border-color .15s !important;
+}
+
+.pztc-text-input {
+	width: 340px !important;
+}
+
+.pztc-select-input {
+	min-width: 200px;
+}
+
+.pztc-text-input:focus,
+.pztc-select-input:focus {
+	border-color: var(--pztc-accent) !important;
+	outline: none !important;
+	box-shadow: 0 0 0 2px rgba(232,105,42,.15) !important;
+}
+
+.pztc-textarea-input {
+	font-family: var(--pztc-font) !important;
+	font-size: 13px !important;
+	border: 1px solid var(--pztc-border) !important;
+	border-radius: 4px !important;
+	padding: 8px 10px !important;
+	resize: vertical;
+	width: 280px !important;
+	transition: border-color .15s !important;
+	line-height: 1.6;
+}
+
+.pztc-textarea-input:focus {
+	border-color: var(--pztc-accent) !important;
+	outline: none !important;
+	box-shadow: 0 0 0 2px rgba(232,105,42,.15) !important;
+}
+
+/* ============================================================
+   Settings fields — toggle checkbox
+   ============================================================ */
+.pztc-toggle-label {
+	display: inline-flex;
+	align-items: center;
+	gap: 10px;
+	cursor: pointer;
+	user-select: none;
+}
+
+.pztc-toggle-input {
+	position: absolute;
+	opacity: 0;
+	width: 0;
+	height: 0;
+}
+
+.pztc-toggle-track {
+	position: relative;
+	display: inline-block;
+	width: 40px;
+	height: 22px;
+	background: var(--pztc-border);
+	border-radius: 11px;
+	transition: background .2s;
+	flex-shrink: 0;
+}
+
+.pztc-toggle-track::after {
+	content: '';
+	position: absolute;
+	top: 3px;
+	left: 3px;
+	width: 16px;
+	height: 16px;
+	background: #fff;
+	border-radius: 50%;
+	box-shadow: 0 1px 3px rgba(0,0,0,.25);
+	transition: transform .2s;
+}
+
+.pztc-toggle-input:checked + .pztc-toggle-track {
+	background: var(--pztc-accent);
+}
+
+.pztc-toggle-input:checked + .pztc-toggle-track::after {
+	transform: translateX(18px);
+}
+
+.pztc-toggle-input:focus + .pztc-toggle-track {
+	box-shadow: 0 0 0 2px rgba(232,105,42,.3);
+}
+
+/* ============================================================
+   Settings page — footer / save button
+   ============================================================ */
+.pztc-settings-footer {
+	display: flex;
+	align-items: center;
+	gap: 20px;
+	margin-top: 28px;
+	padding-top: 20px;
+	border-top: 1px solid var(--pztc-border);
+}
+
+.pztc-save-btn.button-primary {
+	background: var(--pztc-accent) !important;
+	border-color: var(--pztc-accent-hover) !important;
+	color: #fff !important;
+	padding: 0 22px !important;
+	height: 36px !important;
+	font-size: 14px !important;
+	font-weight: 600 !important;
+	border-radius: 4px !important;
+}
+
+.pztc-save-btn.button-primary:hover,
+.pztc-save-btn.button-primary:focus {
+	background: var(--pztc-accent-hover) !important;
+}
+
+.pztc-settings-version {
+	font-size: 12px;
+	color: var(--pztc-muted);
+}
+
+/* ============================================================
+   Responsive
+   ============================================================ */
+@media ( max-width: 782px ) {
+	.pztc-settings-body {
+		flex-direction: column;
+	}
+
+	.pztc-settings-tabs {
+		flex-direction: row;
+		flex-wrap: wrap;
+		width: 100%;
+		position: static;
+	}
+
+	.pztc-settings-tab {
+		flex: 1 1 auto;
+		justify-content: center;
+	}
+
+	.pztc-text-input {
+		width: 100% !important;
+		max-width: 340px !important;
+	}
+}
+
+
+/* ============================================================
+   Pizza Configurator Meta Box — using PizzaTier's own design
+   language (np-* tokens where they exist, pztc-* elsewhere)
+   ============================================================ */
+
+/* Placeholder shown when product type is not pizza */
+.pztc-ph-msg {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	margin: 0;
+	padding: 14px 18px;
+	color: var(--pztc-muted);
+	font-size: 13px;
+	font-style: italic;
+}
+.pztc-ph-msg .dashicons { font-size: 16px; width: 16px; height: 16px; flex-shrink: 0; }
+
+/* Meta box header */
+.pztc-mb-hdr {
+	display: flex;
+	align-items: flex-start;
+	gap: 14px;
+	padding: 16px 20px;
+	background: linear-gradient(135deg, #1a1e23 0%, #2d3748 100%);
+	border-bottom: 3px solid var(--pztc-accent);
+}
+.pztc-mb-hdr h2 { margin: 0 0 4px; font-size: 15px; font-weight: 700; color: #fff; }
+.pztc-mb-hdr p  { margin: 0; font-size: 12px; color: rgba(255,255,255,.55); }
+
+/* Sections */
+.pztc-mb-section {
+	padding: 18px 20px;
+	border-bottom: 1px solid var(--pztc-border);
+	background: var(--pztc-bg-panel);
+}
+.pztc-mb-section:last-of-type { border-bottom: none; }
+
+.pztc-mb-section__title {
+	display: flex;
+	align-items: center;
+	gap: 7px;
+	margin: 0 0 12px;
+	font-size: 12px;
+	font-weight: 700;
+	text-transform: uppercase;
+	letter-spacing: .05em;
+	color: var(--pztc-dark);
+}
+.pztc-mb-section__title .dashicons { color: var(--pztc-accent); font-size: 16px; width: 16px; height: 16px; }
+
+.pztc-mb-section__desc { margin: -6px 0 14px; font-size: 12px; color: var(--pztc-muted); }
+
+/* Field rows */
+.pztc-mb-fields { display: flex; flex-direction: column; gap: 10px; }
+.pztc-mb-field  { display: flex; align-items: baseline; gap: 12px; }
+.pztc-mb-field label { min-width: 170px; font-size: 13px; font-weight: 500; color: var(--pztc-text); flex-shrink: 0; }
+.pztc-mb-field__ctrl { flex: 1; }
+.pztc-mb-field select {
+	width: 100%; max-width: 360px; padding: 5px 10px;
+	border: 1px solid var(--pztc-border); border-radius: var(--pztc-radius);
+	font-size: 13px; color: var(--pztc-text); background: #fff;
+}
+.pztc-mb-field select:focus { border-color: var(--pztc-accent); outline: none; box-shadow: 0 0 0 2px rgba(232,105,42,.18); }
+.pztc-req { color: var(--pztc-accent); margin-left: 2px; }
+
+/* Notices */
+.pztc-notice {
+	display: flex; align-items: center; gap: 6px;
+	padding: 9px 13px; border-radius: var(--pztc-radius); font-size: 12px; margin: 0;
+}
+.pztc-notice--warn  { background: #fff8e5; border-left: 3px solid #f0b429; color: #5a4200; }
+.pztc-notice--info  { background: #e8f4fd; border-left: 3px solid #2196f3; color: #0d47a1; }
+.pztc-notice .dashicons { flex-shrink: 0; font-size: 15px; width: 15px; height: 15px; }
+
+/* ============================================================
+   Layer Configurator — two-column layout
+   ============================================================ */
+.pztc-mb-section--layers { padding-bottom: 20px; }
+
+.pztc-lc-layout {
+	display: grid;
+	grid-template-columns: 1fr 300px;
+	gap: 16px;
+	align-items: flex-start;
+}
+
+/* ── Left pane: type nav + grids ── */
+.pztc-lc-left {
+	border: 1px solid var(--pztc-border);
+	border-radius: var(--pztc-radius);
+	overflow: hidden;
+	background: #fff;
+}
+
+/* Type tab nav — horizontal row, matching PizzaTier's tab style */
+.pztc-lc-nav {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0;
+	list-style: none;
+	margin: 0;
+	padding: 0;
+	background: linear-gradient(135deg, #1a1e23 0%, #2d3748 100%);
+	border-bottom: 2px solid var(--pztc-accent);
+}
+.pztc-lc-nav li { margin: 0; }
+
+.pztc-lc-nav__btn {
+	display: inline-flex;
+	align-items: center;
+	gap: 5px;
+	padding: 9px 14px;
+	background: none;
+	border: none;
+	cursor: pointer;
+	font-size: 12px;
+	font-weight: 600;
+	color: rgba(255,255,255,.55);
+	letter-spacing: .03em;
+	text-transform: uppercase;
+	transition: color .15s, background .15s;
+	border-bottom: 2px solid transparent;
+	margin-bottom: -2px;
+}
+.pztc-lc-nav__btn:hover { color: rgba(255,255,255,.85); }
+.pztc-lc-nav__btn--active {
+	color: #fff;
+	border-bottom-color: var(--pztc-accent);
+}
+
+.pztc-lc-nav__count {
+	display: inline-flex; align-items: center; justify-content: center;
+	min-width: 18px; height: 18px; padding: 0 4px;
+	background: rgba(255,255,255,.12);
+	border-radius: 10px;
+	font-size: 10px; font-weight: 700; color: rgba(255,255,255,.7);
+	transition: background .15s, color .15s;
+}
+.pztc-lc-nav__btn--active .pztc-lc-nav__count {
+	background: var(--pztc-accent); color: #fff;
+}
+
+/* Panel toolbar */
+.pztc-lc-panel__toolbar {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	padding: 8px 12px;
+	background: var(--pztc-bg-light);
+	border-bottom: 1px solid var(--pztc-border);
+}
+.pztc-lc-panel__hint { font-size: 11px; color: var(--pztc-muted); }
+.pztc-lc-panel__select-all {
+	display: flex; align-items: center; gap: 4px;
+	font-size: 11px; color: var(--pztc-text); cursor: pointer;
+	white-space: nowrap;
+}
+
+/* Type panels */
+.pztc-lc-panel { display: none; }
+.pztc-lc-panel--active { display: block; }
+
+/* Layer card grid */
+.pztc-lc-grid {
+	display: grid;
+	grid-template-columns: repeat( auto-fill, minmax( 100px, 1fr ) );
+	gap: 10px;
+	padding: 12px;
+	max-height: 380px;
+	overflow-y: auto;
+}
+
+/* Card */
+.pztc-lc-card {
+	position: relative;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 5px;
+	padding: 8px 6px 7px;
+	border: 2px solid var(--pztc-border);
+	border-radius: var(--pztc-radius);
+	background: var(--pztc-bg-light);
+	cursor: pointer;
+	text-align: center;
+	transition: border-color .15s, background .15s, box-shadow .15s;
+	user-select: none;
+}
+.pztc-lc-card:hover { border-color: var(--pztc-accent); background: #fff; }
+
+/* Default state — highlighted border + warm bg */
+.pztc-lc-card--default {
+	border-color: var(--pztc-accent);
+	background: #fff3ec;
+	box-shadow: 0 0 0 1px var(--pztc-accent) inset;
+}
+
+/* Disabled (not enabled) — faint */
+.pztc-lc-card:not(.pztc-lc-card--enabled) { opacity: .55; }
+.pztc-lc-card--enabled { opacity: 1; }
+
+/* Always show default card at full opacity even if also not enabled */
+.pztc-lc-card--default { opacity: 1 !important; }
+
+/* Hidden inputs */
+.pztc-lc-card__radio { position: absolute; opacity: 0; width: 0; height: 0; pointer-events: none; }
+
+/* Available checkbox — top-left corner */
+.pztc-lc-card__avail {
+	position: absolute;
+	top: 5px;
+	left: 5px;
+	margin: 0;
+	accent-color: var(--pztc-accent);
+	z-index: 2;
+	cursor: pointer;
+}
+
+/* Default star badge — top-right corner */
+.pztc-lc-card__star {
+	position: absolute;
+	top: 4px;
+	right: 5px;
+	font-size: 13px;
+	line-height: 1;
+	color: var(--pztc-accent);
+	display: none;
+}
+.pztc-lc-card--default .pztc-lc-card__star { display: block; }
+
+/* Thumbnail */
+.pztc-lc-card__img-wrap {
+	display: block;
+	width: 58px; height: 58px;
+	flex-shrink: 0;
+	margin-top: 4px;
+}
+.pztc-lc-card__img-wrap img {
+	width: 58px; height: 58px;
+	object-fit: cover;
+	border-radius: 4px;
+	display: block;
+}
+.pztc-lc-card__img-placeholder {
+	display: flex; align-items: center; justify-content: center;
+	width: 58px; height: 58px;
+	background: var(--pztc-border); border-radius: 4px;
+}
+.pztc-lc-card__img-placeholder .dashicons { font-size: 24px; width: 24px; height: 24px; color: var(--pztc-muted); }
+
+/* Name */
+.pztc-lc-card__name {
+	font-size: 11px; font-weight: 500; color: var(--pztc-text);
+	line-height: 1.3; word-break: break-word; max-width: 100%;
+}
+
+/* ── Right pane: live preview ── */
+.pztc-lc-right { position: sticky; top: 32px; }
+
+.pztc-lc-preview {
+	border: 1px solid var(--pztc-border);
+	border-radius: var(--pztc-radius);
+	overflow: hidden;
+	background: #fff;
+}
+
+.pztc-lc-preview__hdr {
+	display: flex;
+	align-items: center;
+	gap: 7px;
+	padding: 10px 14px;
+	background: linear-gradient(135deg, #1a1e23 0%, #2d3748 100%);
+	color: #fff;
+	font-size: 12px;
+	font-weight: 700;
+	text-transform: uppercase;
+	letter-spacing: .05em;
+}
+.pztc-lc-preview__hdr .dashicons { color: var(--pztc-accent); font-size: 15px; width: 15px; height: 15px; }
+
+/* Spinner */
+.pztc-lc-preview__spinner {
+	display: inline-block;
+	width: 14px; height: 14px;
+	border: 2px solid rgba(255,255,255,.3);
+	border-top-color: var(--pztc-accent);
+	border-radius: 50%;
+	animation: pztc-spin .6s linear infinite;
+	margin-left: auto;
+}
+@keyframes pztc-spin { to { transform: rotate(360deg); } }
+
+/* Preview stage */
+.pztc-lc-preview__stage {
+	padding: 16px;
+	min-height: 200px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	background: #f6f6f6;
+}
+.pztc-lc-preview__empty,
+.pztc-lc-preview__error {
+	font-size: 12px;
+	color: var(--pztc-muted);
+	text-align: center;
+	margin: 0;
+	font-style: italic;
+}
+.pztc-lc-preview__error { color: #c0392b; }
+
+/* Preview summary bar */
+.pztc-lc-preview__summary {
+	padding: 8px 12px;
+	font-size: 11px;
+	color: var(--pztc-muted);
+	border-top: 1px solid var(--pztc-border);
+	min-height: 28px;
+	line-height: 1.6;
+}
+.pztc-lc-preview__summary strong { color: var(--pztc-text); }
+
+/* ============================================================
+   Responsive
+   ============================================================ */
+@media ( max-width: 1100px ) {
+	.pztc-lc-layout { grid-template-columns: 1fr; }
+	.pztc-lc-right { position: static; }
+	.pztc-lc-preview__stage { min-height: 160px; }
+}
+
+@media ( max-width: 782px ) {
+	.pztc-mb-field { flex-direction: column; gap: 4px; }
+	.pztc-mb-field label { min-width: auto; }
+	.pztc-lc-nav__btn { padding: 7px 10px; font-size: 11px; }
+}
+
+/* ============================================================
+   Pricing override — mode card grid (product edit screen)
+   ============================================================ */
+.pztc-section--pricing-override {
+	margin: 16px 0; padding: 16px 20px 20px;
+	background: #fff; border: 1px solid #e0e3e7; border-radius: 10px;
+}
+.pztc-prod-mode-grid {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+	gap: 10px;
+	margin-top: 12px;
+}
+.pztc-prod-mode-card {
+	--pmc: #6b7280;
+	position: relative;
+	display: flex; flex-direction: column; align-items: center; gap: 5px;
+	padding: 14px 10px 12px;
+	background: #f9fafb;
+	border: 2px solid #e0e3e7;
+	border-radius: 10px;
+	cursor: pointer; user-select: none; text-align: center;
+	transition: border-color .15s, background .15s, box-shadow .12s, transform .1s;
+}
+.pztc-prod-mode-card:hover {
+	border-color: var(--pmc);
+	background: color-mix(in srgb, var(--pmc) 6%, white);
+	transform: translateY(-1px);
+}
+.pztc-prod-mode-card--selected {
+	border-color: var(--pmc);
+	background: color-mix(in srgb, var(--pmc) 10%, white);
+	box-shadow: 0 0 0 3px color-mix(in srgb, var(--pmc) 18%, transparent);
+}
+.pztc-prod-mode-card__icon  { font-size: 22px; line-height: 1; }
+.pztc-prod-mode-card__title { font-size: 12px; font-weight: 700; color: #1d2023; }
+.pztc-prod-mode-card--selected .pztc-prod-mode-card__title { color: var(--pmc); }
+.pztc-prod-mode-card__desc  { font-size: 10px; color: #6b7280; line-height: 1.4; }
+.pztc-prod-mode-card__check {
+	display: none;
+	position: absolute; top: 6px; right: 6px;
+	width: 18px; height: 18px; border-radius: 50%;
+	background: var(--pmc); color: #fff;
+	font-size: 10px; font-weight: 700;
+	align-items: center; justify-content: center;
+}
+.pztc-prod-mode-card--selected .pztc-prod-mode-card__check { display: flex; }
+.pztc-pricing-mode-hint { margin-top: 10px; font-size: 12px; color: #646970; }
+
+/* ============================================================
+   PRICE GRID — section headings for fraction vs flat tables
+   ============================================================ */
+
+.pztc-grid-section-heading {
+    font-size: 13px;
+    font-weight: 600;
+    color: #1a1a2e;
+    margin: 0 0 8px;
+    padding-bottom: 5px;
+    border-bottom: 2px solid #e8692a;
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+}
+
+.pztc-grid-section-heading--flat {
+    border-bottom-color: #555;
+}
+
+.pztc-grid-section-desc {
+    font-size: 11px;
+    font-weight: 400;
+    color: #888;
+    font-style: italic;
+}
+
+.pztc-grid-table--flat .pztc-grid-th--size-col {
+    min-width: 90px;
+}
+
+.pztc-grid-table--flat .pztc-grid-th--actions {
+    width: 20px;
+}
+
+.pztc-grid-toolbar--flat {
+    margin-bottom: 8px;
+}
+
+/* ============================================================
+   PRICE GRID — bulk tool panels (Paste CSV / Copy from Product / Set All)
+   ============================================================ */
+
+.pztc-grid-panel {
+    background: #f9f9f9;
+    border: 1px solid #ddd;
+    border-top: 3px solid #ff6b35;
+    border-radius: 0 0 4px 4px;
+    padding: 12px 14px;
+    margin: -1px 0 12px;
+}
+
+.pztc-panel-label {
+    margin: 0 0 8px;
+    font-size: 13px;
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.pztc-panel-hint {
+    font-size: 11px;
+    color: #888;
+    font-weight: 400;
+    font-style: italic;
+}
+
+.pztc-panel-actions {
+    display: flex;
+    gap: 6px;
+    margin-top: 8px;
+}
+
+.pztc-panel-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.pztc-set-all-currency {
+    font-size: 14px;
+    font-weight: 600;
+    color: #3c434a;
+    min-width: 14px;
+    text-align: center;
+}
+
+/* feedback bar reused inside layer grid wrap */
+#pztc-layer-grid-feedback {
+    padding: 7px 10px;
+    border-radius: 3px;
+    font-size: 13px;
+    margin-bottom: 10px;
+}
+
+.pztc-grid-toolbar__right {
+    flex-wrap: wrap;
+    gap: 4px;
+}
+
+/* ============================================================
+   Layout picker — "Order Now" bar layout chooser
+   Grid of radio-backed cards, each with an SVG sketch + label.
+   Used on the PizzaTier → Settings → Order Bar tab.
+   ============================================================ */
+
+.pztc-layout-picker {
+	--pztc-picker-accent: #ff4d4d;
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+	gap: 14px;
+	margin: 0;
+	padding: 0;
+	border: 0;
+}
+
+.pztc-layout-card {
+	position: relative;
+	display: flex;
+	flex-direction: column;
+	gap: 10px;
+	padding: 14px;
+	background: #fff;
+	border: 2px solid #e0e3e7;
+	border-radius: 10px;
+	cursor: pointer;
+	transition: border-color 0.15s ease, box-shadow 0.15s ease, transform 0.1s ease;
+	color: #1d2023;
+}
+
+.pztc-layout-card:hover {
+	border-color: #b7bcc4;
+	box-shadow: 0 2px 8px rgba(16, 24, 40, 0.06);
+}
+
+.pztc-layout-card:focus-within {
+	outline: 2px solid var(--pztc-picker-accent);
+	outline-offset: 2px;
+}
+
+/* Hide the native radio — visual state is driven by the card class. */
+.pztc-layout-card__input {
+	position: absolute;
+	opacity: 0;
+	width: 1px;
+	height: 1px;
+	pointer-events: none;
+}
+
+.pztc-layout-card__preview {
+	display: block;
+	background: #f6f7fa;
+	border-radius: 6px;
+	padding: 12px 10px;
+	overflow: hidden;
+}
+
+.pztc-layout-card__preview .pztc-layout-preview__svg {
+	display: block;
+	width: 100%;
+	height: auto;
+	max-height: 84px;
+	color: #1d2023;
+}
+
+.pztc-layout-card__body {
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+	min-width: 0;
+}
+
+.pztc-layout-card__label {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 6px;
+	font-size: 13px;
+	font-weight: 600;
+	color: #1d2023;
+	line-height: 1.3;
+}
+
+.pztc-layout-card__desc {
+	font-size: 12px;
+	color: #5b5f73;
+	line-height: 1.45;
+}
+
+/* Check badge sits inside the label row; only visible on the selected card. */
+.pztc-layout-card__check {
+	width: 20px;
+	height: 20px;
+	flex-shrink: 0;
+	display: none;
+	align-items: center;
+	justify-content: center;
+	background: var(--pztc-picker-accent);
+	color: #fff;
+	border-radius: 50%;
+	font-size: 14px !important;
+	line-height: 20px;
+}
+
+/* Selected state */
+.pztc-layout-card--selected {
+	border-color: var(--pztc-picker-accent);
+	box-shadow: 0 0 0 3px rgba(255, 77, 77, 0.15), 0 2px 10px rgba(16, 24, 40, 0.08);
+}
+
+.pztc-layout-card--selected .pztc-layout-card__check {
+	display: inline-flex;
+}
+
+.pztc-layout-card--selected .pztc-layout-card__preview {
+	background: #fff3f0;
+}
+
+/* "Legacy / no change" card is dashed to visually signal its pass-through role. */
+.pztc-layout-card:first-child .pztc-layout-card__preview {
+	border: 1px dashed #b7bcc4;
+}
+
+/* Narrow-screen tweak — stack to a single column on tiny admin panels. */
+@media (max-width: 600px) {
+	.pztc-layout-picker {
+		grid-template-columns: 1fr;
+	}
+}

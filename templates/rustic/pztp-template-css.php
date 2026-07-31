@@ -123,7 +123,7 @@ function pizzatier_template_rustic_generated_css(): string {
     // Uppercase buttons
     $uppercase = $g( 'rustic_setting_uppercase_btns', 'yes' );
     if ( $uppercase !== 'yes' ) {
-        $css .= '.rp-btn,.pztpro-checkout-bar--rustic .pztpro-add-to-cart-btn{text-transform:none!important;letter-spacing:0.01em!important;}';
+        $css .= '.rp-btn,.pztc-checkout-bar--rustic .pztc-add-to-cart-btn{text-transform:none!important;letter-spacing:0.01em!important;}';
     }
 
     // Apply font-size to root element

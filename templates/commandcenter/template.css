@@ -794,7 +794,7 @@
 }
 
 /* ══════════════════════════════════════════════════════════════════
-   SIZE SELECTOR (PizzaTierPro)
+   SIZE SELECTOR (PizzaTier)
    ══════════════════════════════════════════════════════════════════ */
 
 .cc-size-selector {
@@ -829,25 +829,25 @@
     color:       var(--cc-text);
 }
 .cc-size-option:hover { border-color: var(--cc-border-hover); background: var(--cc-surface-hover); }
-.cc-size-option.pztpro-size-option--active,
+.cc-size-option.pztc-size-option--active,
 .cc-size-option:has(input:checked) {
     border-color: var(--cc-accent);
     background:   var(--cc-accent-dim);
 }
 
 /* ══════════════════════════════════════════════════════════════════
-   CHECKOUT BAR (PizzaTierPro)
+   CHECKOUT BAR (PizzaTier)
    ══════════════════════════════════════════════════════════════════ */
 
 /* Always-present, full-width dock that hosts the Pro Add to Cart bar.
    Renders independently of the optional order-summary sidebar. It stays empty
-   (and collapses) on sites without PizzaTierPro active. */
+   (and collapses) on sites without PizzaTier active. */
 .cc-checkout-dock {
     border-top: 1px solid var(--cc-border);
 }
 .cc-checkout-dock:empty { display: none; }
 
-.pztpro-checkout-bar--commandcenter {
+.pztc-checkout-bar--commandcenter {
     background:  var(--cc-bar-bg, #0e1929);
     border-top:  none;
     padding:     16px 20px;
@@ -855,10 +855,10 @@
     border-bottom-right-radius: var(--cc-radius-lg);
 }
 
-.pztpro-checkout-bar--commandcenter .pztpro-bar-notes {
+.pztc-checkout-bar--commandcenter .pztc-bar-notes {
     margin-bottom: 10px;
 }
-.pztpro-checkout-bar--commandcenter .pztpro-bar-notes__label {
+.pztc-checkout-bar--commandcenter .pztc-bar-notes__label {
     display:     flex;
     align-items: center;
     gap:         6px;
@@ -867,8 +867,8 @@
     color:       var(--cc-text-muted, #8892b0);
     margin-bottom: 4px;
 }
-.pztpro-checkout-bar--commandcenter .pztpro-bar-notes__label svg { width: 14px; height: 14px; }
-.pztpro-checkout-bar--commandcenter .pztpro-bar-notes__input {
+.pztc-checkout-bar--commandcenter .pztc-bar-notes__label svg { width: 14px; height: 14px; }
+.pztc-checkout-bar--commandcenter .pztc-bar-notes__input {
     width:         100%;
     background:    var(--cc-surface, #16213e);
     border:        1px solid var(--cc-border, rgba(255,255,255,0.07));
@@ -879,36 +879,36 @@
     padding:       8px 10px;
     resize:        vertical;
 }
-.pztpro-checkout-bar--commandcenter .pztpro-bar-notes__input:focus {
+.pztc-checkout-bar--commandcenter .pztc-bar-notes__input:focus {
     outline: none;
     border-color: var(--cc-accent, #e94560);
 }
 
-.pztpro-checkout-bar--commandcenter .pztpro-bar-row {
+.pztc-checkout-bar--commandcenter .pztc-bar-row {
     display:     flex;
     align-items: center;
     gap:         14px;
     flex-wrap:   wrap;
 }
-.pztpro-checkout-bar--commandcenter .pztpro-bar-row__summary {
+.pztc-checkout-bar--commandcenter .pztc-bar-row__summary {
     display:        flex;
     flex-direction: column;
     gap:            2px;
     flex:           1;
 }
-.pztpro-checkout-bar--commandcenter .pztpro-bar-row__size-label {
+.pztc-checkout-bar--commandcenter .pztc-bar-row__size-label {
     font-size: 11px;
     color:     var(--cc-text-muted, #8892b0);
 }
-.pztpro-checkout-bar--commandcenter .pztpro-bar-row__price {
+.pztc-checkout-bar--commandcenter .pztc-bar-row__price {
     font-size:   20px;
     font-weight: 700;
     color:       var(--cc-cta, var(--cc-accent));
     font-variant-numeric: tabular-nums;
 }
-.pztpro-checkout-bar--commandcenter .pztpro-bar-row__currency { margin-right: 1px; }
+.pztc-checkout-bar--commandcenter .pztc-bar-row__currency { margin-right: 1px; }
 
-.pztpro-checkout-bar--commandcenter .pztpro-bar-qty {
+.pztc-checkout-bar--commandcenter .pztc-bar-qty {
     display:     flex;
     align-items: center;
     gap:         0;
@@ -917,7 +917,7 @@
     overflow:    hidden;
     flex-shrink: 0;
 }
-.pztpro-checkout-bar--commandcenter .pztpro-qty-btn {
+.pztc-checkout-bar--commandcenter .pztc-qty-btn {
     width:      34px;
     height:     38px;
     background: var(--cc-surface-2, #1e2d4f);
@@ -930,9 +930,9 @@
     align-items: center;
     justify-content: center;
 }
-.pztpro-checkout-bar--commandcenter .pztpro-qty-btn:hover:not(:disabled) { background: var(--cc-surface-3, #253460); }
-.pztpro-checkout-bar--commandcenter .pztpro-qty-btn:disabled { opacity: 0.4; cursor: default; }
-.pztpro-checkout-bar--commandcenter .pztpro-qty-value {
+.pztc-checkout-bar--commandcenter .pztc-qty-btn:hover:not(:disabled) { background: var(--cc-surface-3, #253460); }
+.pztc-checkout-bar--commandcenter .pztc-qty-btn:disabled { opacity: 0.4; cursor: default; }
+.pztc-checkout-bar--commandcenter .pztc-qty-value {
     min-width:  34px;
     text-align: center;
     font-size:  15px;
@@ -941,7 +941,7 @@
     padding:    0 4px;
 }
 
-.pztpro-checkout-bar--commandcenter .pztpro-bar-row__btn {
+.pztc-checkout-bar--commandcenter .pztc-bar-row__btn {
     display:      inline-flex;
     align-items:  center;
     justify-content: center;
@@ -960,13 +960,13 @@
     flex:         0 1 auto;
     min-width:    180px;
 }
-.pztpro-checkout-bar--commandcenter .pztpro-bar-row__btn svg { width: 18px; height: 18px; flex-shrink: 0; }
-.pztpro-checkout-bar--commandcenter .pztpro-bar-row__btn:hover {
+.pztc-checkout-bar--commandcenter .pztc-bar-row__btn svg { width: 18px; height: 18px; flex-shrink: 0; }
+.pztc-checkout-bar--commandcenter .pztc-bar-row__btn:hover {
     background: var(--cc-cta-hover, var(--cc-accent-hover));
     box-shadow: var(--cc-cta-glow, 0 0 24px rgba(233,69,96,0.6));
 }
-.pztpro-checkout-bar--commandcenter .pztpro-bar-row__btn:active { transform: scale(0.98); }
-.pztpro-checkout-bar--commandcenter .pztpro-bar-row__btn:disabled { opacity: 0.55; cursor: default; box-shadow: none; }
+.pztc-checkout-bar--commandcenter .pztc-bar-row__btn:active { transform: scale(0.98); }
+.pztc-checkout-bar--commandcenter .pztc-bar-row__btn:disabled { opacity: 0.55; cursor: default; box-shadow: none; }
 
 /* ══════════════════════════════════════════════════════════════════
    MOBILE TWEAKS
@@ -982,8 +982,8 @@
     .cc-panel        { padding: 18px 14px 16px; }
     .cc-panel__header { gap: 10px; }
     .cc-panel__step-badge { width: 28px; height: 28px; font-size: 13px; }
-    .pztpro-checkout-bar--commandcenter .pztpro-bar-row__summary { flex: 1 0 100%; }
-    .pztpro-checkout-bar--commandcenter .pztpro-bar-row__btn { flex: 1 0 100%; width: 100%; }
+    .pztc-checkout-bar--commandcenter .pztc-bar-row__summary { flex: 1 0 100%; }
+    .pztc-checkout-bar--commandcenter .pztc-bar-row__btn { flex: 1 0 100%; width: 100%; }
 }
 
 @media (max-width: 859px) {

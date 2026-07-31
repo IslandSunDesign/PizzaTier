@@ -3,7 +3,7 @@
 	(function(){
 	'use strict';
 
-	var cfg       = window.plimConfig || {};
+	var cfg       = window.pizzatierLimConfig || {};
 	var AJAX_URL  = cfg.ajaxUrl  || '';
 	var NONCE     = cfg.nonce    || '';
 

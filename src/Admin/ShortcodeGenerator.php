@@ -193,7 +193,7 @@ class ShortcodeGenerator {
 					<p class="pscg-desc">Renders a non-interactive pizza image. Specify layers individually, or pick a saved preset.</p>
 					<div class="pscg-grid">
 						<div class="pscg-field">
-							<label>Preset <span class="pscg-hint">Outputs <code>[pizza_preset]</code> — renders the full saved pizza incl. toppings (requires PizzaTierPro)</span></label>
+							<label>Preset <span class="pscg-hint">Outputs <code>[pizza_preset]</code> — renders the full saved pizza incl. toppings (requires PizzaTier)</span></label>
 							<select class="pscg-select" id="s-preset">
 								<option value="">— none (specify layers below) —</option>
 								<?php

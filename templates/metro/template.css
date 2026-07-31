@@ -1033,7 +1033,7 @@
 }
 
 /* Ingredient card price styling removed in PizzaTier 1.2.0 — pricing is
-   provided by PizzaTierPro and rendered in its own elements. */
+   provided by PizzaTier and rendered in its own elements. */
 .mt-root .mt-card__footer-row--title {
 	display:     flex;
 	align-items: center;
@@ -1626,15 +1626,15 @@
    METRO — CHECKOUT BAR RESPONSIVE
    ══════════════════════════════════════════════════════════════ */
 @media (max-width: 540px) {
-    .pztpro-checkout-bar--metro .pztpro-bar-row {
+    .pztc-checkout-bar--metro .pztc-bar-row {
         flex-wrap: wrap;
         gap: 8px;
     }
-    .pztpro-checkout-bar--metro .pztpro-bar-row__summary {
+    .pztc-checkout-bar--metro .pztc-bar-row__summary {
         width: 100%;
         flex: none;
     }
-    .pztpro-checkout-bar--metro .pztpro-bar-row__btn {
+    .pztc-checkout-bar--metro .pztc-bar-row__btn {
         flex: 1 1 auto;
         justify-content: center;
     }
@@ -1724,12 +1724,12 @@
 
 /* ══════════════════════════════════════════════════════════════
    METRO — ADD TO CART CTA & CHECKOUT BAR
-   Styles the PizzaTierPro checkout bar (checkout-bar.php) for Metro.
-   All rules scoped to .pztpro-checkout-bar--metro so they only affect
+   Styles the PizzaTier checkout bar (checkout-bar.php) for Metro.
+   All rules scoped to .pztc-checkout-bar--metro so they only affect
    this template. Colours pull from the Metro CSS variables, so they
    follow the template's Accent / Surface / Background settings.
    ══════════════════════════════════════════════════════════════ */
-.pztpro-checkout-bar--metro {
+.pztc-checkout-bar--metro {
     margin-top:    0;
     display:       flex;
     flex-direction: column;
@@ -1743,19 +1743,19 @@
 }
 
 /* ── Order notes ─────────────────────────────────────────────── */
-.pztpro-checkout-bar--metro .pztpro-bar-notes {
+.pztc-checkout-bar--metro .pztc-bar-notes {
     display:        flex;
     flex-direction: column;
     gap:            6px;
 }
-.pztpro-checkout-bar--metro .pztpro-bar-notes__label {
+.pztc-checkout-bar--metro .pztc-bar-notes__label {
     font-size:      12px;
     font-weight:    700;
     letter-spacing: 0.02em;
     text-transform: uppercase;
     color:          var(--mt-text-muted, #8a8a82);
 }
-.pztpro-checkout-bar--metro .pztpro-bar-notes__input {
+.pztc-checkout-bar--metro .pztc-bar-notes__input {
     width:         100%;
     padding:       10px 12px;
     border:        2px solid var(--mt-border, #e4e4e0);
@@ -1769,33 +1769,33 @@
     transition:    border-color var(--mt-transition, 0.18s ease),
                    box-shadow   var(--mt-transition, 0.18s ease);
 }
-.pztpro-checkout-bar--metro .pztpro-bar-notes__input:focus {
+.pztc-checkout-bar--metro .pztc-bar-notes__input:focus {
     outline:      none;
     border-color: var(--mt-accent, #e63946);
     box-shadow:   0 0 0 3px var(--mt-accent-dim, rgba(230,57,70,0.10));
 }
 
 /* ── Bar row (price · quantity · CTA) ────────────────────────── */
-.pztpro-checkout-bar--metro .pztpro-bar-row {
+.pztc-checkout-bar--metro .pztc-bar-row {
     display:     flex;
     align-items: center;
     gap:         14px;
 }
-.pztpro-checkout-bar--metro .pztpro-bar-row__summary {
+.pztc-checkout-bar--metro .pztc-bar-row__summary {
     display:        flex;
     flex-direction: column;
     line-height:    1.2;
     flex:           1 1 auto;
     min-width:      0;
 }
-.pztpro-checkout-bar--metro .pztpro-bar-row__size-label {
+.pztc-checkout-bar--metro .pztc-bar-row__size-label {
     font-size:      12px;
     font-weight:    600;
     text-transform: uppercase;
     letter-spacing: 0.03em;
     color:          var(--mt-text-muted, #8a8a82);
 }
-.pztpro-checkout-bar--metro .pztpro-bar-row__price {
+.pztc-checkout-bar--metro .pztc-bar-row__price {
     font-size:   26px;
     font-weight: 800;
     color:       var(--mt-text, #1a1a1a);
@@ -1803,7 +1803,7 @@
 }
 
 /* ── Quantity stepper ────────────────────────────────────────── */
-.pztpro-checkout-bar--metro .pztpro-bar-qty {
+.pztc-checkout-bar--metro .pztc-bar-qty {
     display:       inline-flex;
     align-items:   center;
     border:        2px solid var(--mt-border, #e4e4e0);
@@ -1811,7 +1811,7 @@
     overflow:      hidden;
     flex-shrink:   0;
 }
-.pztpro-checkout-bar--metro .pztpro-qty-btn {
+.pztc-checkout-bar--metro .pztc-qty-btn {
     width:       38px;
     height:      38px;
     border:      none;
@@ -1824,15 +1824,15 @@
     transition:  background var(--mt-transition, 0.18s ease),
                  color      var(--mt-transition, 0.18s ease);
 }
-.pztpro-checkout-bar--metro .pztpro-qty-btn:hover:not(:disabled) {
+.pztc-checkout-bar--metro .pztc-qty-btn:hover:not(:disabled) {
     background: var(--mt-accent-dim, rgba(230,57,70,0.10));
     color:      var(--mt-accent, #e63946);
 }
-.pztpro-checkout-bar--metro .pztpro-qty-btn:disabled {
+.pztc-checkout-bar--metro .pztc-qty-btn:disabled {
     opacity: 0.4;
     cursor:  not-allowed;
 }
-.pztpro-checkout-bar--metro .pztpro-qty-value {
+.pztc-checkout-bar--metro .pztc-qty-value {
     min-width:   32px;
     text-align:  center;
     font-size:   15px;
@@ -1842,7 +1842,7 @@
 }
 
 /* ── Add to Cart CTA ─────────────────────────────────────────── */
-.pztpro-checkout-bar--metro .pztpro-add-to-cart-btn {
+.pztc-checkout-bar--metro .pztc-add-to-cart-btn {
     display:        inline-flex;
     align-items:    center;
     justify-content: center;
@@ -1864,37 +1864,37 @@
                     transform   0.12s ease,
                     box-shadow  var(--mt-transition, 0.18s ease);
 }
-.pztpro-checkout-bar--metro .pztpro-add-to-cart-btn svg {
+.pztc-checkout-bar--metro .pztc-add-to-cart-btn svg {
     width:  19px;
     height: 19px;
     flex-shrink: 0;
 }
-.pztpro-checkout-bar--metro .pztpro-add-to-cart-btn:hover {
+.pztc-checkout-bar--metro .pztc-add-to-cart-btn:hover {
     background: var(--mt-accent-hover, #c1121f);
     box-shadow: 0 6px 20px var(--mt-accent-dim, rgba(230,57,70,0.10));
     transform:  translateY(-1px);
 }
-.pztpro-checkout-bar--metro .pztpro-add-to-cart-btn:active {
+.pztc-checkout-bar--metro .pztc-add-to-cart-btn:active {
     transform: translateY(0);
     box-shadow: 0 2px 8px var(--mt-accent-dim, rgba(230,57,70,0.10));
 }
-.pztpro-checkout-bar--metro .pztpro-add-to-cart-btn:focus-visible {
+.pztc-checkout-bar--metro .pztc-add-to-cart-btn:focus-visible {
     outline:     none;
     box-shadow:  0 0 0 3px var(--mt-surface, #fff),
                  0 0 0 5px var(--mt-accent, #e63946);
 }
-.pztpro-checkout-bar--metro .pztpro-add-to-cart-btn:disabled,
-.pztpro-checkout-bar--metro .pztpro-add-to-cart-btn.is-loading {
+.pztc-checkout-bar--metro .pztc-add-to-cart-btn:disabled,
+.pztc-checkout-bar--metro .pztc-add-to-cart-btn.is-loading {
     opacity:        0.6;
     cursor:         not-allowed;
     transform:      none;
     box-shadow:     none;
 }
-.pztpro-checkout-bar--metro .pztpro-add-to-cart-btn.is-loading {
+.pztc-checkout-bar--metro .pztc-add-to-cart-btn.is-loading {
     color: transparent;
     position: relative;
 }
-.pztpro-checkout-bar--metro .pztpro-add-to-cart-btn.is-loading::after {
+.pztc-checkout-bar--metro .pztc-add-to-cart-btn.is-loading::after {
     content:       '';
     position:      absolute;
     width:         18px;
@@ -1905,7 +1905,7 @@
     animation:     mt-cta-spin 0.7s linear infinite;
 }
 @keyframes mt-cta-spin { to { transform: rotate(360deg); } }
-.pztpro-checkout-bar--metro .pztpro-add-to-cart-btn.is-added {
+.pztc-checkout-bar--metro .pztc-add-to-cart-btn.is-added {
     background: #2d8a4e;
 }
 
@@ -1932,7 +1932,7 @@
 }
 .mt-size-option input[type="radio"] { display: none; }
 .mt-size-option:hover,
-.mt-size-option.pztpro-size-option--active {
+.mt-size-option.pztc-size-option--active {
     border-color: var(--mt-accent, #e63946);
     background: var(--mt-accent-dim, rgba(230,57,70,0.08));
     color: var(--mt-accent, #e63946);

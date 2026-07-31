@@ -38,17 +38,17 @@ class Settings {
 		// Content & Data behaviour
 		'pizzatier_setting_disable_content_hub',
 		'pizzatier_setting_require_complete_data',
-		// Pricing & Cart settings moved to PizzaTierPro:
-		//   pizzatier_setting_price_display_mode → pztpro_get_setting('price_display_mode')
-		//   pizzatier_setting_price_base         → pztpro_get_setting('price_base')
-		//   pizzatier_setting_price_currency_pos → pztpro_get_setting('price_currency_pos')
-		//   pizzatier_setting_price_update_anim  → pztpro_get_setting('price_update_anim')
-		//   pizzatier_setting_price_show_cart_btn  → pztpro_get_setting('show_cart_btn')
-		//   pizzatier_setting_price_cart_btn_text  → pztpro_get_setting('cart_btn_text')
-		//   pizzatier_setting_price_require_crust  → pztpro_get_setting('require_crust')
-		//   pizzatier_setting_price_require_sauce  → pztpro_get_setting('require_sauce')
-		//   pizzatier_setting_price_min_order      → pztpro_get_setting('min_order')
-		//   pizzatier_setting_price_tax_display    → pztpro_get_setting('tax_display')
+		// Pricing & Cart settings moved to PizzaTier:
+		//   pizzatier_setting_price_display_mode → pizzatier_get_option('price_display_mode')
+		//   pizzatier_setting_price_base         → pizzatier_get_option('price_base')
+		//   pizzatier_setting_price_currency_pos → pizzatier_get_option('price_currency_pos')
+		//   pizzatier_setting_price_update_anim  → pizzatier_get_option('price_update_anim')
+		//   pizzatier_setting_price_show_cart_btn  → pizzatier_get_option('show_cart_btn')
+		//   pizzatier_setting_price_cart_btn_text  → pizzatier_get_option('cart_btn_text')
+		//   pizzatier_setting_price_require_crust  → pizzatier_get_option('require_crust')
+		//   pizzatier_setting_price_require_sauce  → pizzatier_get_option('require_sauce')
+		//   pizzatier_setting_price_min_order      → pizzatier_get_option('min_order')
+		//   pizzatier_setting_price_tax_display    → pizzatier_get_option('tax_display')
 		// Accessibility & Performance
 		'pizzatier_setting_a11y_reduce_motion',
 		'pizzatier_setting_a11y_high_contrast',
@@ -109,7 +109,7 @@ class Settings {
 		'plainlist_setting_selected_style',
 		'plainlist_setting_row_padding',
 		'plainlist_setting_label_weight',
-		// Plainlist — Add-to-Cart button (PizzaTierPro checkout bar)
+		// Plainlist — Add-to-Cart button (PizzaTier checkout bar)
 		'plainlist_setting_cart_btn_text',
 		'plainlist_setting_cart_btn_style',
 		'plainlist_setting_cart_btn_size',
@@ -133,7 +133,7 @@ class Settings {
 		'scaffold_setting_show_labels',
 		'scaffold_setting_anim_speed',
 		'scaffold_setting_summary_title',
-		// Scaffold — Add-to-Cart button (PizzaTierPro checkout bar)
+		// Scaffold — Add-to-Cart button (PizzaTier checkout bar)
 		'scaffold_setting_cta_text',
 		'scaffold_setting_cta_show_icon',
 		// Active template — stored separately from Settings page but exported/imported here
@@ -146,9 +146,28 @@ class Settings {
 	 * Used by the Site Migration tool to walk every persisted setting.
 	 * Returns the canonical key list — callers should treat this as read-only.
 	 *
+	 * Delegates to OptionRegistry, which discovers template settings by
+	 * reading each pztp-template-options.php rather than relying on the
+	 * hand-maintained list above. Before 2.0.4 this returned self::OPTIONS
+	 * directly, which covered only two of the eight templates and none of
+	 * the ordering settings — so migrations quietly dropped them.
+	 *
 	 * @return string[]
 	 */
 	public static function get_option_keys(): array {
+		return \PizzaTier\Core\OptionRegistry::all_keys();
+	}
+
+	/**
+	 * The subset of option keys the Settings screen itself renders.
+	 *
+	 * Kept separate from get_option_keys() because the Settings page's own
+	 * export/import is scoped to the fields on that screen, whereas Site
+	 * Migration covers everything the plugin owns.
+	 *
+	 * @return string[]
+	 */
+	public static function get_screen_option_keys(): array {
 		return self::OPTIONS;
 	}
 
@@ -184,7 +203,7 @@ class Settings {
 		$g = fn( string $key, string $default = '' ) => (string) get_option( $key, $default );
 
 		// Active template
-		$active_template = (string) get_option( 'pizzatier_setting_global_template', '' );
+		$active_template = sanitize_key( (string) get_option( 'pizzatier_setting_global_template', '' ) ); // sanitize_key() prevents path traversal in the template-options include below.
 
 		// Load template settings if available
 		$template_settings = [];
@@ -568,44 +587,50 @@ class Settings {
 			</div>
 		</div>
 
-		<!-- ══ Section: Cart Integration ═════════════════════════════════════════
-		     Pricing logic, price displays, and cart options all live in
-		     PizzaTierPro. The base plugin handles ingredients, layouts, and
-		     visualisation only; this section just points admins to the right
-		     place when Pro is or isn't installed. -->
+		<!-- ══ Section: Cart & Pricing ══════════════════════════════════════
+		     Pricing grids, cart behaviour, checkout, nutrition and order emails
+		     are configured on their own screen rather than here. They are stored
+		     as a single array option and registered through the WordPress
+		     Settings API, whereas this page is one long form over ~200 discrete
+		     options with its own save handler. Putting both on one page would
+		     mean two independent forms sharing a sticky Save bar — press the
+		     wrong one and your edits vanish silently. The same reasoning already
+		     keeps the ordering settings on the Orders screen. -->
 		<div class="pset-card">
 			<div class="pset-card__head pset-card__head--collapsible" data-pset-toggle="pricing-cart">
 				<div>
-					<h2><span class="dashicons dashicons-cart"></span> <?php esc_html_e( 'Cart Integration', 'pizzatier' ); ?></h2>
-					<p><?php esc_html_e( 'Pricing and cart features are provided by PizzaTierPro.', 'pizzatier' ); ?></p>
+					<h2><span class="dashicons dashicons-cart"></span> <?php esc_html_e( 'Cart &amp; Pricing', 'pizzatier' ); ?></h2>
+					<p><?php esc_html_e( 'Prices, cart behaviour and checkout are configured on their own screen.', 'pizzatier' ); ?></p>
 				</div>
 				<button type="button" class="pset-collapse-btn" aria-expanded="true" aria-controls="pset-body-pricing-cart"><span class="dashicons dashicons-arrow-up-alt2"></span></button>
 			</div>
 			<div class="pset-card__body" id="pset-body-pricing-cart">
 				<div class="pset-grid">
-					<?php if ( ! class_exists( 'PizzaTierPro\\Pro\\Plugin' ) ) : ?>
 					<div class="pset-field pset-field--full">
-						<div class="pset-pro-notice">
-							<span class="dashicons dashicons-cart"></span>
-							<div>
-								<strong><?php esc_html_e( 'Pricing &amp; WooCommerce Cart', 'pizzatier' ); ?></strong>
-								<p><?php esc_html_e( 'Per-layer pricing grids, base price, currency display, cart buttons, checkout flow, and order/email integration are all handled by PizzaTierPro.', 'pizzatier' ); ?>
-								<a href="https://pizzatier.com/pro" target="_blank" rel="noopener"><?php esc_html_e( 'Learn more →', 'pizzatier' ); ?></a></p>
-							</div>
-						</div>
-					</div>
-					<?php else : ?>
-					<div class="pset-field pset-field--full">
-						<div class="pset-pro-notice pset-pro-notice--active">
+						<div class="pset-info-notice pset-info-notice--active">
 							<span class="dashicons dashicons-yes-alt"></span>
 							<div>
-								<strong><?php esc_html_e( 'Pricing &amp; Cart Settings', 'pizzatier' ); ?></strong>
-								<p><?php esc_html_e( 'Configure pricing grids, cart buttons, and checkout in ', 'pizzatier' ); ?>
-								<a href="<?php echo esc_url( admin_url( 'admin.php?page=pizzatierpro-settings' ) ); ?>"><?php esc_html_e( 'PizzaTierPro → Pro Settings', 'pizzatier' ); ?></a>.</p>
+								<strong><?php esc_html_e( 'Cart &amp; Pricing settings', 'pizzatier' ); ?></strong>
+								<p>
+									<?php esc_html_e( 'Per-layer price grids, base prices, currency display, cart buttons, checkout behaviour, nutrition panels and order emails all live here.', 'pizzatier' ); ?>
+								</p>
+								<p style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:0;">
+									<a href="<?php echo esc_url( admin_url( 'admin.php?page=pizzatier-commerce' ) ); ?>" class="button button-secondary">
+										<?php esc_html_e( 'Cart &amp; Pricing settings', 'pizzatier' ); ?>
+									</a>
+									<a href="<?php echo esc_url( admin_url( 'admin.php?page=' . \PizzaTier\Commerce\Admin\PricingPage::PAGE_SLUG ) ); ?>" class="button button-secondary">
+										<?php esc_html_e( 'Price grids', 'pizzatier' ); ?>
+									</a>
+									<a href="<?php echo esc_url( admin_url( 'admin.php?page=' . \PizzaTier\Orders\Admin\OrdersPage::SLUG ) ); ?>" class="button button-secondary">
+										<?php esc_html_e( 'Ordering', 'pizzatier' ); ?>
+									</a>
+								</p>
+								<p class="description" style="margin-bottom:0;">
+									<?php esc_html_e( 'These settings are included when you export below, and restored on import.', 'pizzatier' ); ?>
+								</p>
 							</div>
 						</div>
 					</div>
-					<?php endif; ?>
 				</div>
 			</div>
 		</div>
@@ -981,6 +1006,18 @@ class Settings {
 		}
 		// Note: pizzatier_setting_global_template is now included in OPTIONS above.
 
+		// The cart-and-pricing settings live in a single array option rather
+		// than as discrete keys, so they are not covered by the loop above.
+		// Before 2.0.0 they belonged to a separate plugin and this export
+		// silently omitted them, which meant exporting settings, importing on
+		// another site, and quietly losing every price grid default, cart and
+		// checkout option. They are part of the same plugin now, so they travel
+		// with the export.
+		$commerce = get_option( \PizzaTier\Commerce\Admin\Settings::OPTION_NAME, null );
+		if ( is_array( $commerce ) ) {
+			$data[ \PizzaTier\Commerce\Admin\Settings::OPTION_NAME ] = $commerce;
+		}
+
 		$json     = (string) wp_json_encode( $data, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE );
 		$filename = 'pizzatier-settings-' . gmdate( 'Y-m-d' ) . '.json';
 
@@ -1058,6 +1095,19 @@ class Settings {
 
 		$allowed = array_flip( self::OPTIONS );
 		$count   = 0;
+
+		// Cart-and-pricing settings, stored as one array option. Routed through
+		// that screen's own sanitise callback rather than a bespoke sanitiser
+		// here, so the two can never disagree about what a valid value is.
+		$commerce_key = \PizzaTier\Commerce\Admin\Settings::OPTION_NAME;
+		if ( isset( $data[ $commerce_key ] ) && is_array( $data[ $commerce_key ] ) ) {
+			$commerce_clean = ( new \PizzaTier\Commerce\Admin\Settings() )->sanitize( $data[ $commerce_key ] );
+			if ( is_array( $commerce_clean ) ) {
+				update_option( $commerce_key, $commerce_clean );
+				$count++;
+			}
+			unset( $data[ $commerce_key ] );
+		}
 
 		// Keys that are stored as arrays — must not be cast to string
 		$array_options = [
@@ -1155,7 +1205,7 @@ class Settings {
 			'pizzatier_setting_global_help_content',
 		];
 		// Note: pizzatier_setting_price_base (decimal) was removed in 1.2.0;
-		// pricing options now live in PizzaTierPro.
+		// pricing options now live in PizzaTier.
 
 		foreach ( $text_options as $key ) {
 			if ( isset( $_POST[ $key ] ) ) {
@@ -1193,7 +1243,7 @@ class Settings {
 			}
 		}
 		// Save template-specific settings dynamically
-		$active_template = (string) get_option( 'pizzatier_setting_global_template', '' );
+		$active_template = sanitize_key( (string) get_option( 'pizzatier_setting_global_template', '' ) ); // sanitize_key() prevents path traversal in the template-options include below.
 		if ( $active_template ) {
 			$tpl_dirs = [
 				get_stylesheet_directory() . '/pzttemplates/' . $active_template . '/',

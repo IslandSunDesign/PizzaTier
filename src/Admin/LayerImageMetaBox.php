@@ -294,7 +294,7 @@ class LayerImageMetaBox {
 			[ 'post_title' => pathinfo( $filename, PATHINFO_FILENAME ) ]
 		);
 
-		@unlink( $tmp ); // phpcs:ignore
+		wp_delete_file( $tmp );
 
 		if ( is_wp_error( $att_id ) ) {
 			wp_send_json_error( $att_id->get_error_message() );

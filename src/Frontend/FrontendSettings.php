@@ -195,8 +195,8 @@ class FrontendSettings {
 			'showSpecialInstr'  => self::gb( 'pizzatier_setting_cx_special_instructions' ) ? 'yes' : 'no',
 			'specialInstrPlaceholder' => self::g( 'pizzatier_setting_cx_special_instr_placeholder', 'Any special requests? (optional)' ),
 			'specialInstrMaxLen'=> self::gi( 'pizzatier_setting_cx_special_instr_max', 300 ),
-			// Cart/WooCommerce — defaults here, filterable so PizzaTierPro can override.
-			// Pro hooks into 'pizzatier_js_cart_data' to supply live values.
+			// Cart/WooCommerce — defaults here, filterable so PizzaTier can override.
+			// The cart integration hooks 'pizzatier_js_cart_data' to supply live values.
 			'addToCartLabel'    => (string) apply_filters( 'pizzatier_cart_btn_text',       'Add to Cart' ),
 			'showCartBtn'       => apply_filters( 'pizzatier_show_cart_btn',        false ) ? 'yes' : 'no',
 			'requireCrust'      => apply_filters( 'pizzatier_require_crust',         false ) ? 'yes' : 'no',
@@ -233,16 +233,12 @@ class FrontendSettings {
 			}
 		}
 
-		// Fornaia / rustic template — pass copy label overrides to JS
-		if ( wp_script_is( 'pizzatier-template-rustic', 'enqueued' ) ) {
-			$rustic_labels = [
-				'addLabel'     => (string) get_option( 'rustic_setting_add_label',    'Add' ),
-				'removeLabel'  => (string) get_option( 'rustic_setting_remove_label', 'Remove' ),
-				'chooseLabel'  => (string) get_option( 'rustic_setting_choose_label', 'Choose' ),
-				'resetLabel'   => (string) get_option( 'rustic_setting_reset_label',  'Reset' ),
-			];
-			wp_localize_script( 'pizzatier-template-rustic', 'pizzatierRusticSettings', $rustic_labels );
-		}
+		// The Fornaia / rustic copy labels (Choose / Add / Remove / Reset) are
+		// rendered server-side by that template's own partial, which reads the
+		// same options directly. They were also being localised into a
+		// `pizzatierRusticSettings` object that no script has ever read —
+		// an extra inline <script> on every page using the template, carrying
+		// data nothing consumes. Removed.
 	}
 
 	/**

@@ -29,7 +29,7 @@ return [
 		'key'     => 'commandcenter_setting_cta_color',
 		'type'    => 'color',
 		'label'   => 'Add to Cart Button Color',
-		'desc'    => 'Color of the Add to Cart button and the live price (PizzaTierPro). Defaults to the accent color.',
+		'desc'    => 'Color of the Add to Cart button and the live price (PizzaTier). Defaults to the accent color.',
 		'default' => '#e94560',
 	],
 	[
@@ -149,12 +149,12 @@ return [
 		'toggle_label' => 'Enable accent glow',
 	],
 
-	// ── Checkout (PizzaTierPro) ──────────────────────────────────────
+	// ── Checkout (PizzaTier) ──────────────────────────────────────
 	[
 		'key'         => 'commandcenter_setting_cta_text',
 		'type'        => 'text',
 		'label'       => 'Add to Cart Button Text',
-		'desc'        => 'Label shown on the Add to Cart button in the checkout bar (PizzaTierPro). Leave blank to use the default "Add to Cart".',
+		'desc'        => 'Label shown on the Add to Cart button in the checkout bar (PizzaTier). Leave blank to use the default "Add to Cart".',
 		'default'     => '',
 		'placeholder' => 'Add to Cart',
 	],

@@ -22,6 +22,11 @@ if ( ! defined( 'ABSPATH' ) ) { exit; }
  *  - _pizzatier_calories         (int)
  *  - _pizzatier_spice_level      (mild|medium|hot|extra_hot)
  *  - _pizzatier_thickness        (string, crusts only)
+ *  - _pizzatier_fat              (float, grams)
+ *  - _pizzatier_carbs            (float, grams)
+ *  - _pizzatier_protein          (float, grams)
+ *  - _pizzatier_sodium           (float, mg)
+ *  - _pizzatier_allergens        (string, free text)
  *  - _pizzatier_is_vegetarian / _is_vegan / _is_gluten_free / _is_dairy_free ('1' | '')
  *
  * These are plain form fields submitted with the post-editor form and saved on
@@ -34,11 +39,29 @@ class NutritionMetaBox {
 	 * shown for every edible type; the rest are type-specific.
 	 */
 	private const TYPE_FIELDS = [
-		'toppings' => [ 'ingredients', 'serving_size', 'calories', 'spice_level', 'dietary' ],
-		'crusts'   => [ 'ingredients', 'serving_size', 'calories', 'thickness',   'dietary' ],
-		'sauces'   => [ 'ingredients', 'serving_size', 'calories', 'spice_level', 'dietary' ],
-		'cheeses'  => [ 'ingredients', 'serving_size', 'calories',                'dietary' ],
-		'drizzles' => [ 'ingredients', 'serving_size', 'calories', 'spice_level', 'dietary' ],
+		'toppings' => [ 'ingredients', 'serving_size', 'calories', 'macros', 'spice_level', 'dietary' ],
+		'crusts'   => [ 'ingredients', 'serving_size', 'calories', 'macros', 'thickness',   'dietary' ],
+		'sauces'   => [ 'ingredients', 'serving_size', 'calories', 'macros', 'spice_level', 'dietary' ],
+		'cheeses'  => [ 'ingredients', 'serving_size', 'calories', 'macros',                'dietary' ],
+		'drizzles' => [ 'ingredients', 'serving_size', 'calories', 'macros', 'spice_level', 'dietary' ],
+	];
+
+	/**
+	 * Per-serving macronutrient fields: meta suffix => [ label, unit, step ].
+	 *
+	 * These arrived with the PizzaTier merge, where they lived in a second
+	 * nutrition meta box on the same five post types, stored under
+	 * their own prefix. Two boxes asking for overlapping nutrition data on one
+	 * edit screen was the clearest duplication the merge left behind. The
+	 * two field sets barely overlapped — only calories appeared in both — so
+	 * the merged box is the union, stored on this plugin's canonical
+	 * `_pizzatier_*` keys alongside the rest.
+	 */
+	private const MACROS = [
+		'fat'     => [ 'Fat',     'g',  '0.1' ],
+		'carbs'   => [ 'Carbs',   'g',  '0.1' ],
+		'protein' => [ 'Protein', 'g',  '0.1' ],
+		'sodium'  => [ 'Sodium',  'mg', '1'   ],
 	];
 
 	/** Dietary flag keys + labels. */
@@ -48,6 +71,28 @@ class NutritionMetaBox {
 		'is_gluten_free' => 'Gluten-free',
 		'is_dairy_free'  => 'Dairy-free',
 	];
+
+	/**
+	 * Nutrition values for one layer post, for the front end.
+	 *
+	 * @since 2.0.0
+	 *
+	 * @param int $post_id Layer post ID.
+	 * @return array<string,string> Non-empty values only.
+	 */
+	public static function get( int $post_id ): array {
+		$keys = array_merge( [ 'calories', 'allergens' ], array_keys( self::MACROS ) );
+
+		$out = [];
+		foreach ( $keys as $key ) {
+			$val = get_post_meta( $post_id, '_pizzatier_' . $key, true );
+			if ( '' !== $val && false !== $val && null !== $val ) {
+				$out[ $key ] = (string) $val;
+			}
+		}
+
+		return $out;
+	}
 
 	public function register_hooks(): void {
 		add_action( 'add_meta_boxes', [ $this, 'add_meta_boxes' ] );
@@ -118,6 +163,35 @@ class NutritionMetaBox {
 					<td>
 						<input type="number" id="pzl-nutri-calories" name="pzl_nutrition[calories]" class="small-text" min="0" max="100000" step="1" value="<?php echo esc_attr( $get( 'calories' ) ); ?>">
 						<span class="description"><?php esc_html_e( 'kcal per serving', 'pizzatier' ); ?></span>
+					</td>
+				</tr>
+				<?php endif; ?>
+
+				<?php if ( in_array( 'macros', $fields, true ) ) : ?>
+				<tr>
+					<th scope="row"><?php esc_html_e( 'Per serving', 'pizzatier' ); ?></th>
+					<td>
+						<?php foreach ( self::MACROS as $mkey => [ $mlabel, $munit, $mstep ] ) : ?>
+							<label for="pzl-nutri-<?php echo esc_attr( $mkey ); ?>" style="display:inline-block;margin:0 16px 6px 0;">
+								<span style="display:inline-block;min-width:58px;"><?php echo esc_html( $mlabel ); ?></span>
+								<input type="number" id="pzl-nutri-<?php echo esc_attr( $mkey ); ?>"
+								       name="pzl_nutrition[<?php echo esc_attr( $mkey ); ?>]"
+								       class="small-text" min="0" max="100000" step="<?php echo esc_attr( $mstep ); ?>"
+								       value="<?php echo esc_attr( $get( $mkey ) ); ?>">
+								<span class="description"><?php echo esc_html( $munit ); ?></span>
+							</label>
+						<?php endforeach; ?>
+						<p class="description" style="margin-top:4px;">
+							<?php esc_html_e( 'Leave blank for any value you do not track.', 'pizzatier' ); ?>
+						</p>
+					</td>
+				</tr>
+				<tr>
+					<th scope="row"><label for="pzl-nutri-allergens"><?php esc_html_e( 'Allergens', 'pizzatier' ); ?></label></th>
+					<td>
+						<input type="text" id="pzl-nutri-allergens" name="pzl_nutrition[allergens]" class="regular-text"
+						       value="<?php echo esc_attr( $get( 'allergens' ) ); ?>"
+						       placeholder="<?php esc_attr_e( 'e.g. milk, wheat, soy', 'pizzatier' ); ?>">
 					</td>
 				</tr>
 				<?php endif; ?>
@@ -211,6 +285,20 @@ class NutritionMetaBox {
 		if ( in_array( 'calories', $fields, true ) ) {
 			$cal = isset( $in['calories'] ) && $in['calories'] !== '' ? max( 0, (int) $in['calories'] ) : '';
 			update_post_meta( $post_id, '_pizzatier_calories', $cal === '' ? '' : (string) $cal );
+		}
+
+		if ( in_array( 'macros', $fields, true ) ) {
+			foreach ( array_keys( self::MACROS ) as $mkey ) {
+				$raw_val = isset( $in[ $mkey ] ) ? trim( (string) $in[ $mkey ] ) : '';
+				if ( '' === $raw_val ) {
+					update_post_meta( $post_id, '_pizzatier_' . $mkey, '' );
+					continue;
+				}
+				$num = max( 0, (float) $raw_val );
+				// Store trimmed of trailing zeros so "12.0" round-trips as "12".
+				update_post_meta( $post_id, '_pizzatier_' . $mkey, rtrim( rtrim( number_format( $num, 2, '.', '' ), '0' ), '.' ) );
+			}
+			update_post_meta( $post_id, '_pizzatier_allergens', sanitize_text_field( $in['allergens'] ?? '' ) );
 		}
 
 		if ( in_array( 'spice_level', $fields, true ) ) {

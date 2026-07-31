@@ -1404,7 +1404,7 @@
 .cb-card__name {
     font-size:      var(--pzl-label-size, inherit);
 }
-/* .cb-card__price removed in PizzaTier 1.2.0 — pricing now provided by PizzaTierPro. */
+/* .cb-card__price removed in PizzaTier 1.2.0 — pricing now provided by PizzaTier. */
 .cb-btn {
     font-weight:    var(--pzl-btn-fw, 600);
 }
@@ -1473,8 +1473,8 @@
 
 
 /* ══════════════════════════════════════════════════════════════
-   CHECKOUT BAR (PizzaTierPro) — Colorbox variant
-   Rendered by PizzaTierPro's checkout-bar.php (this template's copy).
+   CHECKOUT BAR (PizzaTier) — Colorbox variant
+   Rendered by PizzaTier's checkout-bar.php (this template's copy).
    Bright, rounded "order app" bar matching the Colorbox builder.
    All hook classes/ids are kept so Pro's cart JS still binds.
    ══════════════════════════════════════════════════════════════ */
@@ -1488,7 +1488,7 @@
 }
 .cb-action-bar:empty { display: none; }   /* no Pro = no empty gap */
 
-.pztpro-checkout-bar--colorbox {
+.pztc-checkout-bar--colorbox {
     margin-top:    0;
     width:         100%;
     background:    var(--cb-surface);
@@ -1501,7 +1501,7 @@
     box-sizing:    border-box;
 }
 
-.pztpro-checkout-bar--colorbox .pztpro-bar-row {
+.pztc-checkout-bar--colorbox .pztc-bar-row {
     display:     flex;
     align-items: center;
     gap:         10px;
@@ -1509,31 +1509,31 @@
 }
 
 /* Size + price summary */
-.pztpro-checkout-bar--colorbox .pztpro-bar-row__summary {
+.pztc-checkout-bar--colorbox .pztc-bar-row__summary {
     display:        flex;
     flex-direction: column;
     gap:            2px;
     margin-right:   auto;
     min-width:      0;
 }
-.pztpro-checkout-bar--colorbox .pztpro-bar-row__size-label {
+.pztc-checkout-bar--colorbox .pztc-bar-row__size-label {
     font-size:      11px;
     font-weight:    700;
     text-transform: uppercase;
     letter-spacing: 0.06em;
     color:          var(--cb-text-muted);
 }
-.pztpro-checkout-bar--colorbox .pztpro-bar-row__size-label:empty { display: none; }
-.pztpro-checkout-bar--colorbox .pztpro-bar-row__price {
+.pztc-checkout-bar--colorbox .pztc-bar-row__size-label:empty { display: none; }
+.pztc-checkout-bar--colorbox .pztc-bar-row__price {
     font-size:   20px;
     font-weight: 900;
     line-height: 1.1;
     color:       var(--cb-text);
 }
-.pztpro-checkout-bar--colorbox .pztpro-bar-row__currency { margin-right: 1px; }
+.pztc-checkout-bar--colorbox .pztc-bar-row__currency { margin-right: 1px; }
 
 /* Quantity stepper */
-.pztpro-checkout-bar--colorbox .pztpro-bar-qty {
+.pztc-checkout-bar--colorbox .pztc-bar-qty {
     display:       inline-flex;
     align-items:   center;
     gap:           2px;
@@ -1542,7 +1542,7 @@
     border-radius: var(--cb-radius-pill);
     padding:       3px;
 }
-.pztpro-checkout-bar--colorbox .pztpro-qty-btn {
+.pztc-checkout-bar--colorbox .pztc-qty-btn {
     width:         30px;
     height:        30px;
     border:        0;
@@ -1558,15 +1558,15 @@
     justify-content: center;
     transition:    background var(--cb-transition), color var(--cb-transition);
 }
-.pztpro-checkout-bar--colorbox .pztpro-qty-btn:hover:not(:disabled) {
+.pztc-checkout-bar--colorbox .pztc-qty-btn:hover:not(:disabled) {
     background: var(--cb-accent-dim);
     color:      var(--cb-accent);
 }
-.pztpro-checkout-bar--colorbox .pztpro-qty-btn:disabled {
+.pztc-checkout-bar--colorbox .pztc-qty-btn:disabled {
     opacity: 0.4;
     cursor:  default;
 }
-.pztpro-checkout-bar--colorbox .pztpro-qty-value {
+.pztc-checkout-bar--colorbox .pztc-qty-value {
     min-width:   26px;
     text-align:  center;
     font-size:   14px;
@@ -1575,7 +1575,7 @@
 }
 
 /* Add to Cart CTA */
-.pztpro-checkout-bar--colorbox .pztpro-add-to-cart-btn {
+.pztc-checkout-bar--colorbox .pztc-add-to-cart-btn {
     display:         inline-flex;
     align-items:     center;
     justify-content: center;
@@ -1593,25 +1593,25 @@
     box-shadow:      0 4px 16px var(--cb-accent-glow);
     outline:         none;
 }
-.pztpro-checkout-bar--colorbox .pztpro-add-to-cart-btn:hover {
+.pztc-checkout-bar--colorbox .pztc-add-to-cart-btn:hover {
     background: #e64545;
     box-shadow: 0 6px 22px var(--cb-accent-glow);
 }
-.pztpro-checkout-bar--colorbox .pztpro-add-to-cart-btn:active { transform: scale(0.98); }
-.pztpro-checkout-bar--colorbox .pztpro-add-to-cart-btn:disabled {
+.pztc-checkout-bar--colorbox .pztc-add-to-cart-btn:active { transform: scale(0.98); }
+.pztc-checkout-bar--colorbox .pztc-add-to-cart-btn:disabled {
     opacity:    0.55;
     cursor:     default;
     box-shadow: none;
 }
-.pztpro-checkout-bar--colorbox .pztpro-bar-row__icon {
+.pztc-checkout-bar--colorbox .pztc-bar-row__icon {
     width:  18px;
     height: 18px;
     flex-shrink: 0;
 }
 
 /* Order notes */
-.pztpro-checkout-bar--colorbox .pztpro-bar-notes { margin-top: 10px; }
-.pztpro-checkout-bar--colorbox .pztpro-bar-notes__input {
+.pztc-checkout-bar--colorbox .pztc-bar-notes { margin-top: 10px; }
+.pztc-checkout-bar--colorbox .pztc-bar-notes__input {
     width:         100%;
     padding:       9px 12px;
     border:        1px solid var(--cb-border);
@@ -1624,13 +1624,13 @@
     min-height:    52px;
     transition:    border-color var(--cb-transition);
 }
-.pztpro-checkout-bar--colorbox .pztpro-bar-notes__input:focus {
+.pztc-checkout-bar--colorbox .pztc-bar-notes__input:focus {
     outline:      none;
     border-color: var(--cb-accent);
 }
 
 /* Responsive: stack summary above the controls on narrow screens */
 @media (max-width: 520px) {
-    .pztpro-checkout-bar--colorbox .pztpro-bar-row__summary { width: 100%; margin-right: 0; }
-    .pztpro-checkout-bar--colorbox .pztpro-add-to-cart-btn  { flex: 1 1 auto; }
+    .pztc-checkout-bar--colorbox .pztc-bar-row__summary { width: 100%; margin-right: 0; }
+    .pztc-checkout-bar--colorbox .pztc-add-to-cart-btn  { flex: 1 1 auto; }
 }

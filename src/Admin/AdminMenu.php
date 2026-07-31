@@ -55,6 +55,7 @@ class AdminMenu {
 			. '<circle fill="black" cx="7.2" cy="12.9" r="1.1"/>'
 			. '<circle fill="black" cx="12.4" cy="13.7" r="1.1"/>'
 			. '</svg>';
+		// phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_encode -- Builds a data: URI from inline SVG markup defined above; nothing is decoded or executed.
 		return 'data:image/svg+xml;base64,' . base64_encode( $svg );
 	}
 
@@ -83,6 +84,29 @@ class AdminMenu {
 		add_submenu_page( 'pizzatier', __( 'Help',                'pizzatier' ), __( 'Help',                'pizzatier' ), 'manage_options', 'pizzatier-help',       [ $this, 'render_help'       ] );
 		add_submenu_page( 'pizzatier', __( 'Shortcode Generator', 'pizzatier' ), __( 'Shortcode Generator', 'pizzatier' ), 'manage_options', 'pizzatier-shortcodes', [ $this, 'render_shortcodes' ] );
 
+		// ── Orders ───────────────────────────────────────────────────────
+		// Sits in Basics because taking orders is an everyday task. The label
+		// carries an awaiting-attention bubble, matching how WordPress badges
+		// pending comments.
+		if ( \PizzaTier\Orders\OrderCheckout::is_enabled() ) {
+			$orders_label = __( 'Pizza Orders', 'pizzatier' );
+			$open_orders  = \PizzaTier\Orders\OrderPostType::open_count();
+			if ( $open_orders > 0 ) {
+				$orders_label .= ' <span class="awaiting-mod"><span class="pending-count">'
+					. esc_html( number_format_i18n( $open_orders ) )
+					. '</span></span>';
+			}
+
+			add_submenu_page(
+				'pizzatier',
+				__( 'Pizza Orders', 'pizzatier' ),
+				$orders_label,
+				\PizzaTier\Orders\OrderPostType::capability(),
+				\PizzaTier\Orders\Admin\OrdersPage::SLUG,
+				[ $this, 'render_orders' ]
+			);
+		}
+
 		// ── CONTENT group header (non-clickable separator) ───────────────
 		// Registered as a submenu with a unique slug; styled to be non-interactive via CSS.
 		add_submenu_page( 'pizzatier', '', '<span class="pzl-menu-group-header">' . esc_html__( 'Content', 'pizzatier' ) . '</span>', 'manage_options', 'pizzatier-group-content', '__return_null' );
@@ -106,6 +130,58 @@ class AdminMenu {
 			// Using the full URL as the $menu_slug — WP renders it as-is in <a href>
 			add_submenu_page( 'pizzatier', $meta['label'], $label, 'manage_options', $url, null );
 		}
+
+		// ── CART & PRICING group header ──────────────────────────────────
+		// The screens that arrived with the PizzaTier merge. They are
+		// registered here, rather than by their own classes, so one file owns
+		// the whole sidebar and the group ordering is predictable.
+		//
+		add_submenu_page( 'pizzatier', '', '<span class="pzl-menu-group-header">' . esc_html__( 'Cart & Pricing', 'pizzatier' ) . '</span>', 'manage_options', 'pizzatier-group-commerce', '__return_null' );
+
+		add_submenu_page(
+			'pizzatier',
+			__( 'Pricing', 'pizzatier' ),
+			__( 'Pricing', 'pizzatier' ),
+			'manage_options',
+			\PizzaTier\Commerce\Admin\PricingPage::PAGE_SLUG,
+			[ new \PizzaTier\Commerce\Admin\PricingPage( new \PizzaTier\Commerce\PriceGrid\Grid() ), 'render' ]
+		);
+
+		add_submenu_page(
+			'pizzatier',
+			__( 'Bulk Pricing', 'pizzatier' ),
+			__( 'Bulk Pricing', 'pizzatier' ),
+			'manage_options',
+			\PizzaTier\Commerce\Admin\BulkPricingPage::PAGE_SLUG,
+			[ new \PizzaTier\Commerce\Admin\BulkPricingPage( new \PizzaTier\Commerce\PriceGrid\Grid() ), 'render' ]
+		);
+
+		add_submenu_page(
+			'pizzatier',
+			__( 'Pizza Presets', 'pizzatier' ),
+			__( 'Pizza Presets', 'pizzatier' ),
+			'manage_options',
+			'edit.php?post_type=pizzatier_presets',
+			null
+		);
+
+		add_submenu_page(
+			'pizzatier',
+			__( 'New Pizza Wizard', 'pizzatier' ),
+			__( '✦ New Pizza', 'pizzatier' ),
+			'manage_options',
+			\PizzaTier\Commerce\Admin\NewPizzaWizard::PAGE_SLUG,
+			[ new \PizzaTier\Commerce\Admin\NewPizzaWizard(), 'render' ]
+		);
+
+		add_submenu_page(
+			'pizzatier',
+			__( 'Cart & Pricing Settings', 'pizzatier' ),
+			__( 'Cart & Pricing', 'pizzatier' ),
+			'manage_options',
+			'pizzatier-commerce',
+			[ new \PizzaTier\Commerce\Admin\SettingsPage(), 'render' ]
+		);
 
 		// ── TOOLS group header ───────────────────────────────────────────
 		add_submenu_page( 'pizzatier', '', '<span class="pzl-menu-group-header">' . esc_html__( 'Tools', 'pizzatier' ) . '</span>', 'manage_options', 'pizzatier-group-tools', '__return_null' );
@@ -175,6 +251,7 @@ class AdminMenu {
 
 	public function render_layer_maker():   void { ( new LayerImageMaker() )->render(); }
 	public function render_layer_wizard():  void { ( new LayerBuilderWizard() )->render(); }
+	public function render_orders():     void { ( new \PizzaTier\Orders\Admin\OrdersPage() )->render(); }
 	public function render_home():       void { ( new AdminHome() )->render(); }
 	public function render_content():    void { ( new ContentHub() )->render(); }
 	public function render_setup():      void { ( new SetupGuide() )->render(); }

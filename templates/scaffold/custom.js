@@ -137,7 +137,7 @@ function initScaffoldInstance( ROOT, cfg ) {
 
   /** Collect current state as a plain object.
    *
-   * Returns the standard PizzaTierPro shape: `layers` is an ARRAY (so Pro's
+   * Returns the standard PizzaTier shape: `layers` is an ARRAY (so Pro's
    * frontend-builder getTemplateLayersNow() can read selections — this is what
    * the working templates such as Command Center return). The per-type map the
    * summary panel needs is exposed separately as `baseLayers`. Previously this
@@ -187,7 +187,7 @@ function initScaffoldInstance( ROOT, cfg ) {
         coverageLabel: cov.label
       });
     } );
-    var sizeEl = ROOT.querySelector( '.pztpro-size-radio:checked' );
+    var sizeEl = ROOT.querySelector( '.pztc-size-radio:checked' );
     return {
       instanceId: ROOT.id,
       layers:     layers,
@@ -238,7 +238,7 @@ function initScaffoldInstance( ROOT, cfg ) {
 
   /**
    * Programmatically set selection state (PizzaTier JS API).
-   * Consumed by PizzaTierPro to apply "Default Layers".
+   * Consumed by PizzaTier to apply "Default Layers".
    *
    * @param {Object} newState { crust|sauce|cheese|drizzle|cut: slug|{slug},
    *                            toppings: { slug: {…} } }
@@ -314,10 +314,10 @@ function initScaffoldInstance( ROOT, cfg ) {
 
 }
 
-/* PizzaTierAPI — full surface consumed by PizzaTierPro's frontend-builder.
- * Pro discovers state via getState('pztpro-{idx}') (Strategy 1), getInstances()
+/* PizzaTierAPI — full surface consumed by PizzaTier's frontend-builder.
+ * Pro discovers state via getState('pztc-{idx}') (Strategy 1), getInstances()
  * (Strategy 2), or a bare getState() (Strategy 3). Scaffold's .sc-root id IS
- * "pztpro-{idx}", so registering each instance under its root id satisfies all
+ * "pztc-{idx}", so registering each instance under its root id satisfies all
  * three strategies. Previously scaffold exposed only a thin getState/setState
  * surface and returned layers as an object, which Pro could not read — leaving
  * the checkout bar stuck on "The pizza builder is not ready yet." */
@@ -358,7 +358,7 @@ document.querySelectorAll( '.sc-root[data-sc-cfg]' ).forEach( function ( rootEl 
     if ( instanceId && inst ) {
       window.PizzaTierAPI.registerInstance( instanceId, inst );
 
-      /* Signal readiness so PizzaTierPro's checkout bar can bind. Fire via
+      /* Signal readiness so PizzaTier's checkout bar can bind. Fire via
          jQuery (the event Pro binds) and a DOM CustomEvent for good measure. */
       if ( window.jQuery ) {
         window.jQuery( document ).trigger( 'pizzatier_instance_ready', [ instanceId, inst ] );

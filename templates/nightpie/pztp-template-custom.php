@@ -129,9 +129,9 @@ function pzt_nightpie_inject_css(): void {
 		$css .= ".np-root{--np-accent-glow:rgba(0,0,0,0);}";
 		$css .= ".np-root .np-pizza-sticky{box-shadow:0 8px 32px rgba(0,0,0,0.50),inset 0 1px 0 rgba(255,255,255,0.04);}";
 		$css .= ".np-root .np-section-nav__btn--next{box-shadow:none;}";
-		$css .= ".np-root .np-size-option:hover,.np-root .np-size-option.pztpro-size-option--active,.np-root .pztpro-size-option--active{box-shadow:0 0 0 1px var(--np-accent,#ff5722);}";
-		$css .= ".pztpro-checkout-bar--nightpie .pztpro-add-to-cart-btn,.pztpro-checkout-bar--nightpie .pztpro-bar-row__btn{box-shadow:none;}";
-		$css .= ".pztpro-checkout-bar--nightpie .pztpro-bar-row__price{text-shadow:none;}";
+		$css .= ".np-root .np-size-option:hover,.np-root .np-size-option.pztc-size-option--active,.np-root .pztc-size-option--active{box-shadow:0 0 0 1px var(--np-accent,#ff5722);}";
+		$css .= ".pztc-checkout-bar--nightpie .pztc-add-to-cart-btn,.pztc-checkout-bar--nightpie .pztc-bar-row__btn{box-shadow:none;}";
+		$css .= ".pztc-checkout-bar--nightpie .pztc-bar-row__price{text-shadow:none;}";
 	}
 
 	wp_add_inline_style( 'pizzatier-template-nightpie', $css ); // phpcs:ignore -- dynamic CSS vars

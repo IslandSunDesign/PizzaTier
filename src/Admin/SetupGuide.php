@@ -292,6 +292,25 @@ class SetupGuide {
 		</div>
 		<?php endif; ?>
 
+		<!-- ══ Cart & pricing checklist ══════════════════════════════ -->
+		<?php
+		/*
+		 * The steps that arrived with the PizzaTier merge, rendered inline so
+		 * a site has one setup checklist rather than two. Own progress bar and
+		 * own stored state; the ticks post back to this same screen.
+		 */
+		?>
+		<div class="psg-card">
+			<h2 style="margin-top:0;">
+				<span class="dashicons dashicons-cart" style="color:#ff6b35;"></span>
+				<?php esc_html_e( 'Selling pizzas', 'pizzatier' ); ?>
+			</h2>
+			<p class="description" style="margin-bottom:16px;">
+				<?php esc_html_e( 'Optional. These steps cover taking payment through WooCommerce. Skip them if you take orders through PizzaTier\'s own ordering system, or if you are only showing the builder.', 'pizzatier' ); ?>
+			</p>
+			<?php ( new \PizzaTier\Commerce\Admin\SetupGuide() )->render_embedded_checklist(); ?>
+		</div>
+
 		<!-- ══ Help footer ════════════════════════════════════════════ -->
 		<div class="psg-card psg-card--help">
 			<span class="dashicons dashicons-sos"></span>

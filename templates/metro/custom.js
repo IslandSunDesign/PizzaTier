@@ -805,7 +805,7 @@
 
     window.PizzaTierMT = MT;
 
-    /* PizzaTierAPI — standard surface consumed by PizzaTierPro */
+    /* PizzaTierAPI — standard surface consumed by PizzaTier */
     window.PizzaTierAPI = window.PizzaTierAPI || {
         getState: function (instanceId) {
             var inst = MT.getInstance(instanceId);

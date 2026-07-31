@@ -17,7 +17,7 @@ if ( ! defined( 'ABSPATH' ) ) { exit; }
  *   • Image references — URL + filename + alt + caption — instead of
  *     the binary files. On import, images are sideloaded into the new
  *     site's media library by URL.
- *   • Anything PizzaTierPro chooses to contribute via the
+ *   • Anything PizzaTier chooses to contribute via the
  *     pizzatier_export_payload filter (and consume via
  *     pizzatier_import_payload).
  *
@@ -42,13 +42,22 @@ if ( ! defined( 'ABSPATH' ) ) { exit; }
  *         terms: [ slug, ... ],
  *         layer_image: { url, filename, alt, caption } | null
  *     }, ... ],
- *     "pro": { ... whatever Pro contributes via filter ... } | null
+ *     "commerce": { ... cart & pricing data ... } | null
  *   }
  */
 class SiteMigration {
 
 	public const SCHEMA_NAME    = 'pizzatier-site-export';
-	public const SCHEMA_VERSION = 1;
+
+	/**
+	 * Schema 2 (2.0.4) adds: settings_images, state, images-per-post and the
+	 * optional orders section. Schema 1 files still import — every added
+	 * section is read defensively.
+	 */
+	public const SCHEMA_VERSION = 2;
+
+	/** Lowest schema version this importer accepts. */
+	private const MIN_SCHEMA_VERSION = 1;
 
 	/** All eight CPT post types this plugin owns. */
 	private const POST_TYPES = [
@@ -64,6 +73,28 @@ class SiteMigration {
 
 	private const TAXONOMY = 'pizzatier_ingredient_group';
 
+	/**
+	 * The native order CPT.
+	 *
+	 * Never included unless the operator ticks the box on both sides. Orders
+	 * carry customer names, phone numbers and delivery addresses, so they stay
+	 * out of a routine configuration backup by default.
+	 */
+	private const ORDER_POST_TYPE = 'pizzatier_order';
+
+	/**
+	 * Post meta holding an attachment ID rather than a value.
+	 *
+	 * Attachment IDs are meaningless on another install — importing them
+	 * verbatim points the post at whatever unrelated image happens to occupy
+	 * that ID. These are lifted out of the meta payload and re-resolved as
+	 * portable URL references instead.
+	 */
+	private const ATTACHMENT_ID_META = [
+		'_thumbnail_id',
+		'_pizzatier_layer_image_id',
+	];
+
 	/** Cap on import file size — full sites with many CPTs can be a few MB. */
 	private const MAX_IMPORT_BYTES = 25 * 1024 * 1024; // 25 MB
 
@@ -77,7 +108,12 @@ class SiteMigration {
 	public function handle_export(): void {
 		if ( ! current_user_can( 'manage_options' ) ) { wp_die( -1 ); }
 		check_admin_referer( 'pizzatier_site_export' );
-		$this->stream_export();
+
+		// Customer orders are opt-in on the way out as well as the way in, so
+		// a routine settings backup never contains personal data by accident.
+		$include_orders = ! empty( $_POST['pizzatier_export_orders'] );
+
+		$this->stream_export( $include_orders );
 	}
 
 	/**
@@ -105,8 +141,8 @@ class SiteMigration {
 	/**
 	 * Build the full payload, JSON-encode it, and stream as a download.
 	 */
-	private function stream_export(): void {
-		$payload = $this->build_payload();
+	private function stream_export( bool $include_orders = false ): void {
+		$payload = $this->build_payload( $include_orders );
 		$json    = (string) wp_json_encode( $payload, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES );
 
 		$filename = 'pizzatier-site-' . gmdate( 'Y-m-d-His' ) . '.json';
@@ -142,26 +178,29 @@ class SiteMigration {
 	/**
 	 * Assemble the full export payload.
 	 */
-	private function build_payload(): array {
+	private function build_payload( bool $include_orders = false ): array {
 		$payload = [
-			'schema'         => self::SCHEMA_NAME,
-			'version'        => self::SCHEMA_VERSION,
-			'exported_at'    => gmdate( 'c' ),
-			'source_site'    => home_url( '/' ),
-			'plugin_version' => defined( 'PIZZATIER_VERSION' ) ? PIZZATIER_VERSION : 'unknown',
-			'settings'       => $this->collect_settings(),
-			'taxonomy_terms' => $this->collect_terms(),
-			'posts'          => $this->collect_posts(),
-			'pro'            => null,
+			'schema'          => self::SCHEMA_NAME,
+			'version'         => self::SCHEMA_VERSION,
+			'exported_at'     => gmdate( 'c' ),
+			'source_site'     => home_url( '/' ),
+			'plugin_version'  => defined( 'PIZZATIER_VERSION' ) ? PIZZATIER_VERSION : 'unknown',
+			'settings'        => $this->collect_settings(),
+			'settings_images' => $this->collect_settings_images(),
+			'state'           => $this->collect_state(),
+			'taxonomy_terms'  => $this->collect_terms(),
+			'posts'           => $this->collect_posts(),
+			'orders'          => $include_orders ? $this->collect_orders() : null,
+			'commerce'        => null,
 		];
 
 		/**
 		 * Filter the full export payload before serialization.
 		 *
-		 * PizzaTierPro hooks here to add its own settings, post meta,
-		 * pricing grids, etc. under the 'pro' key. Other extensions can
+		 * PizzaTier hooks here to add its own settings, post meta,
+		 * pricing grids, etc. under the 'commerce' key. Other extensions can
 		 * also add top-level keys, but should namespace them clearly
-		 * (e.g. 'mycompany_pizza_addon').
+		 * (e.g. 'mycompany_pizza_extension').
 		 *
 		 * @param array $payload Full export payload.
 		 */
@@ -172,11 +211,69 @@ class SiteMigration {
 
 	/**
 	 * Snapshot every plugin-managed option.
+	 *
+	 * The key list comes from OptionRegistry, which discovers each template's
+	 * settings from its own pztp-template-options.php. Before 2.0.4 this
+	 * walked a hand-maintained list that covered two of the eight templates
+	 * and none of the ordering options.
+	 *
+	 * Options that are unset on this site are omitted rather than written as
+	 * null, so importing never shadows the destination's own defaults with an
+	 * empty value.
 	 */
 	private function collect_settings(): array {
 		$out = [];
 		foreach ( Settings::get_option_keys() as $key ) {
-			$out[ $key ] = get_option( $key, null );
+			// Credentials and site-specific post IDs stay behind. See
+			// OptionRegistry::NON_PORTABLE for why each one is excluded.
+			if ( ! \PizzaTier\Core\OptionRegistry::is_portable( $key ) ) { continue; }
+			$value = get_option( $key, null );
+			if ( null === $value ) { continue; }
+			$out[ $key ] = $value;
+		}
+		return $out;
+	}
+
+	/**
+	 * Portable references for settings that hold an image URL.
+	 *
+	 * Template backgrounds (e.g. metro_setting_container_bg_image) store a URL
+	 * pointing into this site's uploads folder. Left alone, the destination
+	 * would hotlink the source site forever — and break the day it goes away.
+	 * Each is recorded so the importer can pull the file into the destination's
+	 * own media library and rewrite the option.
+	 *
+	 * @return array<string, array>
+	 */
+	private function collect_settings_images(): array {
+		$out = [];
+
+		foreach ( array_keys( \PizzaTier\Core\OptionRegistry::image_option_keys() ) as $key ) {
+			$url = (string) get_option( $key, '' );
+			if ( '' === $url || strpos( $url, 'http' ) !== 0 ) { continue; }
+
+			$path = wp_parse_url( $url, PHP_URL_PATH );
+			$out[ $key ] = [
+				'url'      => esc_url_raw( $url ),
+				'filename' => sanitize_file_name( $path ? basename( $path ) : '' ),
+			];
+		}
+
+		return $out;
+	}
+
+	/**
+	 * Install-state values worth carrying across: setup progress and the
+	 * template preview page. Deliberately excludes the order-number counter,
+	 * which belongs to the destination's own order sequence.
+	 */
+	private function collect_state(): array {
+		$out = [];
+		foreach ( \PizzaTier\Core\OptionRegistry::state_keys() as $key ) {
+			if ( 'pizzatier_order_sequence' === $key || 'pizzatier_db_version' === $key ) { continue; }
+			$value = get_option( $key, null );
+			if ( null === $value ) { continue; }
+			$out[ $key ] = $value;
 		}
 		return $out;
 	}
@@ -273,6 +370,28 @@ class SiteMigration {
 			foreach ( $term_objs as $t ) { $term_slugs[] = (string) $t->slug; }
 		}
 
+		// Lift every image-bearing meta key out of $meta and record it as a
+		// portable URL reference. Leaving them in place would write this site's
+		// attachment IDs (or its URLs) onto the destination.
+		$images = $this->resolve_image_meta( $id, $meta );
+
+		// The featured image is stripped from $meta by is_internal_meta_key(),
+		// so it is resolved from the post itself rather than the meta walk.
+		$thumb_id = (int) get_post_thumbnail_id( $id );
+		if ( $thumb_id > 0 ) {
+			$thumb_ref = $this->attachment_reference( $thumb_id, 'id' );
+			if ( $thumb_ref ) {
+				$images['_thumbnail_id'] = $thumb_ref;
+			}
+		}
+
+		// resolve_layer_image() already carries the canonical layer image, so
+		// drop the legacy key here rather than sideloading the same file twice.
+		$layer_image = $this->resolve_layer_image( $id );
+		if ( $layer_image ) {
+			unset( $images['pzl_layer_image'] );
+		}
+
 		return [
 			'post_type'   => (string) $post->post_type,
 			'slug'        => (string) $post->post_name,
@@ -283,7 +402,91 @@ class SiteMigration {
 			'menu_order'  => (int)    $post->menu_order,
 			'meta'        => $meta,
 			'terms'       => $term_slugs,
-			'layer_image' => $this->resolve_layer_image( $id ),
+			'layer_image' => $layer_image,
+			'images'      => $images,
+		];
+	}
+
+	/**
+	 * Turn every image-bearing meta key into a portable reference, removing it
+	 * from the meta payload by reference.
+	 *
+	 * Two shapes are handled:
+	 *
+	 *   • Attachment IDs — _thumbnail_id, and any SCF/ACF image field, whose
+	 *     keys end in _image or _image_id. An ID means nothing on another
+	 *     install, so it is resolved to a URL here and re-attached on import.
+	 *   • URL strings — legacy fields such as pzl_layer_image and the
+	 *     {type}_layer_image variants ContentHub reads.
+	 *
+	 * Each entry records whether the destination should write back an
+	 * attachment ID ('id') or a URL ('url'), so the restored value matches
+	 * whatever the field originally held.
+	 *
+	 * @param int   $post_id Source post.
+	 * @param array $meta    Meta map, modified in place.
+	 * @return array<string, array>
+	 */
+	private function resolve_image_meta( int $post_id, array &$meta ): array {
+		$out = [];
+
+		foreach ( $meta as $key => $value ) {
+			if ( is_array( $value ) || '' === $value || null === $value ) { continue; }
+
+			$is_id_key  = in_array( $key, self::ATTACHMENT_ID_META, true )
+				|| ( '_id' === substr( $key, -3 ) && false !== strpos( $key, 'image' ) );
+			$is_img_key = '_image' === substr( $key, -6 ) || '_layer_image' === substr( $key, -12 );
+
+			if ( ! $is_id_key && ! $is_img_key ) { continue; }
+
+			$ref = null;
+
+			if ( is_numeric( $value ) && (int) $value > 0 ) {
+				// Attachment ID — resolve to something portable.
+				$ref = $this->attachment_reference( (int) $value, 'id' );
+			} elseif ( is_string( $value ) && strpos( $value, 'http' ) === 0 ) {
+				// Already a URL.
+				$path = wp_parse_url( $value, PHP_URL_PATH );
+				$ref  = [
+					'url'      => esc_url_raw( $value ),
+					'filename' => sanitize_file_name( $path ? basename( $path ) : '' ),
+					'alt'      => '',
+					'caption'  => '',
+					'store_as' => 'url',
+				];
+			}
+
+			if ( null === $ref ) { continue; }
+
+			$out[ $key ] = $ref;
+
+			// Drop the raw value — the importer rebuilds it locally.
+			unset( $meta[ $key ] );
+		}
+
+		return $out;
+	}
+
+	/**
+	 * Describe an attachment in a form another site can rebuild it from.
+	 *
+	 * @param int    $attachment_id Attachment post ID.
+	 * @param string $store_as      'id' or 'url' — how to write the value back.
+	 * @return array|null
+	 */
+	private function attachment_reference( int $attachment_id, string $store_as ) {
+		$url = (string) wp_get_attachment_url( $attachment_id );
+		if ( ! $url ) { return null; }
+
+		$file     = (string) get_attached_file( $attachment_id );
+		$attached = get_post( $attachment_id );
+
+		return [
+			'url'      => esc_url_raw( $url ),
+			'filename' => sanitize_file_name( $file ? basename( $file ) : '' ),
+			'alt'      => sanitize_text_field( (string) get_post_meta( $attachment_id, '_wp_attachment_image_alt', true ) ),
+			'caption'  => $attached instanceof \WP_Post ? wp_kses_post( (string) $attached->post_excerpt ) : '',
+			'store_as' => 'url' === $store_as ? 'url' : 'id',
 		];
 	}
 
@@ -340,6 +543,9 @@ class SiteMigration {
 	 */
 	private function is_internal_meta_key( string $key ): bool {
 		if ( $key === '_pizzatier_layer_image_id' ) { return true; }
+		// Re-resolved through the images map; a raw ID would point at an
+		// unrelated attachment on the destination.
+		if ( $key === '_thumbnail_id' )             { return true; }
 		if ( strpos( $key, '_edit_' ) === 0 )         { return true; }
 		if ( strpos( $key, '_wp_old' ) === 0 )        { return true; }
 		if ( $key === '_wp_trash_meta_status' )       { return true; }
@@ -362,13 +568,18 @@ class SiteMigration {
 			return $this->error_notice( __( 'No file received.', 'pizzatier' ) );
 		}
 
-		$file = $_FILES['pizzatier_site_import_file']; // phpcs:ignore WordPress.Security.ValidatedSanitizedInput
+		// Read each $_FILES member individually with the correct sanitizer at the
+		// point of use, rather than trusting the raw array. tmp_name is a
+		// PHP-generated server path further validated by is_uploaded_file() below.
+		// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Superglobal array access; each member is validated/sanitized on the following lines.
+		$file = isset( $_FILES['pizzatier_site_import_file'] ) && is_array( $_FILES['pizzatier_site_import_file'] ) ? $_FILES['pizzatier_site_import_file'] : array();
 
-		if ( ! empty( $file['error'] ) && (int) $file['error'] !== UPLOAD_ERR_OK ) {
+		$error = isset( $file['error'] ) ? (int) $file['error'] : UPLOAD_ERR_NO_FILE;
+		if ( $error !== UPLOAD_ERR_OK ) {
 			return $this->error_notice( __( 'Upload error.', 'pizzatier' ) );
 		}
 
-		$tmp = isset( $file['tmp_name'] ) ? (string) $file['tmp_name'] : '';
+		$tmp = isset( $file['tmp_name'] ) ? sanitize_text_field( wp_unslash( $file['tmp_name'] ) ) : '';
 		if ( ! $tmp || ! is_uploaded_file( $tmp ) ) {
 			return $this->error_notice( __( 'Invalid upload.', 'pizzatier' ) );
 		}
@@ -382,7 +593,7 @@ class SiteMigration {
 			) );
 		}
 
-		$orig_name = isset( $file['name'] ) ? sanitize_file_name( (string) $file['name'] ) : '';
+		$orig_name = isset( $file['name'] ) ? sanitize_file_name( wp_unslash( $file['name'] ) ) : '';
 		if ( $orig_name === '' || strtolower( pathinfo( $orig_name, PATHINFO_EXTENSION ) ) !== 'json' ) {
 			return $this->error_notice( __( 'Expected a .json file.', 'pizzatier' ) );
 		}
@@ -403,7 +614,7 @@ class SiteMigration {
 			return $this->error_notice( __( 'Not a PizzaTier site export file.', 'pizzatier' ) );
 		}
 		$version = isset( $payload['version'] ) ? (int) $payload['version'] : 0;
-		if ( $version < 1 || $version > self::SCHEMA_VERSION ) {
+		if ( $version < self::MIN_SCHEMA_VERSION || $version > self::SCHEMA_VERSION ) {
 			return $this->error_notice( sprintf(
 				/* translators: %d = schema version found */
 				__( 'Unsupported export schema version (%d).', 'pizzatier' ),
@@ -416,7 +627,9 @@ class SiteMigration {
 		$do_terms    = ! empty( $_POST['pizzatier_import_terms_section'] );
 		$do_posts    = ! empty( $_POST['pizzatier_import_posts_section'] );
 		$do_images   = ! empty( $_POST['pizzatier_import_images'] );
-		$do_pro      = ! empty( $_POST['pizzatier_import_pro_section'] );
+		$do_commerce = ! empty( $_POST['pizzatier_import_commerce_section'] );
+		// Opt-in, unchecked by default: order records carry customer PII.
+		$do_orders   = ! empty( $_POST['pizzatier_import_orders_section'] );
 
 		$results = [
 			'settings'      => 0,
@@ -426,10 +639,24 @@ class SiteMigration {
 			'posts_skipped' => 0,
 			'images_loaded' => 0,
 			'images_failed' => 0,
+			'orders_created' => 0,
+			'orders_skipped' => 0,
 		];
 
 		if ( $do_settings && ! empty( $payload['settings'] ) && is_array( $payload['settings'] ) ) {
 			$results['settings'] = $this->import_settings( $payload['settings'] );
+
+			// Setup-progress flags travel with the settings, not with the
+			// cart & pricing section they used to be attached to.
+			if ( ! empty( $payload['state'] ) && is_array( $payload['state'] ) ) {
+				$this->import_state( $payload['state'] );
+			}
+
+			// Pull template background images into this site's media library
+			// and repoint the options at the local copies.
+			if ( $do_images && ! empty( $payload['settings_images'] ) && is_array( $payload['settings_images'] ) ) {
+				$this->import_settings_images( $payload['settings_images'] );
+			}
 		}
 
 		if ( $do_terms && ! empty( $payload['taxonomy_terms'] ) && is_array( $payload['taxonomy_terms'] ) ) {
@@ -446,13 +673,19 @@ class SiteMigration {
 			$results['images_failed']  = $post_results['images_failed'];
 		}
 
-		// Hand the whole payload to Pro so it can consume its 'pro' section
-		// (and anything else it expects). Free plugin does nothing here.
-		if ( $do_pro ) {
+		if ( $do_orders && ! empty( $payload['orders'] ) && is_array( $payload['orders'] ) ) {
+			$order_results = $this->import_orders( $payload['orders'] );
+			$results['orders_created'] = $order_results['created'];
+			$results['orders_skipped'] = $order_results['skipped'];
+		}
+
+		// Hand the whole payload over so the cart & pricing section is consumed
+		// (and anything else it expects). Nothing else acts on this.
+		if ( $do_commerce ) {
 			/**
 			 * Fires after the free-plugin import sections have run.
 			 *
-			 * Pro hooks here to consume the 'pro' key and anything else
+			 * The cart & pricing importer hooks here to consume the 'commerce' key and anything else
 			 * it added during export. The implementation is responsible
 			 * for its own create-only-by-slug semantics.
 			 *
@@ -476,31 +709,74 @@ class SiteMigration {
 		$allowed = array_flip( Settings::get_option_keys() );
 		$count   = 0;
 
-		$array_options = [
-			'pizzatier_setting_topping_fractions',
-		];
-		$allowed_fractions = [
-			'whole',
-			'half-left', 'half-right',
-			'quarter-top-left', 'quarter-top-right',
-			'quarter-bottom-left', 'quarter-bottom-right',
-		];
-
 		foreach ( $data as $key => $value ) {
 			if ( ! isset( $allowed[ $key ] ) ) { continue; }
 			$key_safe = sanitize_key( $key );
+			if ( '' === $key_safe ) { continue; }
 
-			if ( in_array( $key, $array_options, true ) ) {
-				$sanitised = is_array( $value )
-					? array_values( array_intersect( array_map( 'sanitize_key', $value ), $allowed_fractions ) )
-					: [];
-				if ( ! in_array( 'whole', $sanitised, true ) ) {
-					array_unshift( $sanitised, 'whole' );
-				}
-				update_option( $key_safe, $sanitised );
-			} else {
-				update_option( $key_safe, wp_kses_post( (string) $value ) );
-			}
+			// Guarded on the way in as well as on the way out: an archive
+			// written by an older build, or hand-edited, can still contain a
+			// webhook secret or a foreign product ID.
+			if ( ! \PizzaTier\Core\OptionRegistry::is_portable( $key_safe ) ) { continue; }
+
+			// Type-preserving. Until 2.0.4 every non-array option was written
+			// as wp_kses_post( (string) $value ), which flattened arrays to the
+			// word "Array", collapsed booleans to '1' or '', and turned an
+			// option that was simply unset on the source into an empty string
+			// that then shadowed the destination's default.
+			$clean = \PizzaTier\Core\OptionRegistry::sanitize_value( $key_safe, $value );
+			if ( null === $clean ) { continue; }
+
+			update_option( $key_safe, $clean );
+			$count++;
+		}
+
+		return $count;
+	}
+
+	/**
+	 * Restore setup-progress and preview-page state.
+	 */
+	private function import_state( array $state ): int {
+		$allowed = array_flip( \PizzaTier\Core\OptionRegistry::state_keys() );
+		$count   = 0;
+
+		foreach ( $state as $key => $value ) {
+			if ( ! isset( $allowed[ $key ] ) ) { continue; }
+			$key_safe = sanitize_key( $key );
+			if ( '' === $key_safe ) { continue; }
+
+			// The destination keeps its own order numbering and schema version.
+			if ( 'pizzatier_order_sequence' === $key_safe || 'pizzatier_db_version' === $key_safe ) { continue; }
+
+			$clean = \PizzaTier\Core\OptionRegistry::sanitize_value( $key_safe, $value );
+			if ( null === $clean ) { continue; }
+
+			update_option( $key_safe, $clean );
+			$count++;
+		}
+
+		return $count;
+	}
+
+	/**
+	 * Sideload template background images and repoint their options locally.
+	 */
+	private function import_settings_images( array $images ): int {
+		$allowed = \PizzaTier\Core\OptionRegistry::image_option_keys();
+		$count   = 0;
+
+		foreach ( $images as $key => $ref ) {
+			$key_safe = sanitize_key( (string) $key );
+			if ( ! isset( $allowed[ $key_safe ] ) || ! is_array( $ref ) ) { continue; }
+
+			$attachment_id = $this->sideload_reference( $ref );
+			if ( ! $attachment_id ) { continue; }
+
+			$url = (string) wp_get_attachment_url( $attachment_id );
+			if ( ! $url ) { continue; }
+
+			update_option( $key_safe, esc_url_raw( $url ) );
 			$count++;
 		}
 
@@ -658,6 +934,13 @@ class SiteMigration {
 				if ( $ok ) { $images_loaded++; } else { $images_failed++; }
 			}
 
+			// Featured image and any SCF/ACF image fields (schema 2+).
+			if ( $do_images && ! empty( $row['images'] ) && is_array( $row['images'] ) ) {
+				[ $ok_count, $fail_count ] = $this->restore_post_images( $post_id, $row['images'] );
+				$images_loaded += $ok_count;
+				$images_failed += $fail_count;
+			}
+
 			$created++;
 		}
 
@@ -686,27 +969,64 @@ class SiteMigration {
 	}
 
 	/**
-	 * Sideload a layer image from an external URL into the media library
-	 * and attach it to the freshly-imported post via the standard meta keys.
+	 * Rebuild every image-bearing meta value on a freshly-imported post.
 	 *
-	 * Mirrors the upload pattern used by LayerImageMaker / LayerImageMetaBox.
+	 * Each reference records whether the field originally held an attachment
+	 * ID or a URL, so the restored value matches the shape the rest of the
+	 * plugin expects to read back.
+	 *
+	 * @param int   $post_id Destination post.
+	 * @param array $images  meta_key => reference map.
+	 * @return array{0:int,1:int} [loaded, failed]
 	 */
-	private function sideload_layer_image( int $post_id, array $img ): bool {
-		$url = isset( $img['url'] ) ? esc_url_raw( (string) $img['url'] ) : '';
-		if ( ! $url ) { return false; }
+	private function restore_post_images( int $post_id, array $images ): array {
+		$loaded = 0;
+		$failed = 0;
 
-		// SSRF hardening: only fetch http(s) URLs, and reject loopback/private/
-		// reserved hosts. wp_http_validate_url() blocks those unless a site has
-		// explicitly opted in via the http_request_host_is_external filter.
+		foreach ( $images as $meta_key => $ref ) {
+			$key_safe = sanitize_key( (string) $meta_key );
+			if ( '' === $key_safe || ! is_array( $ref ) ) { continue; }
+
+			$attachment_id = $this->sideload_reference( $ref );
+			if ( ! $attachment_id ) {
+				$failed++;
+				continue;
+			}
+
+			if ( '_thumbnail_id' === $key_safe ) {
+				set_post_thumbnail( $post_id, $attachment_id );
+			} elseif ( isset( $ref['store_as'] ) && 'url' === $ref['store_as'] ) {
+				$url = (string) wp_get_attachment_url( $attachment_id );
+				update_post_meta( $post_id, $key_safe, esc_url_raw( $url ) );
+			} else {
+				update_post_meta( $post_id, $key_safe, $attachment_id );
+			}
+
+			$loaded++;
+		}
+
+		return [ $loaded, $failed ];
+	}
+
+	/**
+	 * Download an image reference into the media library.
+	 *
+	 * Shared by the post, settings and order image paths so the SSRF guards
+	 * and temp-file cleanup live in exactly one place.
+	 *
+	 * @param array $ref Reference with at least a 'url' key.
+	 * @return int Attachment ID, or 0 on failure.
+	 */
+	private function sideload_reference( array $ref ): int {
+		$url = isset( $ref['url'] ) ? esc_url_raw( (string) $ref['url'] ) : '';
+		if ( ! $url ) { return 0; }
+
+		// SSRF hardening: http(s) only, and no loopback/private/reserved hosts
+		// unless the site has explicitly opted in via http_request_host_is_external.
 		$scheme = strtolower( (string) wp_parse_url( $url, PHP_URL_SCHEME ) );
-		if ( 'http' !== $scheme && 'https' !== $scheme ) {
-			return false;
-		}
-		if ( ! wp_http_validate_url( $url ) ) {
-			return false;
-		}
+		if ( 'http' !== $scheme && 'https' !== $scheme ) { return 0; }
+		if ( ! wp_http_validate_url( $url ) )            { return 0; }
 
-		// media_handle_sideload requires these helpers.
 		if ( ! function_exists( 'media_handle_sideload' ) ) {
 			require_once ABSPATH . 'wp-admin/includes/media.php';
 			require_once ABSPATH . 'wp-admin/includes/file.php';
@@ -714,45 +1034,222 @@ class SiteMigration {
 		}
 
 		$tmp = download_url( $url, 30 );
-		if ( is_wp_error( $tmp ) ) { return false; }
+		if ( is_wp_error( $tmp ) ) { return 0; }
 
-		$filename = isset( $img['filename'] ) && $img['filename']
-			? sanitize_file_name( (string) $img['filename'] )
-			: sanitize_file_name( basename( wp_parse_url( $url, PHP_URL_PATH ) ?: 'layer-image.png' ) );
+		$path     = wp_parse_url( $url, PHP_URL_PATH );
+		$filename = ! empty( $ref['filename'] )
+			? sanitize_file_name( (string) $ref['filename'] )
+			: sanitize_file_name( $path ? basename( $path ) : 'image.png' );
+		if ( '' === $filename ) { $filename = 'image.png'; }
 
-		$file_array = [
-			'name'     => $filename,
-			'tmp_name' => $tmp,
-		];
-
-		$caption  = isset( $img['caption'] ) ? wp_kses_post( (string) $img['caption'] ) : '';
-		$alt      = isset( $img['alt'] )     ? sanitize_text_field( (string) $img['alt'] ) : '';
+		$caption = isset( $ref['caption'] ) ? wp_kses_post( (string) $ref['caption'] ) : '';
 
 		$attachment_id = media_handle_sideload(
-			$file_array,
-			0, // not attaching to a parent (matches existing pattern)
+			[ 'name' => $filename, 'tmp_name' => $tmp ],
+			0,
 			$caption ?: null
 		);
 
-		// download_url's tmp file is auto-cleaned by media_handle_sideload on
-		// success, but we need to clean it ourselves on failure.
 		if ( is_wp_error( $attachment_id ) ) {
-			if ( file_exists( $tmp ) ) { @unlink( $tmp ); } // phpcs:ignore
-			return false;
+			// media_handle_sideload() cleans the temp file on success only.
+			if ( file_exists( $tmp ) ) { wp_delete_file( $tmp ); }
+			return 0;
 		}
 
-		// Apply alt text.
+		$alt = isset( $ref['alt'] ) ? sanitize_text_field( (string) $ref['alt'] ) : '';
 		if ( $alt ) {
 			update_post_meta( $attachment_id, '_wp_attachment_image_alt', $alt );
 		}
 
-		// Wire up to the post under both meta keys (URL for templates that
-		// read the legacy key, ID for things that prefer the resolved attachment).
+		return (int) $attachment_id;
+	}
+
+	/**
+	 * Sideload a layer image from an external URL into the media library
+	 * and attach it to the freshly-imported post via the standard meta keys.
+	 *
+	 * Mirrors the upload pattern used by LayerImageMaker / LayerImageMetaBox.
+	 */
+	private function sideload_layer_image( int $post_id, array $img ): bool {
+		$attachment_id = $this->sideload_reference( $img );
+		if ( ! $attachment_id ) { return false; }
+
+		// Write both keys: the ID for code that prefers a resolved attachment,
+		// the URL for templates still reading the legacy field.
 		$resolved_url = (string) wp_get_attachment_url( $attachment_id );
-		update_post_meta( $post_id, '_pizzatier_layer_image_id', (int) $attachment_id );
+		update_post_meta( $post_id, '_pizzatier_layer_image_id', $attachment_id );
 		update_post_meta( $post_id, 'pzl_layer_image', esc_url_raw( $resolved_url ) );
 
 		return true;
+	}
+
+	/* ═══════════════════════════════════════════════════════════════════
+	   ORDERS (opt-in — contains customer personal data)
+	   ═══════════════════════════════════════════════════════════════════ */
+
+	/**
+	 * Serialize every native order.
+	 *
+	 * Only reached when the operator ticks "Include customer orders" on the
+	 * export form. Orders hold names, phone numbers, email addresses and
+	 * delivery addresses, so they are never part of a routine config backup.
+	 *
+	 * Staff-only customer notes are deliberately excluded: they live in user
+	 * meta keyed to WordPress accounts that will not exist on the destination.
+	 *
+	 * @return array
+	 */
+	private function collect_orders(): array {
+		$statuses = array_keys( \PizzaTier\Orders\OrderStatuses::all() );
+		if ( ! $statuses ) { $statuses = [ \PizzaTier\Orders\OrderStatuses::DEFAULT_STATUS ]; }
+
+		// Custom statuses registered with exclude_from_search => true are not
+		// matched by post_status => 'any', so they are queried by name.
+		$query = new \WP_Query( [
+			'post_type'      => self::ORDER_POST_TYPE,
+			'post_status'    => $statuses,
+			'posts_per_page' => -1,
+			'orderby'        => [ 'date' => 'ASC' ],
+			'no_found_rows'  => true,
+			'fields'         => 'all',
+		] );
+
+		$out = [];
+		foreach ( $query->posts as $post ) {
+			$id       = (int) $post->ID;
+			$raw_meta = get_post_meta( $id );
+			$meta     = [];
+
+			foreach ( $raw_meta as $key => $values ) {
+				if ( $this->is_internal_meta_key( $key ) ) { continue; }
+				$meta[ $key ] = count( $values ) === 1
+					? maybe_unserialize( $values[0] )
+					: array_map( 'maybe_unserialize', $values );
+			}
+
+			$out[] = [
+				'slug'       => (string) $post->post_name,
+				'title'      => (string) $post->post_title,
+				'content'    => (string) $post->post_content,
+				'status'     => (string) $post->post_status,
+				'date_gmt'   => (string) $post->post_date_gmt,
+				'menu_order' => (int) $post->menu_order,
+				'meta'       => $meta,
+			];
+		}
+
+		wp_reset_postdata();
+
+		return $out;
+	}
+
+	/**
+	 * Restore orders, create-only by order number.
+	 *
+	 * Matching is on the stored order number rather than the post slug, since
+	 * WordPress will happily hand two different orders the same auto-slug.
+	 *
+	 * @return array{created:int,skipped:int}
+	 */
+	private function import_orders( array $orders ): array {
+		$created = 0;
+		$skipped = 0;
+
+		$number_key = \PizzaTier\Orders\Order::META_NUMBER;
+
+		foreach ( $orders as $row ) {
+			if ( ! is_array( $row ) || empty( $row['meta'] ) || ! is_array( $row['meta'] ) ) {
+				$skipped++;
+				continue;
+			}
+
+			$number = isset( $row['meta'][ $number_key ] )
+				? sanitize_text_field( (string) $row['meta'][ $number_key ] )
+				: '';
+
+			// Without an order number there is no reliable identity to
+			// de-duplicate on, so re-running the import would keep creating
+			// copies. Skip rather than risk that.
+			if ( '' === $number ) {
+				$skipped++;
+				continue;
+			}
+
+			if ( $this->order_number_exists( $number, $number_key ) ) {
+				$skipped++;
+				continue;
+			}
+
+			$status = isset( $row['status'] ) ? sanitize_key( (string) $row['status'] ) : '';
+			if ( ! \PizzaTier\Orders\OrderStatuses::is_valid( $status ) ) {
+				$status = \PizzaTier\Orders\OrderStatuses::DEFAULT_STATUS;
+			}
+
+			$postarr = [
+				'post_type'    => self::ORDER_POST_TYPE,
+				'post_title'   => isset( $row['title'] ) ? sanitize_text_field( (string) $row['title'] ) : $number,
+				'post_content' => isset( $row['content'] ) ? wp_kses_post( (string) $row['content'] ) : '',
+				'post_status'  => $status,
+				'menu_order'   => isset( $row['menu_order'] ) ? (int) $row['menu_order'] : 0,
+			];
+
+			// Preserve when the order was placed, so history and sorting survive.
+			if ( ! empty( $row['date_gmt'] ) ) {
+				$date_gmt = sanitize_text_field( (string) $row['date_gmt'] );
+				if ( $date_gmt && '0000-00-00 00:00:00' !== $date_gmt ) {
+					$postarr['post_date_gmt'] = $date_gmt;
+					$postarr['post_date']     = get_date_from_gmt( $date_gmt );
+				}
+			}
+
+			$post_id = wp_insert_post( $postarr, true );
+			if ( is_wp_error( $post_id ) || ! $post_id ) {
+				$skipped++;
+				continue;
+			}
+
+			foreach ( $row['meta'] as $mkey => $mval ) {
+				$mkey_safe = sanitize_key( (string) $mkey );
+				if ( '' === $mkey_safe || $this->is_internal_meta_key( $mkey_safe ) ) { continue; }
+
+				if ( is_array( $mval ) ) {
+					delete_post_meta( $post_id, $mkey_safe );
+					foreach ( $mval as $v ) {
+						add_post_meta( $post_id, $mkey_safe, $this->sanitize_meta_value( $v ) );
+					}
+				} else {
+					update_post_meta( $post_id, $mkey_safe, $this->sanitize_meta_value( $mval ) );
+				}
+			}
+
+			$created++;
+		}
+
+		return [ 'created' => $created, 'skipped' => $skipped ];
+	}
+
+	/**
+	 * Whether an order with this number already exists.
+	 */
+	private function order_number_exists( string $number, string $number_key ): bool {
+		$statuses = array_keys( \PizzaTier\Orders\OrderStatuses::all() );
+		if ( ! $statuses ) { $statuses = [ \PizzaTier\Orders\OrderStatuses::DEFAULT_STATUS ]; }
+
+		$found = get_posts( [
+			'post_type'      => self::ORDER_POST_TYPE,
+			// 'any' matches nothing here: the pzt-* statuses are registered
+			// with exclude_from_search => true, so they must be named.
+			'post_status'    => $statuses,
+			'posts_per_page' => 1,
+			'fields'         => 'ids',
+			'no_found_rows'  => true,
+			// phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_key -- Order number is the only stable identity across installs; admin-only, runs once per imported row.
+			'meta_key'       => $number_key,
+			// phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_value -- See above.
+			'meta_value'     => $number,
+		] );
+
+		return ! empty( $found );
 	}
 
 	/* ═══════════════════════════════════════════════════════════════════
@@ -760,7 +1257,7 @@ class SiteMigration {
 	   ═══════════════════════════════════════════════════════════════════ */
 
 	private function render_page( string $notice ): void {
-		$pro_active = class_exists( 'PizzaTierPro\\Pro\\Plugin' );
+
 
 		// Quick statistics for the export preview.
 		$post_counts = [];
@@ -784,7 +1281,7 @@ class SiteMigration {
 			<span class="dashicons dashicons-migrate psm-header__icon"></span>
 			<div style="flex:1;">
 				<h1 class="psm-header__title"><?php esc_html_e( 'Site Migration', 'pizzatier' ); ?></h1>
-				<p class="psm-header__sub"><?php esc_html_e( 'Move an entire PizzaTier setup — settings, ingredients, custom fields, taxonomy, and Pro data — to another WordPress installation.', 'pizzatier' ); ?></p>
+				<p class="psm-header__sub"><?php esc_html_e( 'Move an entire PizzaTier setup — settings, ingredients, custom fields, taxonomy, prices and cart configuration — to another WordPress installation.', 'pizzatier' ); ?></p>
 			</div>
 		</div>
 
@@ -805,9 +1302,8 @@ class SiteMigration {
 						<li><strong><?php echo (int) $settings_count; ?></strong> <?php esc_html_e( 'plugin settings', 'pizzatier' ); ?></li>
 						<li><strong><?php echo (int) $total_posts; ?></strong> <?php esc_html_e( 'total content items', 'pizzatier' ); ?></li>
 						<li><strong><?php echo (int) $term_count; ?></strong> <?php esc_html_e( 'ingredient groups', 'pizzatier' ); ?></li>
-						<?php if ( $pro_active ) : ?>
-						<li><span class="psm-pill psm-pill--pro">Pro</span> <?php esc_html_e( 'PizzaTierPro data (via filter)', 'pizzatier' ); ?></li>
-						<?php endif; ?>
+						<li><?php esc_html_e( 'Cart &amp; pricing settings, price grids and pizza products', 'pizzatier' ); ?></li>
+						<li><?php esc_html_e( 'All template designs, ordering configuration and setup progress', 'pizzatier' ); ?></li>
 					</ul>
 
 					<details class="psm-details">
@@ -826,11 +1322,27 @@ class SiteMigration {
 						</table>
 					</details>
 
-					<a href="<?php echo esc_url( wp_nonce_url( admin_url( 'admin-post.php?action=pizzatier_site_export' ), 'pizzatier_site_export' ) ); ?>"
-					   class="button button-primary psm-export-btn">
-						<span class="dashicons dashicons-download"></span>
-						<?php esc_html_e( 'Download Full Export (JSON)', 'pizzatier' ); ?>
-					</a>
+					<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
+						<?php wp_nonce_field( 'pizzatier_site_export' ); ?>
+						<input type="hidden" name="action" value="pizzatier_site_export">
+
+						<div class="psm-checks">
+							<label>
+								<input type="checkbox" name="pizzatier_export_orders" value="1">
+								<?php esc_html_e( 'Include customer orders', 'pizzatier' ); ?>
+								<span class="psm-warn"><?php esc_html_e( '— contains personal data', 'pizzatier' ); ?></span>
+							</label>
+						</div>
+
+						<p class="psm-note">
+							<?php esc_html_e( 'Order records hold customer names, phone numbers, email addresses and delivery addresses. Leave this unticked for a settings-only backup. Private staff notes are never exported.', 'pizzatier' ); ?>
+						</p>
+
+						<button type="submit" class="button button-primary psm-export-btn">
+							<span class="dashicons dashicons-download"></span>
+							<?php esc_html_e( 'Download Full Export (JSON)', 'pizzatier' ); ?>
+						</button>
+					</form>
 
 					<p class="psm-note">
 						<?php esc_html_e( 'Image URLs in the export point to this site. The destination installation must be able to reach those URLs over HTTP at import time.', 'pizzatier' ); ?>
@@ -854,12 +1366,14 @@ class SiteMigration {
 							<label><input type="checkbox" name="pizzatier_import_terms_section" value="1" checked> <?php esc_html_e( 'Ingredient groups (taxonomy)', 'pizzatier' ); ?></label>
 							<label><input type="checkbox" name="pizzatier_import_posts_section" value="1" checked> <?php esc_html_e( 'Content items (toppings, crusts, sauces, cheeses, drizzles, cuts, sizes, presets) and their custom fields', 'pizzatier' ); ?></label>
 							<label><input type="checkbox" name="pizzatier_import_images" value="1" checked> <?php esc_html_e( 'Sideload layer images from their URLs into this site\'s media library', 'pizzatier' ); ?></label>
-							<label<?php echo $pro_active ? '' : ' style="opacity:.55;"'; ?>>
-								<input type="checkbox" name="pizzatier_import_pro_section" value="1" <?php checked( $pro_active ); ?> <?php disabled( ! $pro_active ); ?>>
-								<?php esc_html_e( 'PizzaTierPro data (only if Pro is installed and active here)', 'pizzatier' ); ?>
-								<?php if ( ! $pro_active ) : ?>
-									<span class="psm-warn"><?php esc_html_e( '— Pro not detected', 'pizzatier' ); ?></span>
-								<?php endif; ?>
+							<label>
+								<input type="checkbox" name="pizzatier_import_commerce_section" value="1" checked>
+								<?php esc_html_e( 'Cart &amp; pricing settings, price grids and pizza products', 'pizzatier' ); ?>
+							</label>
+							<label>
+								<input type="checkbox" name="pizzatier_import_orders_section" value="1">
+								<?php esc_html_e( 'Customer orders', 'pizzatier' ); ?>
+								<span class="psm-warn"><?php esc_html_e( '— personal data; only if the export included them', 'pizzatier' ); ?></span>
 							</label>
 						</div>
 
@@ -870,7 +1384,7 @@ class SiteMigration {
 							<span class="dashicons dashicons-warning"></span>
 							<div>
 								<strong><?php esc_html_e( 'Heads up:', 'pizzatier' ); ?></strong>
-								<?php esc_html_e( 'Importing settings WILL overwrite this site\'s current PizzaTier settings. Posts, terms, and Pro data are create-only by slug — already-present items will be left untouched.', 'pizzatier' ); ?>
+								<?php esc_html_e( 'Importing settings WILL overwrite this site\'s current PizzaTier settings. Posts, terms, price grids and pizza products are create-only by slug — already-present items will be left untouched.', 'pizzatier' ); ?>
 							</div>
 						</div>
 
@@ -889,10 +1403,11 @@ class SiteMigration {
 		<div class="psm-howto">
 			<h2><?php esc_html_e( 'How site migration works', 'pizzatier' ); ?></h2>
 			<ol>
-				<li><?php esc_html_e( 'On the source site: click Download Full Export. You get a single JSON file containing settings, all 8 content types with their custom fields, the ingredient-group taxonomy, and (if Pro is active) Pro data.', 'pizzatier' ); ?></li>
-				<li><?php esc_html_e( 'On the destination site: install PizzaTier (and PizzaTierPro if you used it on the source), upload the JSON, and click Run Import.', 'pizzatier' ); ?></li>
+				<li><?php esc_html_e( 'On the source site: click Download Full Export. You get a single JSON file containing settings, all 8 content types with their custom fields, the ingredient-group taxonomy, and your cart and pricing configuration.', 'pizzatier' ); ?></li>
+				<li><?php esc_html_e( 'On the destination site: install PizzaTier, upload the JSON, and click Run Import.', 'pizzatier' ); ?></li>
 				<li><?php esc_html_e( 'Layer images are sideloaded from their original URLs into the destination media library. The source site must be reachable over HTTP at import time.', 'pizzatier' ); ?></li>
 				<li><?php esc_html_e( 'Existing posts/terms with the same slug are skipped — re-running an import is safe and idempotent for everything except settings.', 'pizzatier' ); ?></li>
+				<li><?php esc_html_e( 'Customer orders are opt-in on both sides: tick the box when exporting to include them in the file, and again when importing to restore them. They are matched by order number, so re-running an import never duplicates them.', 'pizzatier' ); ?></li>
 			</ol>
 		</div>
 
@@ -947,6 +1462,14 @@ class SiteMigration {
 				__( 'Layer images: %1$d sideloaded, %2$d failed', 'pizzatier' ),
 				$r['images_loaded'],
 				$r['images_failed']
+			);
+		}
+		if ( $r['orders_created'] > 0 || $r['orders_skipped'] > 0 ) {
+			$lines[] = sprintf(
+				/* translators: 1: created, 2: skipped */
+				__( 'Customer orders: %1$d created, %2$d skipped (order number already existed)', 'pizzatier' ),
+				$r['orders_created'],
+				$r['orders_skipped']
 			);
 		}
 		if ( ! $lines ) {

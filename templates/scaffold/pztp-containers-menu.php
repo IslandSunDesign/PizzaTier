@@ -57,32 +57,36 @@ $pizza_aspect  = sanitize_text_field( $atts['pizza_aspect']  ?? get_option( 'piz
 $pizza_radius  = sanitize_text_field( $atts['pizza_radius']  ?? get_option( 'pizzatier_setting_pizza_radius',  '8px'   ) );
 
 
-// ── PizzaTierPro: inline size selector ──────────────────────────────────────
+// ── Add-on: inline size selector ──────────────────────────────────────
 if ( ! function_exists( 'pzt_get_pro_sizes' ) ) :
 function pzt_get_pro_sizes(): array {
-	if ( ! function_exists( 'pztpro_get_setting' ) || ! class_exists( 'PizzaTierPro\\Pro\\PriceGrid\\Grid' ) ) { return []; }
+	// Sizes come from a pricing add-on when one is installed; pzt_addon_sizes()
+	// returns an empty array otherwise and the selector simply does not render.
 	$product_id = ( function_exists( 'get_queried_object_id' ) ? (int) get_queried_object_id() : 0 );
-	if ( ! $product_id ) { global $post; if ( $post instanceof \WP_Post ) { $product_id = $post->ID; } }
-	$grid = new \PizzaTierPro\Pro\PriceGrid\Grid(); return $grid->get_sizes( $product_id );
+	if ( ! $product_id ) {
+		global $post;
+		if ( $post instanceof \WP_Post ) { $product_id = $post->ID; }
+	}
+	return pzt_addon_sizes( $product_id );
 }
 endif;
 if ( ! function_exists( 'pzt_render_inline_size_selector' ) ) :
 function pzt_render_inline_size_selector( array $sizes, string $instance_id, string $css_prefix = 'cb' ): void {
 	if ( empty( $sizes ) ) { return; }
-	// Extract numeric suffix from instance_id (handles pztpro-1, pizzabuilder-1, pztpro-1-2, etc)
+	// Extract numeric suffix from instance_id (handles pztc-1, pizzabuilder-1, pztc-1-2, etc)
 	preg_match( '/-(\d+)$/', $instance_id, $_m_suf );
 	$radio_name_raw = ! empty( $_m_suf[1] ) ? $_m_suf[1] : preg_replace( '/[^a-zA-Z0-9_]/', '_', $instance_id );
-	$radio_name = 'pztpro_size_' . $radio_name_raw;
-	$heading = function_exists( 'pztpro_get_setting' ) ? (string) pztpro_get_setting( 'size_selector_label', '' ) : '';
+	$radio_name = 'pizzatier_commerce_size_' . $radio_name_raw;
+	$heading = (string) pzt_addon_setting( 'size_selector_label', '' );
 	if ( '' === $heading ) { $heading = __( 'Choose a Size', 'pizzatier' ); }
 	?>
-	<div class="<?php echo esc_attr( $css_prefix ); ?>-size-selector pztpro-inline-size-selector" id="<?php echo esc_attr( $instance_id ); ?>-size-selector" role="group" aria-label="<?php echo esc_attr( $heading ); ?>">
+	<div class="<?php echo esc_attr( $css_prefix ); ?>-size-selector pztc-inline-size-selector" id="<?php echo esc_attr( $instance_id ); ?>-size-selector" role="group" aria-label="<?php echo esc_attr( $heading ); ?>">
 		<p class="<?php echo esc_attr( $css_prefix ); ?>-size-selector__heading"><?php echo esc_html( $heading ); ?></p>
 		<div class="<?php echo esc_attr( $css_prefix ); ?>-size-selector__options">
 			<?php foreach ( $sizes as $i => $size ) :
 				$inp_id = esc_attr( $instance_id ) . '-sz-' . sanitize_html_class( strtolower( $size ) ); ?>
-			<label class="<?php echo esc_attr( $css_prefix ); ?>-size-option pztpro-size-option<?php echo 0 === $i ? ' pztpro-size-option--active' : ''; ?>" for="<?php echo esc_attr( $inp_id ); ?>">
-				<input type="radio" id="<?php echo esc_attr( $inp_id ); ?>" name="<?php echo esc_attr( $radio_name ); ?>" value="<?php echo esc_attr( $size ); ?>" class="pztpro-size-radio" <?php checked( 0, $i ); ?> />
+			<label class="<?php echo esc_attr( $css_prefix ); ?>-size-option pztc-size-option<?php echo 0 === $i ? ' pztc-size-option--active' : ''; ?>" for="<?php echo esc_attr( $inp_id ); ?>">
+				<input type="radio" id="<?php echo esc_attr( $inp_id ); ?>" name="<?php echo esc_attr( $radio_name ); ?>" value="<?php echo esc_attr( $size ); ?>" class="pztc-size-radio" <?php checked( 0, $i ); ?> />
 				<span class="<?php echo esc_attr( $css_prefix ); ?>-size-option__name"><?php echo esc_html( $size ); ?></span>
 			</label>
 			<?php endforeach; ?>
@@ -223,20 +227,20 @@ endif;
 
 // ── Pre-render all card HTML pools ─────────────────────────────────────────────
 $crusts_html   = '';
-foreach ( $crusts   as $post ) { if ( $post instanceof \WP_Post ) { $crusts_html   .= pzt_scaffold_render_item_card( $post, 'crust',   $sc_var ); } }
+foreach ( $crusts   as $pzt_layer ) { if ( $pzt_layer instanceof \WP_Post ) { $crusts_html   .= pzt_scaffold_render_item_card( $pzt_layer, 'crust',   $sc_var ); } }
 $sauces_html   = '';
-foreach ( $sauces   as $post ) { if ( $post instanceof \WP_Post ) { $sauces_html   .= pzt_scaffold_render_item_card( $post, 'sauce',   $sc_var ); } }
+foreach ( $sauces   as $pzt_layer ) { if ( $pzt_layer instanceof \WP_Post ) { $sauces_html   .= pzt_scaffold_render_item_card( $pzt_layer, 'sauce',   $sc_var ); } }
 $cheeses_html  = '';
-foreach ( $cheeses  as $post ) { if ( $post instanceof \WP_Post ) { $cheeses_html  .= pzt_scaffold_render_item_card( $post, 'cheese',  $sc_var ); } }
+foreach ( $cheeses  as $pzt_layer ) { if ( $pzt_layer instanceof \WP_Post ) { $cheeses_html  .= pzt_scaffold_render_item_card( $pzt_layer, 'cheese',  $sc_var ); } }
 $drizzles_html = '';
-foreach ( $drizzles as $post ) { if ( $post instanceof \WP_Post ) { $drizzles_html .= pzt_scaffold_render_item_card( $post, 'drizzle', $sc_var ); } }
+foreach ( $drizzles as $pzt_layer ) { if ( $pzt_layer instanceof \WP_Post ) { $drizzles_html .= pzt_scaffold_render_item_card( $pzt_layer, 'drizzle', $sc_var ); } }
 $cuts_html     = '';
-foreach ( $cuts     as $post ) { if ( $post instanceof \WP_Post ) { $cuts_html     .= pzt_scaffold_render_item_card( $post, 'slicing', $sc_var ); } }
+foreach ( $cuts     as $pzt_layer ) { if ( $pzt_layer instanceof \WP_Post ) { $cuts_html     .= pzt_scaffold_render_item_card( $pzt_layer, 'slicing', $sc_var ); } }
 $toppings_html = '';
 $_tz = 500;
-foreach ( $toppings as $post ) {
-    if ( ! ( $post instanceof \WP_Post ) ) { continue; }
-    $toppings_html .= pzt_scaffold_render_topping_card( $post, $sc_var, $_tz );
+foreach ( $toppings as $pzt_layer ) {
+    if ( ! ( $pzt_layer instanceof \WP_Post ) ) { continue; }
+    $toppings_html .= pzt_scaffold_render_topping_card( $pzt_layer, $sc_var, $_tz );
     $_tz += 10;
 }
 

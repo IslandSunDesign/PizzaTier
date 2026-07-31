@@ -85,6 +85,16 @@ class AssetManager {
 		// lines of formerly-inline <style> across the admin classes.
 		wp_enqueue_style( 'pizzatier-admin', PIZZATIER_ASSETS_URL . 'css/admin/pizzatier-admin.css', [], $v );
 
+		// Pizza Orders screens.
+		if ( false !== strpos( $hook, 'pizzatier-orders' ) ) {
+			wp_enqueue_style(
+				'pizzatier-orders-admin',
+				PIZZATIER_ASSETS_URL . 'css/admin/pizzatier-orders-admin.css',
+				[ 'pizzatier-admin' ],
+				$v
+			);
+		}
+
 		if ( false === strpos( $hook, 'pizzatier' ) ) { return; }
 
 		$base = PIZZATIER_ASSETS_URL . 'js/admin/';
@@ -322,7 +332,7 @@ class AssetManager {
 			);
 			wp_localize_script(
 				'pizzatier-layer-image-maker',
-				'plimConfig',
+				'pizzatierLimConfig',
 				[
 					'ajaxUrl'     => admin_url( 'admin-ajax.php' ),
 					'nonce'       => wp_create_nonce( 'pizzatier_layer_image_maker' ),

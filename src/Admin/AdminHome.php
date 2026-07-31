@@ -13,23 +13,11 @@ if ( ! defined( 'ABSPATH' ) ) { exit; }
  *  - Quick-access icon nav (Help surfaced as a featured item)
  *  - Hero intro
  *  - Shortcode reference + Extend / developer cards
- *  - Pro upsell CTA (dismissable per-user, hidden when Pro active)
  */
 class AdminHome {
 
 	public function render(): void {
 		if ( ! current_user_can( 'manage_options' ) ) { return; }
-
-		// Handle Pro CTA dismissal
-		if (
-			isset( $_GET['pizzatier_dismiss_pro_cta'] )
-			&& check_admin_referer( 'pizzatier_dismiss_pro_cta' )
-		) {
-			update_user_meta( get_current_user_id(), 'pizzatier_pro_cta_dismissed', true );
-		}
-
-		$show_pro_cta = ! class_exists( 'PizzaTierPro' )
-		             && ! get_user_meta( get_current_user_id(), 'pizzatier_pro_cta_dismissed', true );
 
 		// ── Live stats ──────────────────────────────────────────────────
 		$stats = [
@@ -133,20 +121,6 @@ class AdminHome {
 					</a>
 				</div>
 			</div>
-
-			<!-- ══ Pro upsell CTA ════════════════════════════════════════ -->
-			<?php if ( $show_pro_cta ) : ?>
-			<div class="plh-pro-cta">
-				<span class="plh-pro-cta__icon">🍕</span>
-				<div class="plh-pro-cta__text">
-					<strong><?php esc_html_e( 'Supercharge with PizzaTierPro', 'pizzatier' ); ?></strong> &mdash;
-					<?php esc_html_e( 'Add WooCommerce cart integration, order pricing grids, and more.', 'pizzatier' ); ?>
-					<a href="https://pizzatier.com/pro" target="_blank" rel="noopener"><?php esc_html_e( 'Learn more →', 'pizzatier' ); ?></a>
-				</div>
-				<a href="<?php echo esc_url( wp_nonce_url( add_query_arg( 'pizzatier_dismiss_pro_cta', '1' ), 'pizzatier_dismiss_pro_cta' ) ); ?>"
-				   class="plh-pro-cta__dismiss" title="<?php esc_attr_e( 'Dismiss', 'pizzatier' ); ?>">✕</a>
-			</div>
-			<?php endif; ?>
 
 			<!-- ══ Setup nag ═════════════════════════════════════════════ -->
 			<?php if ( ! empty( $missing ) ) : ?>

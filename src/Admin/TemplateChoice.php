@@ -30,7 +30,7 @@ class TemplateChoice {
 			}
 		}
 
-		$active = (string) get_option( 'pizzatier_setting_global_template', 'nightpie' );
+		$active = sanitize_key( (string) get_option( 'pizzatier_setting_global_template', 'nightpie' ) ); // sanitize_key() prevents path traversal in template-options includes.
 
 		// ── Handle template settings save ──────────────────────────
 		if ( isset( $_POST['pizzatier_template_settings_save'], $_POST['_wpnonce'] )
@@ -38,7 +38,7 @@ class TemplateChoice {
 			$this->save_template_settings();
 			echo '<div class="notice notice-success is-dismissible"><p><strong>' . esc_html__( 'Template settings saved.', 'pizzatier' ) . '</strong></p></div>';
 			// Re-read active after save
-			$active = (string) get_option( 'pizzatier_setting_global_template', 'nightpie' );
+			$active = sanitize_key( (string) get_option( 'pizzatier_setting_global_template', 'nightpie' ) ); // sanitize_key() prevents path traversal in template-options includes.
 		}
 
 		// ── Scan template directories ───────────────────────────────
@@ -593,7 +593,7 @@ class TemplateChoice {
 	private function save_template_settings(): void {
 		check_admin_referer( 'pizzatier_template_settings_save' );
 
-		$active = (string) get_option( 'pizzatier_setting_global_template', '' );
+		$active = sanitize_key( (string) get_option( 'pizzatier_setting_global_template', '' ) ); // sanitize_key() prevents path traversal in template-options includes.
 		if ( ! $active ) { return; }
 		// Load the option keys for this template
 		$options_paths = [

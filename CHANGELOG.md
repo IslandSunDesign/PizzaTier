@@ -6,6 +6,1357 @@ Versions follow [Semantic Versioning](https://semver.org/).
 
 ---
 
+## 2.1.0
+
+**Order routing**
+
+Where an order goes when a customer places it is now a setting rather than a consequence of which button happens to be on screen. Orders → Ordering Settings gains a "When a customer orders" choice with five routes:
+
+* **Pizza order list** — record the order in WordPress. No cart, no payment step.
+* **WooCommerce cart** — add the pizza and let the customer keep shopping.
+* **WooCommerce checkout** — add the pizza and go straight to payment, skipping the cart page.
+* **Both** — one button that records the order *and* adds it to the cart.
+* **Notify only** — email the ticket and POST it to a webhook, then keep no record.
+
+* Added: `PizzaTier\Orders\OrderRoute` is now the source of truth for where orders go. `ActionBarMode` survives as a derived view answering the narrower question of which bar renders; its constants, option key and `pizzatier_action_bar_mode` filter are unchanged, so code written against it keeps working.
+* Added: `PizzaTier\Orders\RouteDispatcher` carries a submitted order to its destination — cart, webhook, checkout redirect — separately from the validation that builds it.
+* Added: an order webhook. Every placed order is POSTed as JSON to a configurable endpoint, for a kitchen display, a POS, or an automation service. When a secret is set the body is signed with HMAC-SHA256 in the `X-PizzaTier-Signature` header.
+* Added: a "Pizza product" setting. The cart routes need a WooCommerce product, and a builder embedded by shortcode on an ordinary page has none; this is the product those routes fall back to. On a product page the product itself is always used.
+* Added: `PizzaTier\Orders\OrderProduct` resolves that product — posted ID, then queried object, then the configured fallback — validating every candidate, so an untrusted `product_id` can only ever select another real pizza product.
+
+**Native orders are no longer priced at zero**
+
+* Fixed: `pizzatier_order_item_price` had been applied since the ordering feature shipped and documented as the seam a premium extension would fill. Nothing ever filled it — the calculator lived in PizzaTierPro, and when Pro merged into the free plugin for 2.0 the seam was left unconnected. Every order recorded in the pizza order list therefore had a line total of zero. `PizzaTier\Orders\OrderPricing` now connects the commerce price grid to it.
+* An order that cannot be priced — no grid on the product, a size that does not map, a layer the product does not permit — is still recorded, unpriced, for staff to quote by hand. Pricing never fails a submission.
+* Added: `pizzatier_order_price_size` filters which grid size a native order is priced at when the order's own size does not match a grid column.
+
+**Changed behaviour**
+
+* Changed: "both" no longer means two buttons. It used to draw the Add to Cart bar and the Order Now bar together and let the *customer* choose the destination; it now draws one button and the *store* chooses. Sites upgrading with `action_bar_mode` set to `both` are migrated to the new route and shown a one-time admin notice explaining the change.
+* Changed: the upgrade step writes each site's resolved route into an explicit setting instead of leaving it derived from the pre-2.1.0 options, so a later change to the fallback logic cannot move a working store.
+
+**Safety and privacy**
+
+* Added: the "notify only" route never discards an order it could not deliver. If neither the store email nor the webhook succeeded, the record is kept regardless of the setting, so a network failure costs a customer's dinner rather than the store's only copy of it. The settings screen warns when the route is active with nowhere to send.
+* Added: `pizzatier_order_discarded` fires while a notify-only order is still fully readable, as the last chance for an integration to copy anything off it.
+* Fixed: the site exporter no longer carries the webhook secret or the pizza product ID to another site. A secret in an exported file has stopped being a secret, and a post ID means something different on every install. Both are still deleted on uninstall. `OptionRegistry::is_portable()` and the `pizzatier_option_is_portable` filter control this.
+
+**Also**
+
+* Added: after a "both" order the confirmation panel tells the customer the pizza is in their cart and links to it, and reports it plainly if the cart add failed while the order itself succeeded.
+* Added: `pizzatier_order_route`, `pizzatier_order_product_id`, `pizzatier_order_dispatch_result`, `pizzatier_order_webhook_payload`, `pizzatier_order_checkout_redirect` filters and the `pizzatier_order_webhook_failed` action.
+
+---
+
+## 2.0.7
+
+* Fixed: `src/Core/OptionRegistry.php` used a compound direct-access guard (`! defined( 'ABSPATH' ) && ! defined( 'WP_UNINSTALL_PLUGIN' )`) that the WordPress.org Plugin Check scanner does not recognise. Replaced with the canonical single-condition guard. The second clause was redundant — `uninstall_plugin()` includes `uninstall.php` from inside a fully loaded WordPress, so `ABSPATH` is always defined when this file is required.
+
+---
+
+## 2.0.6
+
+**Resilience against damaged installs**
+
+* Fixed: a missing or unreadable file under `src/` no longer takes the whole site down. The four shortcodes were the only classes instantiated lazily on `init`, so an incomplete upload threw an uncaught `Error` out of `do_action( 'init' )` — fatalling every request including wp-admin and locking the site owner out. Each shortcode is now registered independently and skipped if its class cannot be loaded.
+* Added: the autoloader now records and logs every class it cannot resolve, naming the expected file path and whether it is absent or merely unreadable, instead of returning silently and leaving a bare "Class not found" fatal.
+* Added: an admin notice listing any files the autoloader could not load, with instructions to re-extract the plugin server-side.
+
+---
+
+## 2.0.5
+
+**Personal data / GDPR tooling for native orders**
+
+* Added: orders are now included in Tools → Export Personal Data. A request returns the order number, date, status, contact details, delivery address, instructions, order notes, line items and total.
+* Added: orders are now included in Tools → Erase Personal Data. Erasure **anonymises rather than deletes** — name, contact details, address and notes are cleared while the order number, date, items and total survive, because tax and accounting rules require the store to keep a record of the transaction. The requester is told this in the confirmation message.
+* Added: staff notes are included in personal-data exports by default. Notes written about an identifiable customer are that customer's data and a subject access request generally reaches them; "staff-only" is a display choice, not a legal exemption. Sites needing to withhold them can use the new `pizzatier_privacy_export_staff_notes` filter.
+* Added: suggested privacy-policy text, surfaced in Settings → Privacy, describing exactly what the plugin stores.
+* Added: optional retention sweep. Set "Auto-anonymise after" on the Orders settings screen and orders older than that are anonymised on a daily cron. Off by default.
+* Added: orders are now indexed by customer email so a personal-data request can actually find them — the customer record is a serialised array and could not be queried. Existing orders are backfilled on upgrade. Guest orders are covered, not just orders from registered users.
+* Added: the Orders settings screen now warns when "Require email" is off, because orders without an email address cannot be located by WordPress's email-keyed personal-data tools and must be handled manually.
+* Added: `pizzatier_order_anonymised` action, fired after an order's personal fields are cleared.
+* The retention cron is removed on deactivation.
+
+## 2.0.4
+
+**Site Migration — completeness**
+
+* Fixed: migration exported only 98 of the 300+ options the plugin owns. Template settings for Colorbox, Command Center, Metro, NightPie, PocketPie and Rustic (157 keys) were silently dropped, so a migrated site landed on template defaults. All eight templates now migrate.
+* Fixed: the entire native ordering configuration (20 settings) was never exported or imported.
+* Fixed: global layout, typography, branding, topping-display and accessibility settings were missing from the export.
+* Fixed: importing flattened array options to the string "Array", collapsed booleans to '1'/'', and wrote an empty string for options that were merely unset on the source — shadowing the destination's own defaults. Values now keep their type.
+* Fixed: featured images and SCF/ACF image fields exported raw attachment IDs, which point at unrelated images on another install. Images now travel as URL references and are sideloaded into the destination media library.
+* Fixed: template background images (e.g. Metro's container background) stayed hotlinked to the source site. They are now pulled into the destination's media library.
+* Fixed: setup progress was only restored when the unrelated "Cart & pricing" box was ticked.
+* Added: customer orders can be included in a migration. Opt-in on both sides and unticked by default, since order records hold names, phone numbers and addresses. Matched by order number, so re-importing never duplicates. Private staff notes are never exported.
+* Added: `PizzaTier\Core\OptionRegistry` is now the single source of truth for option keys, discovering template settings from each template's own `pztp-template-options.php`. Export, import and uninstall can no longer drift apart. Extensions can join all three via the new `pizzatier_option_keys` filter.
+* Export schema is now version 2. Version 1 files still import.
+
+**Uninstall**
+
+* Fixed: 34 template options (mostly Colorbox and Command Center) and all ordering settings were left behind in `wp_options` after uninstall.
+
+**WordPress.org compliance**
+
+* Added the missing `Requires PHP` header to the main plugin file.
+* Replaced error-suppressed `@unlink()` calls with `wp_delete_file()`.
+* Preset and layout-preview output now passes through a literal `wp_kses()` call at the point of output.
+* Corrected the template count in the readme (8, not 7 — Command Center was missing).
+
+## [2.0.3] - 2026-07-23
+
+Code-quality release prepared for WordPress.org review. No functional changes, no
+database or option changes, and no changes to any public CSS class, DOM ID or
+JavaScript global.
+
+### Fixed
+
+- **`phpcs.xml.dist` renamed to `phpcs.xml`.** Plugin Check rejects the `.dist`
+  extension, which maps to `application/octet-stream`, as a disallowed
+  application file. This was the only hard error in the scan.
+- **Prefixed `$instance_idx`** in the `pizza.php` WooCommerce add-to-cart
+  template override, the one variable in the plugin that genuinely occupied
+  global scope.
+- **The copy-from-product picker no longer uses `post__not_in`.** It excluded a
+  single ID from an IDs-only query, so the exclusion moved into PHP and the
+  query no longer builds a `NOT IN` subquery.
+- **`uninstall.php` order line-item cleanup** now interpolates
+  `{$wpdb->prefix}` directly rather than passing a pre-built table name
+  variable into the statement, so no variable reaches `$wpdb->query()` at all.
+- Removed a duplicated `@var` docblock line above `WC_Product_Pizza::$product_type`.
+
+### Changed
+
+- **`Presets::$section_defs` array key renamed from `meta_key` to `state_key`.**
+  These were never database meta keys — they are keys into the saved preset
+  state array — but the literal name tripped the slow-query sniff eight times.
+  The key *values* (`crust_id`, `sauce_id`, and so on) are unchanged, so stored
+  preset data and the `data-meta-key` attribute are unaffected.
+
+### Internal
+
+- Documented, with justification, the sniff suppressions for cases that cannot
+  be renamed: WooCommerce's `$product` global, the `WC_Product_Pizza` class name
+  required verbatim by `WC_Product_Factory`, the checkout-bar layout variables
+  that only appear global because the partial is included from inside a method,
+  and the `tax_query` lookups that have no non-taxonomy equivalent.
+
+### Upgrade note for existing installs
+
+If a copy of this plugin has been installed since before 2.0.0, delete the
+leftover `src/Pro/` directory and any old `phpcs.xml.dist` from the plugin
+folder. The `PizzaTier\Pro\` namespace became `PizzaTier\Commerce\` in 2.0.0;
+plugin updates overwrite files but never remove them, so the superseded copies
+linger and will be reported by Plugin Check even though nothing loads them.
+
+---
+
+## [2.0.2] - 2026-07-23
+
+Fixes an unreachable dashboard. **Update immediately from 2.0.0 or 2.0.1.**
+
+### Fixed
+- **`admin.php?page=pizzatier` redirected to itself, so the dashboard failed
+  with "too many redirects".**
+
+  2.0.0-alpha.6 added a redirect map sending the retired PizzaTierPro screens to
+  their PizzaTier equivalents, including `'pizzatierpro' => 'pizzatier'`. The
+  brand sweep in alpha.9 then rewrote every occurrence of the old name, turning
+  that entry into `'pizzatier' => 'pizzatier'` — the dashboard redirecting to
+  itself, unconditionally, on every admin request to that page.
+
+  The whole redirect map is removed. It could not survive alpha.9 in any case:
+  redirecting *from* the old routes requires naming them, and alpha.9 removed
+  every reference to those names by design.
+
+  The alpha.9 changelog claimed these redirects had been removed. They had not.
+  Only the two blocks in the main plugin file were — the settings migration
+  chain and the plugin-deactivation guard, the latter of which the same sweep
+  had pointed at PizzaTier's own file. This third block lived in `src/Plugin.php`
+  and was missed, and the changelog recorded an intent rather than a check.
+
+### Added
+- A regression test that requests every registered admin page, fires
+  `admin_init`, and asserts none of them redirects to itself. It was confirmed
+  to fail against the broken code before being accepted, so it tests something
+  real. All 20 pages pass.
+
+### Notes
+- Audited for the same failure mode elsewhere. Twelve `'x' => 'x'` mappings
+  exist in the codebase; all are legitimate normalisation tables — layer-type
+  aliases, font names, CSS keywords — not sweep damage. Every other
+  `wp_safe_redirect()` was checked for a self-referential path: the settings
+  wizard's is a standard POST-redirect-GET, the customizer stub targets a
+  different page, and the content-hub redirect is guarded on a different slug.
+
+## [2.0.1] - 2026-07-23
+
+Bug-fix release. Everything here was found by running PHPStan against the
+plugin with WordPress and WooCommerce stubs after 2.0.0 was packaged — a class
+of check the earlier phases had not applied.
+
+**Three of these were introduced by the merge itself.** They are listed first,
+because they are the ones that would not have existed otherwise.
+
+### Fixed — regressions introduced during the merge
+- **Importing a site export silently skipped every WooCommerce pizza product.**
+  When the export payload key was renamed from `pro` to `commerce`, two
+  references in the importer were missed. `$pro['wc_products']` evaluated to an
+  undefined variable, so the check `! empty( $pro['wc_products'] )` was always
+  false: the products were present in the file, read, and never applied. No
+  error, no warning in the import summary.
+- **The Colorbox and NightPie progress dots rendered blank.** Renaming a loop
+  variable that shadowed a WordPress global changed `foreach ( … as $s )` but
+  not the `$s` used inside the loop body, leaving it undefined.
+- **The Site Migration export summary lost a line and logged a warning.**
+  Removing a capability check left the `if ( $pro_active )` that depended on it.
+
+### Fixed — pre-existing
+- **Radio groups were shared between builders on the Plainlist template.** The
+  item builder used `$instance_id` for the radio group `name`, but the variable
+  was defined at file scope and the function never received it, so the name was
+  emitted without its instance segment. Two builders on one page shared a group:
+  choosing a crust in one cleared the choice in the other.
+- **`wp_die()` was passing the HTTP status as the page title** in four handlers,
+  so failed AJAX requests returned 200 with "400" or "403" rendered as a
+  heading. Client code checking the response status saw success.
+- `add_option()` and `update_option()` were passed the legacy `'no'` string for
+  `$autoload` where a boolean is expected.
+- A `catch ( \Throwable )` around a constructor that cannot throw.
+
+### Removed
+- **`assets/js/admin-grid.js` — 388 lines that were never enqueued.** 16 of the
+  19 element ids and 8 of the 10 classes it looks for do not exist anywhere in
+  the plugin: it targets a grid setup wizard that was removed from the PHP at
+  some point without the script following. This is also the origin of the stale
+  translations noticed earlier — "Grid Editor", "Setup Wizard", "What sizes do
+  you offer?" — which had no source to match.
+- A `pizzatierRusticSettings` object localised into every page using the Fornaia
+  template. No script has ever read it; the labels it carries are rendered
+  server-side by the template's own partial, from the same options.
+
+### Notes
+- Also verified rather than assumed: all 16 internal `class_exists()` string
+  literals resolve to a declared class, every AJAX action posted by JavaScript
+  has a PHP handler, and every nonce verified is created somewhere. These are
+  exactly the contracts a large rename breaks silently, and none were broken.
+- The remaining static-analysis output is understood and benign: `esc_attr()`
+  receiving integers, which PHP coerces; `return` after functions that already
+  terminate; and scope tracking that PHPStan loses across inline-HTML blocks
+  inside a method.
+
+## [2.0.0] - 2026-07-23
+
+**PizzaTierPro merged into PizzaTier. One plugin, fully free.**
+
+The twelve `2.0.0-alpha.*` entries below are the working record of how this was
+done, step by step, and are kept for anyone tracing why the codebase looks the
+way it does. This entry is the summary.
+
+### The shape of it
+
+PizzaTier and PizzaTierPro were 15,800 and 18,600 lines of PHP maintained as two
+plugins with a deliberate one-way dependency between them. They are now one
+plugin of roughly 34,000 lines, with the former Pro sources under
+`src/Commerce/` and no trace of the old branding anywhere in the code, styles,
+scripts, admin routes or translations.
+
+Sequence, each step delivered and validated on its own: remove the licensing
+layer; fold the sources in unchanged; unify namespace, text domain and
+translations; reconcile internal identifiers; dismantle the integration bridges;
+consolidate the admin menu, then the duplicated screens; consolidate settings;
+reconcile duplicated features and rename the database keys; remove the
+two-product framing; fix uninstall and add an upgrade routine; and finally a
+WordPress.org compliance pass.
+
+### Bugs found and fixed along the way
+
+None of these were the point of the merge. All of them were found by reading
+code that had to be touched anyway:
+
+- Settings export omitted the entire cart and pricing configuration, so
+  exporting from one site and importing on another silently lost every price
+  grid default, cart and checkout option.
+- Uninstall left behind the cart and pricing settings, every ordering setting,
+  all price grids, and all pizza presets.
+- Site export cast the setup checklist to a boolean, so importing replaced the
+  destination site's checklist with `true` and broke it.
+- The pricing, presets and nutrition admin disappeared entirely when WooCommerce
+  was inactive, though the code was written to degrade rather than vanish.
+- Two settings governed the builder action bar with opposite defaults; the
+  native bar rendered only when both happened to agree.
+- Admin forms saved text without unslashing, corrupting every apostrophe.
+- Order emails and the order screen printed unescaped values.
+- All eight template partials used `$post` as a loop variable, shadowing a
+  WordPress global.
+- A German translation carried an invalid `printf` directive.
+- The readme changelog had been over the 5,000-character guideline for some time.
+
+And one introduced by the merge itself and caught before release: folding the
+integration bridge in unconditionally changed the default action bar for sites
+that had never run PizzaTierPro, replacing a working order bar with an Add to
+Cart button wired to a product that did not exist.
+
+### Upgrading
+
+Sites coming from PizzaTierPro must run the separate **PizzaTier Key Migrator**
+plugin, which converts the database keys inherited from the old naming. Nothing
+in PizzaTier reads the old names any more. The migrator surveys before it
+writes, copies rather than moves, skips rows already converted so it is safe to
+re-run, and works in batches so a long order history does not time out.
+
+### Known and deliberate
+
+- Merged help and setup-guide sections keep their original styling, so the seam
+  between the two former plugins is still visible on those screens. Cosmetic.
+- The Cart & Pricing settings remain their own screen rather than folding into
+  the main Settings page. The two use incompatible storage and form-submission
+  models; combining them would put two independent forms under one Save button,
+  where pressing the visible one discards the other's edits.
+- The three wizards remain three. They do genuinely different jobs.
+- `SlowDBQuery` warnings are excluded with the reason recorded in
+  `phpcs.xml.dist`; WordPress.org's own check will still report them.
+
+### Verification
+
+Every step was validated with PHP lint, `node --check`, CSS brace balance,
+`msgfmt -c`, and a WordPress stub harness that boots the plugin with and without
+WooCommerce, in admin and front-end contexts. The final compliance pass ran the
+real WordPress Coding Standards and PHPCompatibility, not approximations.
+
+**This plugin has never been executed against a real WordPress installation.**
+The harness catches load-time and registration errors, not rendering, database
+behaviour or WooCommerce interaction. Test on a staging site before deploying.
+
+## [2.0.0-alpha.12] - 2026-07-23
+
+Pre-release. WordPress.org compliance. **Not intended for production sites.**
+
+Run against the real WordPress Coding Standards (WPCS 3.x on PHP_CodeSniffer
+4.0.2) plus PHPCompatibility, rather than approximated with greps. The first
+pass found **78 errors and 3 warnings across 18 files**, overwhelmingly in the
+commerce code, which had never been through a WordPress.org review. All are
+resolved.
+
+### Fixed
+- **Input was not unslashed before sanitizing** in the New Pizza wizard and the
+  product Pizza Configurator tab. WordPress slashes superglobals, so
+  `sanitize_text_field( $_POST['x'] )` without `wp_unslash()` stores a literal
+  backslash before every apostrophe. A data-corruption bug, not a lint nag —
+  product names and descriptions were affected.
+- **Values escaped into a variable rather than at the point of output** in the
+  order-email summary, the order pizza meta box and the wizard. Not exploitable,
+  but PHPCS cannot verify escaping it cannot see, and Plugin Check rejects it.
+  Escaping moved to each echo site.
+- **Genuinely unescaped output** in the dashboard, the product mode cards and the
+  preset picker, including a case where translated text containing a link was
+  printed without `wp_kses()`.
+- **Loop variables shadowing WordPress globals.** All eight template partials
+  used `foreach ( $layers as $post )`, and several used `$tab` and `$s`.
+  Function-scoped today, so harmless today — but a file that is included at
+  global scope one day would silently clobber `$post` for everything after it.
+  102 occurrences renamed rather than suppressed. `uninstall.php` had the same
+  pattern.
+- **`fputcsv()` and `str_getcsv()` relied on PHP's default `$escape`**, which
+  8.4 deprecates. Now passed explicitly as an empty string, which also means
+  exports use plain RFC 4180 quoting instead of PHP's proprietary backslash
+  escaping — what spreadsheet software actually expects.
+- `urlencode()` → `rawurlencode()` for a URL component.
+- 17 `printf`/`sprintf` calls on translatable strings had no `translators:`
+  comment, leaving translators to guess what each placeholder holds.
+
+### Removed
+- The PHP 8.1 `$title` null-safety guard. It assigned to a WordPress global,
+  which WordPress.org prohibits, and the screen that originally triggered it
+  stopped existing when the licensing layer was removed.
+
+### Added
+- **`phpcs.xml.dist`**, so this is reproducible rather than something that
+  happened once. Scoped to the sniffs that decide whether a plugin is accepted;
+  deliberately not the whole WordPress standard, whose formatting rules would
+  bury real findings under thousands of cosmetic ones.
+
+### Notes
+- **28 findings were annotated rather than changed, each with a specific
+  reason.** The largest group is nonce verification in handlers that verify
+  through a helper which `wp_die()`s on failure — PHPCS cannot follow a call
+  into a method. The helpers were read and confirmed correct before annotating.
+  The rest are values sanitized element-by-element just after the read, an
+  in-memory `php://memory` stream that is not a filesystem operation, `base64`
+  used to build data URIs from inline SVG, and one table name in a `DELETE`,
+  which cannot be a placeholder.
+- **`SlowDBQuery` warnings are excluded, with the reason recorded in the
+  ruleset.** Meta-key and taxonomy queries are flagged as slow and are, but
+  WooCommerce pizza products are identified by a `product_type` term and layer
+  posts by their meta — there is no other way to find them. The queries are
+  bounded, admin-side, and off the front-end path. WordPress.org's own check
+  will still surface them.
+- PHPCompatibility against PHP 7.4 and up is clean.
+
+## [2.0.0-alpha.11] - 2026-07-23
+
+Pre-release. Uninstall coverage and a version-tracked upgrade routine.
+**Not intended for production sites.**
+
+### Fixed
+- **Uninstall left most of the merged plugin's data behind.** Auditing what the
+  plugin writes against what `uninstall.php` removes turned up:
+  - **`pizzatier_options` was never deleted** — the entire cart and pricing
+    configuration. The file contained the string `pizzatier_options`, but only
+    as the name of the local variable holding the list of option keys, so a
+    search for it looked like coverage. The variable is now
+    `$pizzatier_option_keys` so the two cannot be confused again.
+  - **`pizzatier_presets` was missing from the post-type deletion loop.** Every
+    saved pizza preset, and its meta, survived a full uninstall.
+  - **All ordering settings survived.** `OrderSettings` writes them under a
+    shared prefix rather than from an enumerated list, so nothing named them.
+    Removed by prefix now.
+  - **Cart and pricing post meta survived**: builder template and position,
+    enabled and default layers, pricing mode, product and per-ingredient price
+    grids, preset layers, and the per-serving nutrition fields added in
+    alpha.8. Product configuration lives on WooCommerce products, which are not
+    ours to delete, so those keys are removed directly.
+  - Per-user admin state survived.
+
+### Added
+- **`Core\Upgrade`**, running one-time steps on a version change. Activation
+  hooks do not fire on an update — not from the updater, not from WP-CLI, not
+  from replacing the directory over FTP — so anything that must happen once per
+  release cannot rely on them. Steps are keyed by the version that introduced
+  them and run in order, so a site jumping several releases gets each exactly
+  once.
+- The 2.0.0 step flushes rewrite rules, since post types and rewrite rules moved
+  during the merge and a stale cache shows up as 404s on archive URLs.
+
+### Notes
+- **A site with no stored version is ambiguous** — it is either a fresh install
+  or an upgrade from any release before 2.0.0, which is when version tracking
+  arrived. Treating both as fresh would silently skip the steps for every
+  existing site, which is the case that actually needs them. The presence of
+  existing settings distinguishes them. `Activator` also records the version on
+  activation, so fresh installs are unambiguous from the start. All five paths
+  are covered by tests: fresh install, untracked upgrade, same version,
+  earlier alpha, and an immediate re-run.
+- **WooCommerce order line-item meta is removed only when the site has opted
+  into deleting order records.** Otherwise a store that deliberately keeps its
+  order history would find those orders emptied of what was actually ordered.
+  Leaving a few rows behind is the lesser harm.
+- The database key conversion is deliberately not an upgrade step. It belongs to
+  the separate key migrator, which can survey before writing, work in batches
+  and be re-run — none of which fits a routine that fires unattended on the
+  first admin request after an update.
+
+## [2.0.0-alpha.10] - 2026-07-23
+
+Pre-release. Removes the last of the two-product framing. **Not intended for
+production sites.**
+
+Every remaining string, label and comment that described cart and pricing as a
+separate product has been rewritten. After the alpha.9 rename these had become
+actively wrong rather than merely dated — the plugin was telling readers that
+features were "provided by PizzaTier", and the Site Migration instructions read
+"install PizzaTier (and PizzaTier if you used it on the source)".
+
+### Removed
+- **The upgrade advert on the dashboard** — a dismissable "Supercharge with
+  PizzaTier" panel with a "Learn more" link to a product page, plus the per-user
+  dismissal state behind it.
+- `pzt_has_pricing_addon()`'s two remaining call sites. It existed to decide
+  whether to show the advert and whether to offer the commerce section of an
+  export; both questions now have one answer.
+
+### Changed
+- **Site Migration** no longer presents cart and pricing as an optional section
+  contributed by something else. The "Pro" pill is gone, the import checkbox is
+  no longer conditionally disabled with a "not detected" warning, and the
+  instructions describe one export containing everything.
+- **Export payload key** `pro` → `commerce`. Export files written by earlier
+  releases will import their settings and content but not their cart and pricing
+  section.
+- **Help** — the FAQ answer about WooCommerce previously said the integration was
+  "provided by PizzaTier" with the base plugin handling the builder; it now
+  describes what is actually there and points at the screen. The Site Migration
+  and developer-hook sections, the code example, and the Sizes reference are all
+  rewritten.
+- **"Pro Settings"** as a label is gone throughout — 20-odd occurrences across
+  the settings, help, setup-guide and dashboard screens, now "Cart & Pricing".
+- **`readme.txt` rewritten** where it described a paid extension: the feature
+  list, the shortcode and hook notes, the WooCommerce FAQ, and the "Pro Version"
+  section, which is now "Selling pizzas" and covers both the WooCommerce path and
+  the built-in ordering path.
+- CSS class names carrying the old framing renamed: `plh-pro-cta` → `plh-cta`,
+  `pset-pro-notice` → `pset-info-notice`, `psm-pill--pro` → `psm-pill--commerce`.
+- Internal vocabulary: the order `price_source` value `'pro'` is now `'grid'`,
+  and comments no longer speak of a "free plugin" and a separate premium one.
+
+### Notes
+- Ordinary English survives. "Add-on price per topping" is pricing terminology,
+  not product framing, and "pro tips" is just an idiom.
+- **The old product name is deliberately retained in two places:** this file's
+  historical entries, and the upgrade instructions in `readme.txt`. Someone
+  upgrading needs to recognise their own situation — an instruction to run the
+  key migrator is useless if it cannot say what you are upgrading from.
+
+## [2.0.0-alpha.9] - 2026-07-23
+
+Pre-release. Complete removal of the PizzaTierPro naming. **Not intended for
+production sites, and the first release that is not backwards compatible.**
+
+5,030 replacements across 117 files. The plugin now contains zero occurrences of
+`pizzatierpro` or `pztpro` in any case, anywhere — PHP, JavaScript, CSS,
+translations and admin routes. The only remaining mentions are the historical
+entries in this file.
+
+### Changed
+- **Namespace** `PizzaTier\Pro\…` → `PizzaTier\Commerce\…`, `src/Pro/` →
+  `src/Commerce/`. Flattening into `PizzaTier\` directly was not possible —
+  `Admin\Settings`, `Admin\Help` and `Admin\SetupGuide` exist on both sides.
+- **CSS classes and DOM ids** `pztpro-*` → `pztc-*`. Not `pzt-*`: that prefix is
+  already used by the ordering feature in 512 places and includes names such as
+  `pzt-field`, so the obvious choice would have silently merged two unrelated
+  rule sets.
+- **JavaScript globals** `window.PizzaTierProBuilder` and
+  `PizzaTierProBuilderInstances` → `PizzaTierBuilder` / `PizzaTierBuilderInstances`.
+- **Snake-case identifiers** — AJAX actions, nonces, settings sections, filters
+  — `pztpro_*` → `pizzatier_commerce_*`.
+- **Admin page addresses:** `pizzatierpro-pricing-config` → `pizzatier-pricing`,
+  `pizzatierpro-bulk-pricing` → `pizzatier-bulk-pricing`,
+  `pizzatierpro-settings` → `pizzatier-commerce`,
+  `pztpro-new-pizza` → `pizzatier-new-pizza`.
+- **Child-theme override path** `your-theme/pizzatierpro/checkout-bar.php` →
+  `your-theme/pizzatier/checkout-bar.php`.
+- **Asset handles** `pizzatierpro-*` → `pizzatier-commerce-*`. Not
+  `pizzatier-*`: several would have collided with existing handles, most
+  visibly `pizzatier-settings`.
+- Translation catalogues regenerated; obsolete entries and legacy headers
+  stripped, so no shipped file carries the old name. 606 German and 574 Spanish
+  strings remain translated — the drop from 621/588 is the strings whose text
+  contained the old product name and therefore changed.
+
+### Removed — breaking
+- **The legacy key read fallback.** `Compat\MetaKeys`, added one release ago so
+  the database rename could not lose anything, is gone: it existed only to know
+  about the old names. **A site upgrading from PizzaTierPro must run the
+  PizzaTier Key Migrator plugin**, or per-product builder configuration, price
+  grids, presets and the pizza breakdown on existing orders will read as empty.
+- The `pizzalayerpro_settings` → `pizzatierpro_settings` → `pizzatier_options`
+  settings migration chain. The migrator plugin owns this now.
+- The check that deactivated a still-active standalone PizzaTierPro plugin.
+  **Note:** the sweep had rewritten that check's target to
+  `pizzatier/pizzatier.php` — this plugin's own file — so on any admin request it
+  would have deactivated PizzaTier itself. Caught by verifying the sweep rather
+  than trusting it. Deactivating the old plugin is now called out in the
+  migrator's instructions instead.
+- Redirects from the retired `pizzatierpro-*` admin routes, which could not be
+  kept without keeping the names they redirect from.
+
+### Notes
+- CHANGELOG.md keeps its historical entries. Rewriting them would misrepresent
+  what was released and when, and they are the record of why the codebase looks
+  the way it does.
+- Verified after the sweep rather than assumed: no duplicate admin page slugs,
+  no asset handle collisions, 255 `pztc-` CSS rules against 700 PHP emissions
+  and 213 JavaScript references with no orphaned lookups, and a clean boot in
+  all four context combinations with the action-bar ordering intact.
+
+## [2.0.0-alpha.8] - 2026-07-23
+
+Pre-release. Duplicate-feature reconciliation and the database key rename.
+**Not intended for production sites.**
+
+### Fixed
+- **Site export corrupted the commerce setup checklist.** `Admin\Migration`
+  exported the checklist as `(bool) get_option( ... )` and imported it with
+  `update_option( ..., (bool) ... )`, replacing the destination site's array of
+  ticked steps with `true`. Reading a step off a boolean then warned on PHP 8
+  and the checklist stopped working. It is exported and imported as the array it
+  is, and merged into any existing progress rather than replacing it.
+
+### Changed
+- **The two nutrition meta boxes merged into one.** Both registered on the same
+  five ingredient post types, so every one of those edit screens carried two
+  boxes asking for overlapping nutrition data. Only `calories` actually appeared
+  in both, so the surviving box is the union: ingredients, serving size,
+  calories, fat, carbs, protein, sodium, allergens, spice level, thickness and
+  the dietary flags. Everything stores on this plugin's existing canonical
+  `_pizzatier_*` keys.
+- **Database keys renamed** from `_pztpro_*` to `_pizzatier_*` — 57 literals
+  across 10 files, covering product configuration, presets, price grids,
+  nutrition and WooCommerce order line items.
+- The two setup-progress trackers merged into the single `pizzatier_setup_done`
+  option. Their step keys did not overlap, so both checklists keep their state.
+- PizzaTierPro's admin-bar contribution — a nine-line class adding one
+  WooCommerce products link through a hook — folded directly into
+  `Admin\AdminBar`. `ProAdminBar` is gone.
+
+### Added
+- **`PizzaTier\Compat\MetaKeys`**, which makes the key rename safe. Renaming
+  stored data is the part of a rename that can actually lose something, so
+  nothing depends on the conversion having been run: two core filters,
+  `get_post_metadata` and `get_order_item_metadata`, fall back to the legacy key
+  whenever the current one holds nothing. A site that never converts, or
+  converts halfway, or is interrupted mid-run, keeps working. Writes always use
+  the new key, so data converts naturally as records are edited.
+- **PizzaTier Key Migrator**, a separate single-purpose plugin that converts
+  existing rows in bulk. It surveys first and shows exactly what would change
+  before touching anything; it copies rather than moves, leaving legacy rows in
+  place unless explicitly told otherwise, so a rollback to a pre-2.0 release
+  still finds its data; it never overwrites an existing new key, so it is safe
+  to re-run; and it works in batches so a store with a long order history does
+  not time out. Run it once and delete it.
+
+### Notes
+- **The three wizards were deliberately left as three.** New Pizza, Layer
+  Builder and Settings Wizard look like duplication but do genuinely different
+  jobs — creating a WooCommerce pizza product, creating a layer, and configuring
+  the builder. Merging them would produce one wizard with three unrelated
+  branches. This is a decision, not outstanding work.
+- **`Admin\Migration` still contributes to the site export through the
+  `pizzatier_export_payload` filter rather than being folded into
+  `SiteMigration` directly.** That indirection is good structure, not merge
+  residue: it keeps the exporter open to third parties and keeps the commerce
+  export logic in one file. Collapsing it would have been churn for the look of
+  the thing.
+- Order line-item meta is renamed like everything else, but it is a historical
+  record of what customers ordered rather than configuration. The read fallback
+  matters most here: an interrupted migration cannot make an old order
+  unreadable.
+- Remaining `pztpro` identifiers — the namespace, roughly 4,000 CSS class and
+  DOM id occurrences, JavaScript globals, asset handles, AJAX action names and
+  admin page slugs — are code and markup rather than stored data, and are swept
+  separately.
+
+## [2.0.0-alpha.7] - 2026-07-23
+
+Pre-release. Settings consolidation. **Not intended for production sites.**
+
+### Fixed
+- **Settings export silently omitted every cart and pricing setting.**
+  `Settings::export_settings()` walks the `Settings::OPTIONS` allowlist, which
+  covers the ~200 discrete `pizzatier_setting_*` options but not the single
+  array option holding prices, cart behaviour, checkout, nutrition and order
+  emails. Before the merge that option belonged to a different plugin, so the
+  omission was arguably correct; afterwards it meant exporting settings,
+  importing on a new site, and quietly losing all of it. The export now includes
+  it, and the import restores it.
+- Import routes the array through that screen's own `sanitize()` callback rather
+  than a second sanitiser written here, so the two cannot disagree about what a
+  valid value is. Verified with a full round-trip across every settings block —
+  general, display, toppings, checkout-bar layout, cart, and order notes — with
+  the destination site holding different values beforehand.
+
+### Changed
+- **The builder action-bar choice moved to the Orders screen.** It decides
+  whether a customer gets a WooCommerce cart or an order recorded in WordPress,
+  which is an ordering decision, and it now sits with the rest of the ordering
+  settings. The WooCommerce options are disabled with an explanation when
+  WooCommerce is not active. Its storage did not move — it stays in the
+  cart-and-pricing option where `ActionBarMode` reads it, since moving the
+  storage as well would mean migrating data for no benefit.
+- **The Settings page's Cart Integration section rewritten.** It previously
+  told the reader that "Pricing and cart features are provided by
+  PizzaTierPro", with a "Learn more →" link to a product page. Pricing is built
+  in now. The section explains what lives where and links to the Cart & Pricing
+  settings, the price grids, and the Orders screen.
+- Menu entry renamed from "Settings — Cart & Pricing" to "Cart & Pricing", the
+  disambiguating suffix from alpha.5 no longer being needed.
+
+### Notes
+- **The Cart & Pricing settings deliberately remain their own screen rather than
+  being folded into the Settings page.** The two use incompatible mechanisms:
+  the Settings page is a single long form over ~200 discrete options with its
+  own save handler and one sticky Save bar, while Cart & Pricing is a WordPress
+  Settings API screen writing one array option through `options.php`. Combining
+  them would put two independent forms on one page under a single Save button —
+  edit pricing fields, press the visible Save, and the edits vanish with no
+  warning. That is a worse outcome than two clearly-named screens, and it is the
+  same reasoning that already keeps the ordering settings on the Orders screen.
+  This is a deliberate decision, not deferred work.
+- `Pro\Admin\Settings::sanitize()` only overwrites a block of keys when one of
+  that block's keys is present in the submission, so that a save from one screen
+  cannot wipe fields owned by another. That design is correct for partial form
+  saves and also correct for import, because an exported file contains every
+  key — confirmed by the round-trip test rather than assumed.
+
+## [2.0.0-alpha.6] - 2026-07-23
+
+Pre-release. Completes admin consolidation: the content merge that alpha.5's
+menu restructure set up. **Not intended for production sites.**
+
+### Changed
+- **One Help page.** The cart-and-pricing documentation is now four sections of
+  PizzaTier's own Help screen — Cart & Pricing Overview, Price Grids, Cart &
+  Orders, and Cart Display Settings — bringing it to 14 sections. Pro's
+  migration, FAQ and developer sections were deliberately not carried over as
+  separate entries: PizzaTier's Help already has sections on all three subjects,
+  and duplicating them would defeat the point.
+- **One Setup Guide.** The WooCommerce setup steps appear as an optional
+  "Selling pizzas" section, with their own progress bar and their own stored
+  state, ticking back to the same screen.
+- **One Dashboard.** The old PizzaTierPro dashboard is gone. Most of it was
+  product marketing for a separately-sold plugin — a hero panel headed
+  "WooCommerce Pizza Integration — Supercharged" — which stopped being true when
+  the plugins became one. Its genuinely useful part, the status row, is now a
+  compact "Cart & Pricing" card on the PizzaTier dashboard showing WooCommerce
+  status, pizza product count and preset count, added through the existing
+  `pizzatier_admin_home_cards` extension point.
+- Section markup is **reused rather than transcribed.** `Pro\Admin\Help` and
+  `Pro\Admin\SetupGuide` gained embed entry points, and the host pages call
+  them. Retyping roughly 2,300 lines of markup into the host pages' conventions
+  would have risked silent transcription errors for a purely cosmetic gain.
+  `SetupGuide::render()` was split so the standalone screen and the embedded
+  checklist share the same progress and step markup and cannot drift.
+
+### Fixed
+- **Setup copy that the alpha.5 gating fix made wrong.** The first setup step
+  said "PizzaTierPro requires WooCommerce", which stopped being true when the
+  pricing admin was made to work without it. It now explains that WooCommerce
+  handles cart, checkout and payment, and that PizzaTier's own ordering system
+  is the alternative.
+- The step labelled "PizzaTier installed & active" is now "PizzaTier builder
+  ready" — it was checking whether a separate plugin was present, which no
+  longer means anything.
+
+### Removed
+- The `pizzatierpro`, `pizzatierpro-setup-guide` and `pizzatierpro-help` admin
+  screens. All three redirect to their PizzaTier equivalents, so existing
+  bookmarks and links in documentation land on the right screen rather than on
+  WordPress's "you do not have sufficient permissions" error.
+
+### Notes
+- **The Cart & Pricing Settings screen is deliberately still separate.** Folding
+  its nine sections into PizzaTier's Settings screen is settings consolidation,
+  not admin consolidation, and the target is a 1,300-line file with its own tab
+  system. It is the next step, along with moving the action-bar setting to the
+  Orders screen.
+- **The merged sections keep their original styling** — Pro's markup uses
+  `pztpro-*` classes and dashicons while the host pages use `plhelp-*` / `psg-*`
+  and emoji. Both stylesheets load, so everything renders, but the seam is
+  visible. Harmonising it is cosmetic and better done once, after the settings
+  merge, than piecemeal.
+- Rendering was verified by invoking each merged section and checking output
+  size and marker classes, and each retired route was checked to confirm it
+  redirects to the right destination.
+
+## [2.0.0-alpha.5] - 2026-07-23
+
+Pre-release. Fifth step of the PizzaTierPro merge: admin menu consolidation.
+**Not intended for production sites.** This is the first alpha in which the
+admin visibly changes.
+
+### Fixed
+- **The pricing admin no longer disappears without WooCommerce.** The
+  PizzaTierPro bootstrap returned early when WooCommerce was inactive, taking
+  the entire Pro admin with it — Pricing, Bulk Pricing, the settings screen, the
+  nutrition and price-grid meta boxes, the New Pizza Wizard. That was a bug
+  rather than a design choice: `Pro\Plugin` re-checks for WooCommerce internally
+  around each WooCommerce-specific registration and is written to degrade rather
+  than vanish. A store can legitimately configure per-layer prices and presets
+  before installing a shop, or take orders through PizzaTier's own ordering
+  system and never install one. Those screens now load either way; the
+  WooCommerce-specific parts remain gated.
+
+### Changed
+- **One admin menu.** PizzaTierPro's top-level menu — which sat at position 56,
+  directly beside PizzaTier's own — is gone. Its screens are now submenus of
+  PizzaTier under a new "Cart & Pricing" group header, between Content and
+  Tools: Pricing, Bulk Pricing, Pizza Presets, New Pizza, and the three
+  screens awaiting a content merge.
+- **`PizzaTier\Admin\AdminMenu` is now the sole owner of the sidebar.** Menu
+  registration was previously split across three classes (`AdminMenu`,
+  `Pro\Admin\Dashboard`, `Pro\Admin\NewPizzaWizard`) hooking `admin_menu`
+  independently, which made group placement depend on registration order.
+  `Dashboard::register()` and `NewPizzaWizard::register_menu()` are now
+  documented no-ops rather than deleted, so any code still calling them does not
+  fatal.
+- "Back to dashboard" links in Bulk Pricing and the New Pizza Wizard now point
+  at the PizzaTier dashboard rather than the retired PizzaTierPro one.
+- Menu labels no longer say "Pro". The three entries that still duplicate a base
+  PizzaTier screen are suffixed "— Cart & Pricing" so they are tellable apart
+  until their content is merged.
+
+### Notes
+- **No page slug changed and nothing became unreachable.** Every
+  `pizzatierpro-*` slug is still registered, just under a different parent, so
+  existing bookmarks and any links in documentation still resolve. The former
+  PizzaTierPro dashboard (`admin.php?page=pizzatierpro`) is registered with an
+  empty menu label: reachable by URL, but not adding a second dashboard entry
+  beside PizzaTier's own.
+- **This is step one of two.** The three duplicated screens — Settings, Setup
+  Guide and Help — are relocated here but not yet merged. Folding their content
+  into the base PizzaTier screens section by section, reconciling the two
+  setup-progress trackers, and retiring the duplicate slugs behind redirects is
+  the next step. It is separated because it is a content merge across roughly
+  2,300 lines and deserves its own review.
+- The action-bar setting's UI has still not moved to the Orders screen; that
+  happens with the settings merge.
+- Menu structure was verified by capturing the registered menu tree in both
+  WooCommerce-active and WooCommerce-inactive states: one top-level menu, no
+  submenus orphaned under a missing parent, and the group in the intended
+  position.
+
+## [2.0.0-alpha.4] - 2026-07-23
+
+Pre-release. Fourth step of the PizzaTierPro merge: dismantling the integration
+bridges. **Not intended for production sites.**
+
+### Fixed
+- **Regression introduced in alpha.1: the wrong action bar on PizzaTier-only
+  sites.** Folding PizzaTierPro in meant its integration bridge registered
+  unconditionally, and that bridge defaulted the action-bar area to
+  WooCommerce-only. A site that had never run PizzaTierPro but had WooCommerce
+  active for an unrelated shop therefore lost its native order bar and got an
+  Add to Cart button instead — one wired to a WooCommerce product that, on such
+  a site, generally does not exist.
+
+  The default is now conditional on whether the site ever ran PizzaTierPro,
+  detected by the presence of its options row rather than by its contents: such
+  sites keep WooCommerce-only, and PizzaTier-only sites keep the native order
+  bar. Both therefore behave exactly as they did before the merge.
+
+### Changed
+- **The action-bar choice is now one setting, not two.** It was governed by two
+  options that could disagree and shipped with opposite defaults:
+  `pizzatier_setting_orders_bar_mode` (PizzaTier's, two values, no UI, defaulting
+  to "show my bar") and `pizzatier_options['action_bar_mode']` (PizzaTierPro's,
+  three values, the only user-facing control, defaulting to "WooCommerce only").
+  The native bar rendered only when both agreed. The PizzaTierPro setting is the
+  one users could see and change, so it survives as the source of truth; the
+  PizzaTier option is still honoured as an input when no explicit choice is
+  stored, so anything setting it programmatically keeps working.
+- **New `PizzaTier\Orders\ActionBarMode`** owns that decision — resolution,
+  validation, the conditional default, and the degrade-to-native-bar behaviour
+  when WooCommerce is inactive. It lives in PizzaTier's own namespace because it
+  is an ordering decision, not a WooCommerce one.
+- **`AddonBridge` collapsed.** Each method now reads PizzaTier's own data
+  directly and passes the result through its filter, instead of asking the
+  filter first and falling back. Roughly half the call path is gone.
+
+### Removed
+- **`PizzaTierPro\Pro\Integration\PizzaTierBridge`**, deleted. It existed only
+  to let a separate plugin answer PizzaTier's capability filters; with both in
+  one plugin it was answering its own questions. Its mode logic moved to
+  `ActionBarMode`; its three filter responders are unnecessary now that
+  `AddonBridge` resolves directly.
+- The `<= 1.8.4` back-compat fallbacks in `AddonBridge`, and its
+  `pztpro_action_bar_mode` filter (replaced by `pizzatier_action_bar_mode`).
+
+### Notes
+- **Filter semantics changed.** `pizzatier_addon_setting`,
+  `pizzatier_addon_sizes` and `pizzatier_has_pricing_addon` are retained as
+  extension points and still fire on every call, but they now receive
+  PizzaTier's *resolved* value rather than `null` / `[]` / `false`. A callback
+  written in the old "only answer if nobody else did" style — returning early
+  when the incoming value is non-null — will no longer take effect. Callbacks
+  should inspect and override. This is arguably an improvement: a third party can
+  now override a value PizzaTier resolved, which the old ordering did not allow.
+- **The shipped checkout-bar templates were deliberately left calling
+  `pzt_addon_setting()`** rather than being switched to direct reads. Those files
+  are documented as child-theme-overridable, so customer copies call the same
+  helper; and routing through the helper is what keeps the filters applying.
+  Changing the call sites would have bought nothing and broken overrides.
+- Action-bar ordering is unchanged and verified: WooCommerce Add to Cart
+  registers on `pizzatier_builder_action_bar` at priority 10, the native order
+  bar at 20, so "both" mode still shows Add to Cart first.
+- Mode resolution was tested across sixteen scenarios — PizzaTier-only and
+  ex-Pro sites, each of the three stored values, no stored value, a corrupt
+  value, the legacy option, and an empty options row, each with WooCommerce
+  active and inactive.
+- The action-bar setting's UI has not moved yet; it is still on the Pro Settings
+  screen under "Order Bar". It relocates to the Orders screen during admin
+  consolidation, when that screen is being reworked anyway.
+
+## [2.0.0-alpha.3] - 2026-07-23
+
+Pre-release. Third step of the PizzaTierPro merge: internal identifier
+reconciliation. **Not intended for production sites.**
+
+No feature, admin page, menu location, CSS class, DOM id, post meta key, AJAX
+action, shortcode or REST route changed. The admin looks and behaves exactly as
+it did in alpha.2.
+
+### Changed
+- **Settings accessor renamed.** `pztpro_get_setting()` → `pizzatier_get_option()`
+  across 152 call sites in 17 files, plus 5 references written as strings inside
+  `function_exists()` checks.
+- **Settings option renamed.** `pizzatierpro_settings` → `pizzatier_options`,
+  via `Settings::OPTION_NAME`. Deliberately *not* named `pizzatier_settings`:
+  that is one character from the `pizzatier_setting_*` prefix used by the ~200
+  discrete base options, which would be a trap for anyone grepping the codebase
+  or maintaining the export whitelist.
+- `Settings::OPTION_GROUP` → `pizzatier_options_group`.
+- Five `function_exists( 'pztpro_get_setting' )` guards removed from
+  `LayoutRegistry` and `PizzaTierBridge`. Post-merge the function always exists,
+  so the guards were dead branches.
+- `AddonBridge` doc comments corrected. They described the class as bridging to
+  an external premium plugin and named "PizzaTier Pro 1.8.4 and earlier" — both
+  false since the merge. The structure is unchanged; the class collapses into
+  direct calls in the next step.
+
+### Added
+- `pztpro_get_setting()` retained as a deprecated shim forwarding to
+  `pizzatier_get_option()`, since PizzaTierPro exposed it as a public helper and
+  third-party snippets may call it. It raises `_deprecated_function()`. Nothing
+  inside PizzaTier calls it — verified with a tripwire during boot testing.
+- Three-generation settings migration, covering
+  `pizzalayerpro_settings` → `pizzatierpro_settings` → `pizzatier_options`.
+  A site updating from any point in that history keeps its configuration,
+  including one that skipped the PizzaTierPro rebrand entirely. Verified against
+  five scenarios: fresh install, each legacy key alone, both present (newer
+  wins), and already-migrated (not overwritten).
+
+### Notes
+- **Legacy option keys are not deleted.** `pizzatierpro_settings` and
+  `pizzalayerpro_settings` are copied forward and left in place so a site can
+  roll back to a pre-merge release without losing its settings. They are removed
+  by the consolidated upgrade routine later.
+- **Export/import is unaffected.** `Admin\Migration` reads and writes through
+  `Settings::OPTION_NAME` and stores the payload under the structural key
+  `settings`, so previously-exported JSON files still import correctly.
+- **Deliberately not renamed**, all for the same reason — an external contract
+  where renaming risks breaking customer customisations for no user-visible
+  benefit:
+  - `pztpro-*` CSS class names and DOM ids (shared with stylesheets, cart JS and
+    child-theme checkout-bar overrides)
+  - `_pztpro_*` post meta keys (stored data; renaming needs a migration for no
+    gain)
+  - `window.PizzaTierProBuilder` / `…BuilderInstances` JavaScript globals
+  - `pztpro_setup_done`, which is about to be reconciled with PizzaTier's own
+    setup tracker during admin consolidation — migrating it now then merging it
+    later would be two migrations for one flag
+  - `pizzatierpro-*` admin page slugs and `pztpro_section_*` settings section
+    ids, all retired behind redirects during admin consolidation
+- The `sanitize_option_pizzatierpro_settings` filter documented in
+  `Admin\Settings` becomes `sanitize_option_pizzatier_options`. It was
+  documented as an extension point, so any third-party code hooking it needs
+  updating.
+
+## [2.0.0-alpha.2] - 2026-07-23
+
+Pre-release. Second step of the PizzaTierPro merge: the mechanical naming sweep.
+**Not intended for production sites.**
+
+No feature, admin page, setting, option key, post meta key, CSS class, DOM id,
+menu slug, AJAX action, shortcode or REST route changed. Stored data is
+untouched. This step only renames code identifiers and unifies the text domain.
+
+### Changed
+- **Namespace unified.** `PizzaTierPro\Pro\…` → `PizzaTier\Pro\…` across 41
+  files (149 references). This includes five class references written as
+  *strings* rather than symbols — in `AddonBridge`, `OrderMeta`,
+  `FrontendEmbed` and `LayoutHelpers` — which a symbol-only rename would have
+  silently broken at runtime rather than at lint time.
+- **Text domain unified.** 1,156 `'pizzatierpro'` literals → `'pizzatier'`.
+  The one occurrence deliberately left alone is `Dashboard::MENU_SLUG`, which is
+  the literal string `'pizzatierpro'` used as an admin menu slug, not a text
+  domain; changing it would have broken the menu. It is retired during admin
+  consolidation.
+- **Constants unified.** `PIZZATIERPRO_VERSION`, `PIZZATIERPRO_PLUGIN_DIR` and
+  `PIZZATIERPRO_PLUGIN_URL` (40 references) replaced with their PizzaTier
+  equivalents.
+- **Translations merged.** PizzaTierPro's German and Spanish catalogues folded
+  into PizzaTier's own, which had 857 strings and — as it turns out — **zero**
+  translations; every translated string in the plugin came from PizzaTierPro.
+  The merged catalogues carry 625 German and 593 Spanish translations. The 38
+  msgids present in both catalogues had identical translations, so there were no
+  conflicts to resolve.
+- `pizzatier.pot` regenerated from the merged source: 1,822 strings, up from
+  1,044, as it now covers the Pro sources and the template and partial files.
+
+### Removed
+- The transitional second autoloader prefix, the `PIZZATIERPRO_*` compatibility
+  constants and the explicit `pizzatierpro` text-domain loader added in
+  alpha.1 — all now unnecessary.
+- `pizzatierpro.pot` and the `pizzatierpro-de_DE` / `pizzatierpro-es_ES`
+  catalogues, superseded by the merged ones.
+
+### Notes
+- **62 German and 59 Spanish translations were marked obsolete**, not lost. They
+  are preserved as `#~` entries in the `.po` files. These are translations for
+  UI strings — grid editor and setup wizard labels such as "Grid Editor",
+  "Half pizza" and "What sizes do you offer?" — that no longer exist anywhere in
+  the source. The catalogues had simply never been re-merged against a fresh
+  template after those features changed, so the stale entries accumulated.
+- **PizzaTier's own locale files were empty stubs.** `pizzatier-de_DE.po` and
+  `pizzatier-es_ES.po` each carried 857 msgids and not one translation. They
+  have been shipping as dead weight; they now carry the merged translations.
+- **JavaScript globals were deliberately not renamed.**
+  `window.PizzaTierProBuilder` and `window.PizzaTierProBuilderInstances` are a
+  cross-file contract between `frontend-builder.js`, `cart.js` and the per-
+  template `custom.js` files — and potentially customer customisations. Renaming
+  them is cosmetic churn with real breakage risk, the same reasoning applied to
+  the `pztpro-*` CSS class names. They are invisible to users.
+- User-facing strings containing the word "PizzaTierPro" were also left alone.
+  Changing them would change their msgids and invalidate the translations just
+  merged; they are rewritten during admin consolidation and the de-upsell pass,
+  when the surrounding UI is being reworked anyway.
+
+## [2.0.0-alpha.1] - 2026-07-23
+
+Pre-release. First structural step of merging PizzaTierPro into PizzaTier as a
+single, fully free plugin. **Not intended for production sites.**
+
+This step is deliberately pure file movement plus the minimum wiring needed to
+make it boot. No feature was renamed, moved, redesigned or removed; no option
+key, post meta key, CSS class, DOM id, menu slug, AJAX action, shortcode or REST
+route changed. PizzaTierPro's admin menu still appears separately, exactly where
+it was.
+
+### Added
+- All PizzaTierPro sources under `src/Pro/` (37 files, ~18,600 lines), carried
+  over with their original `PizzaTierPro\` namespace intact.
+- PizzaTierPro's assets merged into this plugin's `assets/` directory. There
+  were no filename collisions between the two sets, so every existing asset path
+  in the Pro sources resolves unchanged.
+- PizzaTierPro's WooCommerce template override directory (`woocommerce/`) and its
+  de_DE / es_ES translation catalogues.
+- Second autoloader prefix resolving `PizzaTierPro\…` to `src/…`, so Pro classes
+  load from `src/Pro/` without being renamed. Transitional.
+- Compatibility constants `PIZZATIERPRO_VERSION`, `PIZZATIERPRO_PLUGIN_DIR` and
+  `PIZZATIERPRO_PLUGIN_URL`, aliased to their PizzaTier equivalents, so the ~35
+  references in the Pro sources need no edit. Transitional.
+- `pztpro_get_setting()` and the one-time `pizzalayerpro_settings` →
+  `pizzatierpro_settings` migration, both ported verbatim from the PizzaTierPro
+  bootstrap.
+- Explicit `load_plugin_textdomain()` for the `pizzatierpro` domain, hooked on
+  `init`. The Pro sources still carry ~1,100 strings on that domain, and because
+  it is not this plugin's declared text domain it is not loaded just-in-time.
+  Hooked on `init` rather than `plugins_loaded` because WordPress 6.7+ warns
+  about loading translations earlier.
+- Safety check that deactivates a still-active standalone PizzaTierPro (or
+  PizzaLayerPro) plugin and explains why. Without it, the old plugin would
+  re-define the `PIZZATIERPRO_*` constants and register a duplicate admin menu.
+- `Plugin::boot_pro_features()`, a faithful port of the PizzaTierPro bootstrap
+  tail: integration bridge, preset meta box, and `[pizza_preset]` unconditionally;
+  the WooCommerce feature set behind `class_exists( 'WooCommerce' )`.
+
+### Removed
+- The separate PizzaTierPro `plugins_loaded` bootstrap, its base-plugin presence
+  check, its `PIZZATIERPRO_MIN_BASE_VERSION` gate and the associated admin
+  notices. The base plugin is now the same plugin, so there is nothing to check.
+
+### Notes
+- **Boot timing changed.** The Pro feature set used to register on
+  `plugins_loaded` at priority 20; it now registers at priority 10, inside
+  PizzaTier's own boot. Everything involved is hook registration rather than
+  immediate work, and `class_exists( 'WooCommerce' )` is already settled at any
+  `plugins_loaded` priority, so the two should be equivalent. This is the only
+  behavioural difference in the step and the thing most worth confirming on a
+  live store.
+- The builder action-bar ordering is unchanged and verified: the WooCommerce Add
+  to Cart bar registers on `pizzatier_builder_action_bar` at priority 10 and the
+  native order bar at 20, so "both" mode still shows Add to Cart first.
+- Without WooCommerce, the entire Pro admin (Dashboard, Pricing, Bulk Pricing,
+  Pro Settings) does not load — only the bridge, preset meta box and preset
+  shortcode do. `Pro\Plugin` re-checks for WooCommerce internally and looks like
+  it was meant to degrade rather than disappear, so this is arguably a bug. It
+  predates the merge and is preserved here deliberately rather than fixed
+  silently; it is resolved during admin consolidation.
+- Two admin menus are expected in this build. Consolidation is a later step.
+
+## [1.17.0] - 2026-07-19
+
+### Added — Native pizza orders (Phase 1: data foundation)
+PizzaTier can now record customer orders on its own. This release ships the
+data layer; the front-end checkout, admin management screens and customer
+private notes follow in subsequent releases. Nothing in this feature depends on
+PizzaTierPro, WooCommerce, or any other plugin.
+
+- **`pizzatier_order` custom post type** (`PizzaTier\Orders\OrderPostType`).
+  Private by design: `public => false`, `publicly_queryable => false`,
+  `exclude_from_search => true`, no rewrite, no query var, and
+  `show_in_rest => false` because order records can carry customer contact
+  details. `show_ui` is on but `show_in_menu` is off — orders are surfaced
+  through PizzaTier's own admin screens. Registration args are filterable via
+  `pizzatier_order_cpt_args`; the managing capability is filterable via
+  `pizzatier_orders_capability` (default `manage_options`) so sites can hand
+  order management to a shop-manager role.
+- **Kitchen-oriented order statuses** (`PizzaTier\Orders\OrderStatuses`),
+  registered as real WordPress post statuses so counting, filtering and
+  `WP_Query` work natively without meta queries: New, Confirmed, Preparing,
+  Ready, Out for Delivery, Completed, Cancelled, Refunded, Failed. Each carries
+  a label, badge colour, description, and an "open" flag marking whether it
+  still needs staff attention. Extendable via `pizzatier_order_statuses`. All
+  status names are kept at or under 20 characters, the width of the
+  `post_status` column.
+- **Order model** (`PizzaTier\Orders\Order`) — the single read/write surface
+  for an order record, covering: customer (name, email, phone, company), linked
+  WP user ID for logged-in customers, fulfilment method and address, itemised
+  pizzas (template, size, every chosen layer with its coverage fraction and
+  source post ID, quantity, per-pizza notes, unit and line price, and where the
+  price came from), whole-order totals (subtotal, tax, delivery fee, discount,
+  tip, total, currency), the customer's own order note, internal staff notes,
+  a timestamped status-transition history, and provenance (origin, page, URL,
+  referrer, IP, user agent, active template). All input is sanitised on write,
+  so raw request data can be passed straight to the setters.
+- **Sequential order numbering.** `PZT-0001` by default, backed by an option so
+  numbers stay short, stay sequential, and are never reused after a deletion.
+  Prefix, padding and the final number are each filterable
+  (`pizzatier_order_number_prefix`, `pizzatier_order_number_pad`,
+  `pizzatier_order_number`).
+- **Extension points:** `pizzatier_order_created`,
+  `pizzatier_order_status_changed`, `pizzatier_order_cpt_registered`,
+  `pizzatier_order_statuses_registered`, `pizzatier_order_fulfillment_methods`.
+
+### Quality assurance (Phase 7)
+- Verified across both plugins: PHP lint on every file, `node --check` on every
+  script, brace balance on every stylesheet, PSR-4 namespace-to-path agreement
+  for all classes, and no unguarded duplicate function definitions.
+- **Cross-plugin hook contract audited in both directions.** Every hook
+  PizzaTierPro consumes exists in PizzaTier, and every hook PizzaTier fires for
+  add-ons is answered. No orphans.
+- **End-to-end lifecycle test:** builder submission through order creation,
+  server-side layer resolution, status progression across all six kitchen
+  states, staff notes, history logging, and the store notification email.
+  Confirmed a layer slug that does not exist is dropped rather than recorded,
+  that rate limiting engages at the configured threshold, that a filled honeypot
+  creates no record while returning a success-shaped response, that a forged
+  nonce is rejected, and that internal staff notes never appear in the
+  notification email.
+- **Visual QA** of the order bar and checkout panel at 1440px, 860px and 390px.
+  No horizontal overflow at any width; the bar stacks and the panel goes
+  full-screen on mobile as intended.
+- Translation template regenerated: 184 new singular strings and 3 plural forms
+  from the ordering feature added to `pizzatier.pot`, taking it to 1,044 entries.
+  Structurally validated — no entry is missing its `msgstr`.
+
+### Known issues, not introduced by this release
+- `templates/{rustic,nightpie,colorbox}/pztp-containers-presentation.php` each
+  define `pizzatier_toppings_visualizer_func()` without a `function_exists()`
+  guard. Harmless today because nothing includes those files — they appear to be
+  legacy — but two of them loading together would be a fatal redeclare. Left
+  alone rather than modified blind.
+- The `.pot` contains one duplicate msgid, `Ingredient Groups`, which comes from
+  a `_x()` call whose context is not being emitted. Present before this release.
+
+---
+
+### Fixed — PizzaTier no longer depends on the premium extension (Phase 5)
+- **Five checkout bar templates called `pztpro_get_setting()` with no guard at
+  all** — `metro`, `nightpie`, `plainlist`, `pocketpie` and `rustic`, on the
+  lines reading `max_quantity`, `enable_order_notes` and
+  `order_note_placeholder`. Including any of those files on a site without the
+  premium extension raised a fatal "call to undefined function". It had not
+  surfaced in practice only because those files were, until now, included
+  exclusively by premium code. All eight bars now render correctly with nothing
+  else installed, verified by rendering each one in isolation with no premium
+  functions or classes defined.
+
+### Changed — one compatibility seam instead of forty call sites
+- **New `PizzaTier\Compat\AddonBridge`.** Everything PizzaTier might want from a
+  premium extension now goes through this single class, which asks via filters
+  and returns a safe default when nobody answers. Three global helpers wrap it
+  for template use: `pzt_addon_setting()`, `pzt_addon_sizes()` and
+  `pzt_has_pricing_addon()`.
+- New extension points: `pizzatier_addon_setting`, `pizzatier_addon_sizes`,
+  `pizzatier_has_pricing_addon`.
+- All eight `checkout-bar.php` templates now read their settings through
+  `pzt_addon_setting()`.
+- All eight `pztp-containers-menu.php` size-grid helpers now resolve sizes
+  through `pzt_addon_sizes()` instead of constructing a premium price-grid class.
+- The Dashboard upgrade prompt, the Settings upgrade notice and the Site
+  Migration screen detect a premium extension through the bridge rather than by
+  testing for a hard-coded class name.
+
+### Notes
+- **The dependency now points one way only:** extensions know about PizzaTier,
+  PizzaTier does not know about extensions. Nothing in PizzaTier changes
+  behaviour based on a premium class being present; the bridge only decides
+  whether to *offer* optional pricing UI and upgrade prompts.
+- Two guarded back-compat paths remain inside `AddonBridge`, and nowhere else.
+  PizzaTier Pro 1.8.4 and earlier expose a global settings function and a price
+  grid class rather than hooking the filters above, and a site mid-upgrade would
+  otherwise silently lose its saved settings and size selector. Both paths are
+  clearly marked and can be deleted once those releases are out of circulation.
+- The `pztpro-*` CSS class names and DOM ids in the checkout bar markup are
+  **deliberately unchanged**. They are the shared contract that the premium
+  stylesheet and cart script bind to; renaming them would break every installed
+  copy of the extension for no functional gain. They are naming, not dependency —
+  the markup renders identically with nothing else installed.
+- Historical comments in `Settings.php` recording where pricing options moved in
+  1.2.0 are left in place. They document a real migration and removing them would
+  lose information for anyone tracing an old option key.
+
+---
+
+### Added — Native pizza orders (Phase 4: private customer notes)
+- **Private, staff-only notes about customers**, stored as user meta under
+  `_pzt_customer_private_notes`. These are notes the store writes *about* a
+  customer — "buzzer is broken, call on arrival", "disputed an order in March" —
+  and they are deliberately kept off every customer-facing surface.
+- **On the user profile**, under a "PizzaTier — Store Notes" heading, alongside a
+  list of that customer's five most recent orders linking straight to each order
+  detail screen.
+- **On the order detail screen**, in a visually distinct card, so staff can read
+  and update a customer's notes without leaving the order they are working on.
+- **On the Users list**, a Store Notes column showing a short preview that links
+  to the full note. Only a preview is rendered, so a long or sensitive note is
+  not broadcast across a shared back-office display.
+- **Guest orders are matched to accounts by email address.** When someone who
+  normally has an account orders without logging in, their notes still surface,
+  and the order screen says the match was made by email rather than implying the
+  customer was signed in.
+
+### Security
+- Three independent measures keep these notes contained:
+  1. The meta key is underscore-prefixed, so WordPress treats it as protected —
+     it never appears in the Custom Fields box and is not exposed over REST.
+  2. Every public read and write path is gated on the orders capability;
+     `CustomerNotes::get()` returns an empty string for anyone without it, so a
+     stray call from a theme or template cannot leak the contents.
+  3. The profile field only renders for users holding that capability, so a
+     customer visiting their own profile never sees notes written about them.
+- The order screen re-derives the customer's user ID from the order and checks it
+  against the submitted form field, so a tampered request cannot write notes onto
+  an unrelated account.
+- Notes are capped at 5,000 characters, using `mb_substr()` where available and
+  falling back to `substr()` because mbstring is not guaranteed on shared hosting.
+
+### Notes
+- Private notes are removed on uninstall under the same opt-in that governs order
+  history, rather than lingering as orphaned user meta.
+- These notes are **not** included in WordPress's personal-data export or erasure
+  tools. They are store-internal records, but they are also personal data about
+  an identifiable person, so whether they belong in a subject-access response is
+  a judgement call that depends on jurisdiction. Nothing here prevents adding
+  exporter and eraser callbacks later.
+
+---
+
+### Added — Native pizza orders (Phase 3: back-end management)
+- **Pizza Orders admin screen** under the PizzaTier menu, with an
+  awaiting-attention bubble on the menu label counting orders in an open status
+  (New, Confirmed, Preparing, Ready, Out for Delivery).
+- **Orders list** built on `WP_List_Table`: order number, relative time for
+  anything placed in the last day, customer with click-to-call and mailto links,
+  a preview of the pizzas ordered, fulfilment method with address or table,
+  total, and a colour-coded status pill. Sortable by number and date, filterable
+  by status with live counts, and searchable across the order number, customer
+  name, phone, email and delivery address.
+- **Bulk actions** for every status change, plus Trash. A Trash view with
+  Restore and Delete permanently appears once anything is in it.
+- **Order detail screen** showing the whole record: each pizza with every layer,
+  its coverage fraction and a link to the source content item, per-pizza notes,
+  totals, the customer's own note, contact details with a link to their profile,
+  fulfilment details, and where the order came from.
+- **Status management** with an optional reason, recorded in a timestamped
+  history log alongside internal staff notes. Staff notes are clearly labelled
+  as never appearing on receipts or in customer email.
+- **Ordering Settings** screen covering the master switch, button label, login
+  requirement, starting status, fulfilment methods offered, requested time, size
+  picker, which contact fields are required, notes and quantity limits, store
+  notification address, confirmation message, rate limit, and the opt-in for
+  deleting order history on uninstall.
+
+### Changed
+- The bare `pizzatier_order` edit and list screens now redirect to the
+  purpose-built order views. The post type only supports `title`, so the default
+  editor had nothing useful to show.
+- The new-order notification email links straight to the order detail screen.
+
+### Fixed
+- Restoring an order from the trash now returns it to the status it held before
+  trashing. Since WordPress 5.6 an untrashed post is restored to `draft` unless a
+  filter says otherwise, and `draft` is not a valid order status — a restored
+  order would have vanished from every view.
+- Removed a duplicate bulk-action nonce field on the orders list.
+  `WP_List_Table` emits `bulk-pizza_orders` itself.
+
+### Notes
+- Orders settings live on the Orders screen rather than as a tab on the main
+  Settings page. The ordering feature is self-contained, and keeping it out of
+  the 1,300-line Settings monolith avoids destabilising unrelated options.
+- Every order query passes an explicit status list. The `pzt-*` statuses are
+  registered with `exclude_from_search => true`, so a `post_status => 'any'`
+  query would silently match nothing.
+- Money is formatted with a small symbol map for common currencies, falling back
+  to a trailing currency code. PizzaTier does not price pizzas, so where no total
+  has been recorded the list shows the pizza count instead of a misleading 0.00.
+
+---
+
+### Added — Native pizza orders (Phase 2: front-end checkout)
+- **Order bar in the builder.** PizzaTier now renders its own order bar into the
+  builder action-bar area, using the `pizzatier_builder_action_bar` hook that all
+  eight bundled templates already fire — no template markup was changed. The bar
+  shows a live summary of the pizza, an optional quantity stepper, and the
+  call-to-action.
+- **Checkout panel** printed once per page in `wp_footer`, so the dialog is never
+  trapped inside an overflow-constrained builder column. Covers review of the
+  built pizza, an optional size picker (shown when Size posts exist), fulfilment
+  method with conditional delivery-address and dine-in table fields, requested
+  time, contact details, and a notes field for kitchen instructions.
+- **Partial override chain** for both the bar and the panel:
+  child theme → parent theme → `templates/{slug}/` → bundled default. Filterable
+  via `pizzatier_orders_partial_candidates`.
+- **`OrderSettings`** — one home for every ordering option, with defaults defined
+  in a single place so the front end and the Settings screen cannot drift apart.
+- **`pizzatier-orders.js`** reads the current pizza from `window.PizzaTierAPI`.
+  Three different state shapes ship across the bundled templates and the
+  normaliser flattens all of them: the standard `{crust, sauce, …, toppings:{}}`
+  object, PlainList's `{exclusive:{…}}` grouping, and Command Center's
+  `{selections:{…}}` wrapper with toppings as an array and the cut layer named
+  `slicing`.
+- **Styling** in `assets/css/pizzatier-orders.css`, driven entirely by custom
+  properties so a template stylesheet can restyle the whole bar and panel by
+  redefining a handful of variables under its own `--{slug}` modifier class.
+  Includes a mobile full-screen panel layout and a `prefers-reduced-motion` rule.
+
+### Security
+- Order submissions are nonce-verified, honeypot-screened, and rate-limited per
+  IP (configurable, default 10/hour, backed by a transient keyed on a salted
+  hash so no raw address is written to the options table).
+- **Nothing the client sends is trusted for display or pricing.** Layer names,
+  post IDs, size labels and diameters are all re-resolved from the CPTs
+  server-side using only the submitted slugs; unknown slugs and unknown layer
+  types are dropped rather than recorded, and coverage fractions are checked
+  against the site's enabled list. A tampered payload cannot invent an item,
+  rename one on the kitchen ticket, or attach a price.
+- The honeypot returns a success-shaped response so a bot learns nothing from
+  the difference between acceptance and rejection.
+- An optional plain-text notification email is sent to the store on each new
+  order; it deliberately omits internal staff notes.
+
+### Fixed
+- Order note truncation no longer calls `mb_substr()` directly. The mbstring
+  extension is not guaranteed on shared hosting, so truncation now prefers it
+  when present and falls back to `substr()` otherwise.
+
+---
+
+### Changed
+- `Core\Activator` seeds the order-number sequence and registers the order post
+  type and statuses during activation, so `flush_rewrite_rules()` sees them.
+
+### Notes
+- **Uninstall is non-destructive for orders.** Order records are customer
+  transaction data, so they survive plugin removal unless the site explicitly
+  opts in via `pizzatier_setting_delete_orders_on_uninstall`. The cleanup query
+  reads the `pizzatier_order` rows directly, because the `pzt-*` statuses are
+  not registered while `uninstall.php` runs and a `post_status => 'any'` query
+  would silently match nothing.
+- Order meta uses the brand-neutral `_pzt_order_*` prefix and carries a
+  `_pzt_order_schema` version for future migrations.
+
+---
+
+## [1.16.0] - 2026-07-16
+
+### Security / hardening (WordPress.org review round)
+- **Interactive builder output is now escaped at the output boundary.** The per-template layer-card grids (`crusts_html`, `sauces_html`, `cheeses_html`, `toppings_html`, `drizzles_html`, `cuts_html`, chip/section markup) and the initial pizza preview from `PizzaBuilder::build_dynamic()` are escaped at output with core `wp_kses()`, using an allowlist (`pzt_card_allowed_html()`, filterable via `pizzatier_card_kses`) covering exactly the markup the builder emits (interactive elements, form controls, ARIA state, `data-*` hooks and inline SVG icons, plus the `onclick`/`onkeydown` handlers the cards use). `<script>`, `<style>`, `<iframe>`, `<object>`, `<form>` and any unlisted attribute are stripped. The allowlist is filterable via `pizzatier_card_kses` for Pro and third-party templates.
+- **Output-buffer hardening.** Every buffered card function now wraps its `ob_start()`…capture region in `try { … } finally { ob_end_clean(); }` within the same function scope, so the buffer close cannot be bypassed by a `pizzatier_before_layer_card` / `pizzatier_after_layer_card` hook. Hook output remains inside the buffer, preserving render order.
+- **Namespaced JS global.** The Layer Image Maker's localized config global was renamed `plimConfig` → `pizzatierLimConfig` (updated in `AssetManager`, the JS reader, and the doc comment).
+- **Site Import upload sanitization.** `SiteMigration::handle_import_upload()` now reads each `$_FILES` member with the appropriate sanitizer at the point of use (error code cast, `is_uploaded_file()`, size cap, `sanitize_file_name()`, `wp_unslash()` on `tmp_name`/`name`).
+
+### Changed
+- Regenerated `languages/pizzatier.pot` from current source and reconciled the bundled `de_DE` / `es_ES` translations with `msgmerge`; removed msgids left over from the Custom CSS/JS fields retired in 1.14.0.
+
+### Notes
+- The `pizzatier_import_payload` action contract is unchanged: each consumer (including PizzaTier Pro) remains responsible for sanitizing its own namespaced section, which Pro does against its settings allowlist. No PizzaTier Pro code changes are required for compatibility with this release.
+
+---
+
 ## [1.15.0] - 2026-07-07
 
 ### Changed (rebrand)

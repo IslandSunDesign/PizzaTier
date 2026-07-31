@@ -250,7 +250,7 @@ class LayerImageMaker {
 		</div><!-- /.wrap -->
 
 		<?php
-		// Config passed to JS via wp_localize_script( 'pizzatier-layer-image-maker', 'plimConfig', [...] ).
+		// Config passed to JS via wp_localize_script( 'pizzatier-layer-image-maker', 'pizzatierLimConfig', [...] ).
 		// JS enqueued via wp_enqueue_script( 'pizzatier-layer-image-maker' ) in AssetManager::enqueue_admin().
 	}
 
@@ -305,7 +305,7 @@ class LayerImageMaker {
 			[ 'post_title' => pathinfo( $filename, PATHINFO_FILENAME ) ]
 		);
 
-		@unlink( $tmp ); // phpcs:ignore
+		wp_delete_file( $tmp );
 
 		if ( is_wp_error( $attachment_id ) ) {
 			wp_send_json_error( $attachment_id->get_error_message() );

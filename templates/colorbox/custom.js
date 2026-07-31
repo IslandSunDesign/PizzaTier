@@ -580,7 +580,7 @@
 
             /* ── Native Add to Cart bar ──────────────────────────────────
                (removed) The base plugin's Add to Cart / checkout bar is
-               provided by PizzaTierPro via the pizzatier_builder_action_bar
+               provided by PizzaTier via the pizzatier_builder_action_bar
                hook in pztp-containers-menu.php, so the template renders no
                native bar of its own. ── */
 

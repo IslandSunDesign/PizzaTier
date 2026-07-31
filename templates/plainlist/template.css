@@ -253,7 +253,7 @@
 }
 
 /* Item price styling removed in PizzaTier 1.2.0 — pricing is provided
-   by PizzaTierPro. */
+   by PizzaTier. */
 
 /* ── Step mode ───────────────────────────────────────────────────── */
 .pl-step-wrapper {
@@ -417,7 +417,7 @@
 	opacity: 0.65;
 }
 
-/* ── Action bar (WooCommerce / PizzaTierPro hook) ───────────────── */
+/* ── Action bar (WooCommerce / PizzaTier hook) ───────────────── */
 .pl-action-bar {
 	margin-top: 24px;
 }
@@ -494,15 +494,15 @@
    PLAINLIST — CHECKOUT BAR RESPONSIVE
    ══════════════════════════════════════════════════════════════ */
 @media (max-width: 540px) {
-    .pztpro-checkout-bar--plainlist .pztpro-bar-row {
+    .pztc-checkout-bar--plainlist .pztc-bar-row {
         flex-wrap: wrap;
         gap: 8px;
     }
-    .pztpro-checkout-bar--plainlist .pztpro-bar-row__summary {
+    .pztc-checkout-bar--plainlist .pztc-bar-row__summary {
         width: 100%;
         flex: none;
     }
-    .pztpro-checkout-bar--plainlist .pztpro-bar-row__btn {
+    .pztc-checkout-bar--plainlist .pztc-bar-row__btn {
         flex: 1 1 auto;
         justify-content: center;
     }
@@ -644,7 +644,7 @@
 }
 
 /* 2. Custom checkout bar — PlainList minimal edition */
-.pztpro-checkout-bar--plainlist {
+.pztc-checkout-bar--plainlist {
     margin-top: 12px;
     border-top: 2px solid var(--pl-divider, #e0e0e0);
     padding-top: 14px;
@@ -761,29 +761,29 @@
 /* ══════════════════════════════════════════════════════════════
    PLAINLIST — ADD-TO-CART BUTTON & CHECKOUT BAR
    ══════════════════════════════════════════════════════════════
-   Self-contained styling for the PizzaTierPro checkout bar so the CTA
+   Self-contained styling for the PizzaTier checkout bar so the CTA
    matches the Plainlist aesthetic without relying on Pro's generic styles.
    Driven by the template's colour vars + the Add-to-Cart button settings. */
 
-.pl-root .pztpro-checkout-bar--plainlist .pztpro-bar-row {
+.pl-root .pztc-checkout-bar--plainlist .pztc-bar-row {
     display: flex;
     align-items: center;
     gap: 12px;
     flex-wrap: wrap;
 }
-.pl-root .pztpro-checkout-bar--plainlist .pztpro-bar-row__summary {
+.pl-root .pztc-checkout-bar--plainlist .pztc-bar-row__summary {
     display: flex;
     align-items: baseline;
     gap: 8px;
     flex: 1 1 auto;
     min-width: 0;
 }
-.pl-root .pztpro-checkout-bar--plainlist .pztpro-bar-row__size-label {
+.pl-root .pztc-checkout-bar--plainlist .pztc-bar-row__size-label {
     font-size: calc(var(--pl-base-size) * 0.9);
     color: var(--pl-item-color);
     opacity: 0.75;
 }
-.pl-root .pztpro-checkout-bar--plainlist .pztpro-bar-row__price {
+.pl-root .pztc-checkout-bar--plainlist .pztc-bar-row__price {
     font-size: calc(var(--pl-base-size) * 1.25);
     font-weight: 700;
     color: var(--pl-heading-color);
@@ -791,7 +791,7 @@
 }
 
 /* Quantity stepper */
-.pl-root .pztpro-checkout-bar--plainlist .pztpro-bar-qty {
+.pl-root .pztc-checkout-bar--plainlist .pztc-bar-qty {
     display: inline-flex;
     align-items: center;
     gap: 2px;
@@ -800,7 +800,7 @@
     padding: 2px;
     flex-shrink: 0;
 }
-.pl-root .pztpro-checkout-bar--plainlist .pztpro-qty-btn {
+.pl-root .pztc-checkout-bar--plainlist .pztc-qty-btn {
     width: 30px;
     height: 32px;
     border: none;
@@ -812,15 +812,15 @@
     border-radius: calc(var(--pl-cart-radius) - 1px);
     transition: background 0.15s, color 0.15s;
 }
-.pl-root .pztpro-checkout-bar--plainlist .pztpro-qty-btn:hover:not(:disabled) {
+.pl-root .pztc-checkout-bar--plainlist .pztc-qty-btn:hover:not(:disabled) {
     background: var(--pl-accent-10);
     color: var(--pl-accent);
 }
-.pl-root .pztpro-checkout-bar--plainlist .pztpro-qty-btn:disabled {
+.pl-root .pztc-checkout-bar--plainlist .pztc-qty-btn:disabled {
     opacity: 0.35;
     cursor: default;
 }
-.pl-root .pztpro-checkout-bar--plainlist .pztpro-qty-value {
+.pl-root .pztc-checkout-bar--plainlist .pztc-qty-value {
     min-width: 26px;
     text-align: center;
     font-weight: 700;
@@ -829,8 +829,8 @@
 }
 
 /* ── The CTA button ─────────────────────────────────────────────── */
-.pl-root .pztpro-checkout-bar--plainlist .pztpro-bar-row__btn,
-.pl-root .pztpro-checkout-bar--plainlist .pztpro-add-to-cart-btn {
+.pl-root .pztc-checkout-bar--plainlist .pztc-bar-row__btn,
+.pl-root .pztc-checkout-bar--plainlist .pztc-add-to-cart-btn {
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -847,42 +847,42 @@
     transition: background 0.16s, color 0.16s, border-color 0.16s, opacity 0.16s, transform 0.05s;
     text-decoration: none;
 }
-.pl-root .pztpro-checkout-bar--plainlist .pztpro-bar-row__btn:hover,
-.pl-root .pztpro-checkout-bar--plainlist .pztpro-add-to-cart-btn:hover {
+.pl-root .pztc-checkout-bar--plainlist .pztc-bar-row__btn:hover,
+.pl-root .pztc-checkout-bar--plainlist .pztc-add-to-cart-btn:hover {
     opacity: 0.9;
 }
-.pl-root .pztpro-checkout-bar--plainlist .pztpro-bar-row__btn:active,
-.pl-root .pztpro-checkout-bar--plainlist .pztpro-add-to-cart-btn:active {
+.pl-root .pztc-checkout-bar--plainlist .pztc-bar-row__btn:active,
+.pl-root .pztc-checkout-bar--plainlist .pztc-add-to-cart-btn:active {
     transform: translateY(1px);
 }
-.pl-root .pztpro-checkout-bar--plainlist .pztpro-bar-row__btn:disabled,
-.pl-root .pztpro-checkout-bar--plainlist .pztpro-add-to-cart-btn:disabled {
+.pl-root .pztc-checkout-bar--plainlist .pztc-bar-row__btn:disabled,
+.pl-root .pztc-checkout-bar--plainlist .pztc-add-to-cart-btn:disabled {
     opacity: 0.45;
     cursor: default;
 }
 
 /* CTA size variants */
-.pl-root--cartsize-small  .pztpro-checkout-bar--plainlist .pztpro-bar-row__btn { padding: 7px 16px;  font-size: calc(var(--pl-base-size) * 0.9); }
-.pl-root--cartsize-medium .pztpro-checkout-bar--plainlist .pztpro-bar-row__btn { padding: 10px 22px; font-size: var(--pl-base-size); }
-.pl-root--cartsize-large  .pztpro-checkout-bar--plainlist .pztpro-bar-row__btn { padding: 14px 30px; font-size: calc(var(--pl-base-size) * 1.1); }
+.pl-root--cartsize-small  .pztc-checkout-bar--plainlist .pztc-bar-row__btn { padding: 7px 16px;  font-size: calc(var(--pl-base-size) * 0.9); }
+.pl-root--cartsize-medium .pztc-checkout-bar--plainlist .pztc-bar-row__btn { padding: 10px 22px; font-size: var(--pl-base-size); }
+.pl-root--cartsize-large  .pztc-checkout-bar--plainlist .pztc-bar-row__btn { padding: 14px 30px; font-size: calc(var(--pl-base-size) * 1.1); }
 
 /* CTA style: Outline — transparent until hover */
-.pl-root--cart-outline .pztpro-checkout-bar--plainlist .pztpro-bar-row__btn,
-.pl-root--cart-outline .pztpro-checkout-bar--plainlist .pztpro-add-to-cart-btn {
+.pl-root--cart-outline .pztc-checkout-bar--plainlist .pztc-bar-row__btn,
+.pl-root--cart-outline .pztc-checkout-bar--plainlist .pztc-add-to-cart-btn {
     background: transparent;
     color: var(--pl-cart-bg);
     border-color: var(--pl-cart-bg);
 }
-.pl-root--cart-outline .pztpro-checkout-bar--plainlist .pztpro-bar-row__btn:hover,
-.pl-root--cart-outline .pztpro-checkout-bar--plainlist .pztpro-add-to-cart-btn:hover {
+.pl-root--cart-outline .pztc-checkout-bar--plainlist .pztc-bar-row__btn:hover,
+.pl-root--cart-outline .pztc-checkout-bar--plainlist .pztc-add-to-cart-btn:hover {
     background: var(--pl-cart-bg);
     color: var(--pl-cart-fg);
     opacity: 1;
 }
 
 /* CTA style: Text link — minimal, underlined */
-.pl-root--cart-link .pztpro-checkout-bar--plainlist .pztpro-bar-row__btn,
-.pl-root--cart-link .pztpro-checkout-bar--plainlist .pztpro-add-to-cart-btn {
+.pl-root--cart-link .pztc-checkout-bar--plainlist .pztc-bar-row__btn,
+.pl-root--cart-link .pztc-checkout-bar--plainlist .pztc-add-to-cart-btn {
     background: transparent;
     border-color: transparent;
     color: var(--pl-cart-bg);
@@ -891,15 +891,15 @@
     padding-left: 6px;
     padding-right: 6px;
 }
-.pl-root--cart-link .pztpro-checkout-bar--plainlist .pztpro-bar-row__btn:hover,
-.pl-root--cart-link .pztpro-checkout-bar--plainlist .pztpro-add-to-cart-btn:hover {
+.pl-root--cart-link .pztc-checkout-bar--plainlist .pztc-bar-row__btn:hover,
+.pl-root--cart-link .pztc-checkout-bar--plainlist .pztc-add-to-cart-btn:hover {
     color: var(--pl-accent);
     opacity: 1;
 }
 
 /* Full-width CTA */
-.pl-root--cartfull .pztpro-checkout-bar--plainlist .pztpro-bar-row__btn,
-.pl-root--cartfull .pztpro-checkout-bar--plainlist .pztpro-add-to-cart-btn {
+.pl-root--cartfull .pztc-checkout-bar--plainlist .pztc-bar-row__btn,
+.pl-root--cartfull .pztc-checkout-bar--plainlist .pztc-add-to-cart-btn {
     flex: 1 1 100%;
     width: 100%;
 }

@@ -1125,15 +1125,15 @@
    RUSTIC — CHECKOUT BAR RESPONSIVE
    ══════════════════════════════════════════════════════════════ */
 @media (max-width: 540px) {
-    .pztpro-checkout-bar--rustic .pztpro-bar-row {
+    .pztc-checkout-bar--rustic .pztc-bar-row {
         flex-wrap: wrap;
         gap: 8px;
     }
-    .pztpro-checkout-bar--rustic .pztpro-bar-row__summary {
+    .pztc-checkout-bar--rustic .pztc-bar-row__summary {
         width: 100%;
         flex: none;
     }
-    .pztpro-checkout-bar--rustic .pztpro-bar-row__btn {
+    .pztc-checkout-bar--rustic .pztc-bar-row__btn {
         flex: 1 1 auto;
         justify-content: center;
     }
@@ -1147,14 +1147,14 @@
 /* 1. Size selection — styled pill chips matching template aesthetics */
 .rp-size-selector__options,
 .rp-size-selector .rp-size-option,
-.rp-panel .pztpro-inline-size-selector .rp-size-option {
+.rp-panel .pztc-inline-size-selector .rp-size-option {
     display: flex;
     flex-wrap: wrap;
     gap: 10px;
     margin-top: 10px;
 }
 .rp-size-option,
-.rp-panel .pztpro-inline-size-selector label.rp-size-option {
+.rp-panel .pztc-inline-size-selector label.rp-size-option {
     display: inline-flex;
     align-items: center;
     padding: 10px 22px;
@@ -1171,25 +1171,25 @@
     text-transform: uppercase;
 }
 .rp-size-option input[type="radio"],
-.rp-panel .pztpro-inline-size-selector input[type="radio"] {
+.rp-panel .pztc-inline-size-selector input[type="radio"] {
     display: none !important;
 }
 .rp-size-option:hover,
-.rp-size-option.pztpro-size-option--active,
-.rp-panel .pztpro-inline-size-selector label.rp-size-option:hover,
-.rp-panel .pztpro-inline-size-selector .pztpro-size-option--active {
+.rp-size-option.pztc-size-option--active,
+.rp-panel .pztc-inline-size-selector label.rp-size-option:hover,
+.rp-panel .pztc-inline-size-selector .pztc-size-option--active {
     border-color: var(--rp-accent, #b34a00);
     background: var(--rp-accent-dim, rgba(179,74,0,0.12));
     color: var(--rp-accent, #b34a00);
     box-shadow: 0 0 0 1px var(--rp-accent, #b34a00);
 }
 
-/* Target the pztpro-inline-size-selector wrapper with rp prefix */
-.rp-panel .pztpro-inline-size-selector {
+/* Target the pztc-inline-size-selector wrapper with rp prefix */
+.rp-panel .pztc-inline-size-selector {
     margin-top: 0;
 }
-.rp-panel .pztpro-inline-size-selector .rp-size-selector__options,
-.rp-panel .pztpro-inline-size-selector .rp-size-selector__options {
+.rp-panel .pztc-inline-size-selector .rp-size-selector__options,
+.rp-panel .pztc-inline-size-selector .rp-size-selector__options {
     display: flex;
     flex-wrap: wrap;
     gap: 10px;
@@ -1197,12 +1197,12 @@
 
 /* ══════════════════════════════════════════════════════════════
    FORNAIA — ADD TO CART CTA & CHECKOUT BAR
-   Styles the PizzaTierPro checkout bar (checkout-bar.php) for Fornaia.
-   All rules scoped to .pztpro-checkout-bar--rustic so they only affect
+   Styles the PizzaTier checkout bar (checkout-bar.php) for Fornaia.
+   All rules scoped to .pztc-checkout-bar--rustic so they only affect
    this template. Colours pull from the Fornaia CSS variables, so they
    follow the template's Accent / Surface / Text / Button-Style settings.
    ══════════════════════════════════════════════════════════════ */
-.pztpro-checkout-bar--rustic {
+.pztc-checkout-bar--rustic {
     margin-top:     14px;
     display:        flex;
     flex-direction: column;
@@ -1216,7 +1216,7 @@
 }
 
 /* Hand-torn divider rule above the bar */
-.pztpro-checkout-bar--rustic .pztpro-rustic-bar__divider {
+.pztc-checkout-bar--rustic .pztc-rustic-bar__divider {
     height:     2px;
     margin:     0 0 2px;
     background: repeating-linear-gradient(
@@ -1230,26 +1230,26 @@
 }
 
 /* ── Bar row (price · quantity · CTA) ────────────────────────── */
-.pztpro-checkout-bar--rustic .pztpro-bar-row {
+.pztc-checkout-bar--rustic .pztc-bar-row {
     display:     flex;
     align-items: center;
     gap:         14px;
 }
-.pztpro-checkout-bar--rustic .pztpro-bar-row__summary {
+.pztc-checkout-bar--rustic .pztc-bar-row__summary {
     display:        flex;
     flex-direction: column;
     line-height:    1.2;
     flex:           1 1 auto;
     min-width:      0;
 }
-.pztpro-checkout-bar--rustic .pztpro-bar-row__size-label {
+.pztc-checkout-bar--rustic .pztc-bar-row__size-label {
     font-family:    var(--rp-font-serif);
     font-size:      12px;
     font-style:     italic;
     letter-spacing: 0.03em;
     color:          var(--rp-text-muted, #7a5c34);
 }
-.pztpro-checkout-bar--rustic .pztpro-bar-row__price {
+.pztc-checkout-bar--rustic .pztc-bar-row__price {
     font-family:    var(--rp-font-serif);
     font-size:      26px;
     font-weight:    700;
@@ -1259,7 +1259,7 @@
 }
 
 /* ── Quantity stepper ────────────────────────────────────────── */
-.pztpro-checkout-bar--rustic .pztpro-bar-qty {
+.pztc-checkout-bar--rustic .pztc-bar-qty {
     display:       inline-flex;
     align-items:   center;
     border:        1.5px solid var(--rp-border, rgba(101,70,30,0.18));
@@ -1268,7 +1268,7 @@
     flex-shrink:   0;
     background:    var(--rp-surface-2, #f0e5d0);
 }
-.pztpro-checkout-bar--rustic .pztpro-qty-btn {
+.pztc-checkout-bar--rustic .pztc-qty-btn {
     width:       36px;
     height:      36px;
     border:      none;
@@ -1282,15 +1282,15 @@
     transition:  background var(--rp-transition, 0.2s ease),
                  color      var(--rp-transition, 0.2s ease);
 }
-.pztpro-checkout-bar--rustic .pztpro-qty-btn:hover:not(:disabled) {
+.pztc-checkout-bar--rustic .pztc-qty-btn:hover:not(:disabled) {
     background: var(--rp-accent-dim, rgba(179,74,0,0.10));
     color:      var(--rp-accent, #b34a00);
 }
-.pztpro-checkout-bar--rustic .pztpro-qty-btn:disabled {
+.pztc-checkout-bar--rustic .pztc-qty-btn:disabled {
     opacity: 0.4;
     cursor:  not-allowed;
 }
-.pztpro-checkout-bar--rustic .pztpro-qty-value {
+.pztc-checkout-bar--rustic .pztc-qty-value {
     min-width:   34px;
     text-align:  center;
     font-family: var(--rp-font-serif);
@@ -1301,7 +1301,7 @@
 }
 
 /* ── Add to Cart CTA — terracotta, hand-crafted ──────────────── */
-.pztpro-checkout-bar--rustic .pztpro-add-to-cart-btn {
+.pztc-checkout-bar--rustic .pztc-add-to-cart-btn {
     display:         inline-flex;
     align-items:     center;
     justify-content: center;
@@ -1325,33 +1325,33 @@
                      box-shadow  var(--rp-transition, 0.2s ease),
                      transform   0.1s ease;
 }
-.pztpro-checkout-bar--rustic .pztpro-add-to-cart-btn:hover:not(:disabled) {
+.pztc-checkout-bar--rustic .pztc-add-to-cart-btn:hover:not(:disabled) {
     background:   var(--rp-accent-hover, #8f3a00);
     border-color: var(--rp-accent-hover, #8f3a00);
     box-shadow:   0 5px 18px var(--rp-accent-glow, rgba(179,74,0,0.25));
     transform:    translateY(-1px);
 }
-.pztpro-checkout-bar--rustic .pztpro-add-to-cart-btn:active {
+.pztc-checkout-bar--rustic .pztc-add-to-cart-btn:active {
     transform:  translateY(0) scale(0.99);
     box-shadow: 0 2px 8px var(--rp-accent-glow, rgba(179,74,0,0.25));
 }
-.pztpro-checkout-bar--rustic .pztpro-add-to-cart-btn:focus-visible {
+.pztc-checkout-bar--rustic .pztc-add-to-cart-btn:focus-visible {
     outline:    none;
     box-shadow: 0 0 0 2px var(--rp-surface, #faf4eb),
                 0 0 0 4px var(--rp-accent, #b34a00);
 }
-.pztpro-checkout-bar--rustic .pztpro-add-to-cart-btn:disabled,
-.pztpro-checkout-bar--rustic .pztpro-add-to-cart-btn.is-loading {
+.pztc-checkout-bar--rustic .pztc-add-to-cart-btn:disabled,
+.pztc-checkout-bar--rustic .pztc-add-to-cart-btn.is-loading {
     opacity:    0.6;
     cursor:     not-allowed;
     transform:  none;
     box-shadow: none;
 }
-.pztpro-checkout-bar--rustic .pztpro-add-to-cart-btn.is-loading {
+.pztc-checkout-bar--rustic .pztc-add-to-cart-btn.is-loading {
     color:    transparent;
     position: relative;
 }
-.pztpro-checkout-bar--rustic .pztpro-add-to-cart-btn.is-loading::after {
+.pztc-checkout-bar--rustic .pztc-add-to-cart-btn.is-loading::after {
     content:          '';
     position:         absolute;
     width:            18px;
@@ -1362,18 +1362,18 @@
     animation:        rp-cta-spin 0.7s linear infinite;
 }
 @keyframes rp-cta-spin { to { transform: rotate(360deg); } }
-.pztpro-checkout-bar--rustic .pztpro-add-to-cart-btn.is-added {
+.pztc-checkout-bar--rustic .pztc-add-to-cart-btn.is-added {
     background:   var(--rp-green, #4a6741);
     border-color: var(--rp-green, #4a6741);
 }
 
 /* ── Order notes ─────────────────────────────────────────────── */
-.pztpro-checkout-bar--rustic .pztpro-bar-notes {
+.pztc-checkout-bar--rustic .pztc-bar-notes {
     display:        flex;
     flex-direction: column;
     gap:            6px;
 }
-.pztpro-checkout-bar--rustic .pztpro-bar-notes__label {
+.pztc-checkout-bar--rustic .pztc-bar-notes__label {
     font-family:    var(--rp-font-serif);
     font-size:      12px;
     font-weight:    700;
@@ -1381,7 +1381,7 @@
     letter-spacing: 0.02em;
     color:          var(--rp-text-mid, #5c3d1a);
 }
-.pztpro-checkout-bar--rustic .pztpro-bar-notes__input {
+.pztc-checkout-bar--rustic .pztc-bar-notes__input {
     width:         100%;
     padding:       10px 12px;
     border:        1.5px solid var(--rp-border, rgba(101,70,30,0.18));
@@ -1395,12 +1395,12 @@
     transition:    border-color var(--rp-transition, 0.2s ease),
                    box-shadow   var(--rp-transition, 0.2s ease);
 }
-.pztpro-checkout-bar--rustic .pztpro-bar-notes__input::placeholder {
+.pztc-checkout-bar--rustic .pztc-bar-notes__input::placeholder {
     color:      var(--rp-text-muted, #7a5c34);
     font-style: italic;
     opacity:    0.85;
 }
-.pztpro-checkout-bar--rustic .pztpro-bar-notes__input:focus {
+.pztc-checkout-bar--rustic .pztc-bar-notes__input:focus {
     outline:      none;
     border-color: var(--rp-accent, #b34a00);
     box-shadow:   0 0 0 3px var(--rp-accent-dim, rgba(179,74,0,0.10));
@@ -1408,15 +1408,15 @@
 
 /* ── Responsive: stack CTA full-width on narrow screens ──────── */
 @media (max-width: 540px) {
-    .pztpro-checkout-bar--rustic .pztpro-bar-row {
+    .pztc-checkout-bar--rustic .pztc-bar-row {
         flex-wrap: wrap;
         gap:       10px;
     }
-    .pztpro-checkout-bar--rustic .pztpro-bar-row__summary {
+    .pztc-checkout-bar--rustic .pztc-bar-row__summary {
         width: 100%;
         flex:  none;
     }
-    .pztpro-checkout-bar--rustic .pztpro-add-to-cart-btn {
+    .pztc-checkout-bar--rustic .pztc-add-to-cart-btn {
         flex:            1 1 auto;
         justify-content: center;
     }

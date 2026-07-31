@@ -13,7 +13,7 @@
 
     /* ════════════════════════════════════════════════════════════
        PIZZA STACK RENDERER
-       Identical interface to Colorbox so PizzaTierPro can hook in
+       Identical interface to Colorbox so PizzaTier can hook in
        ════════════════════════════════════════════════════════════ */
     var PizzaStack = {
 
@@ -481,7 +481,7 @@
 
             /**
              * Programmatically set selection state (PizzaTier JS API).
-             * Consumed by PizzaTierPro to apply "Default Layers".
+             * Consumed by PizzaTier to apply "Default Layers".
              *
              * @param {Object} newState { crust|sauce|cheese|drizzle|cut: slug|{slug},
              *                            toppings: { slug: {…} } }
@@ -519,7 +519,7 @@
              * Get current state (for Pro / external use).
              */
             function getState() {
-                /* Build a layers array in the standard PizzaTierPro format so
+                /* Build a layers array in the standard PizzaTier format so
                    frontend-builder.js getTemplateLayersNow() can read selections.
                    Non-topping types use coverage 'Whole'; toppings carry their
                    per-item coverage value. */

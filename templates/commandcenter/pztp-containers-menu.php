@@ -20,7 +20,7 @@ if ( ! isset( $atts ) )            { $atts           = []; }
 if ( ! isset( $template_slug ) )   { $template_slug  = 'commandcenter'; }
 if ( ! isset( $function_prefix ) ) { $function_prefix = 'pzt_commandcenter'; }
 
-/* Per-instance JS namespace: CC_pizzabuilder1, CC_pztpro2, etc. */
+/* Per-instance JS namespace: CC_pizzabuilder1, CC_pizzatier_commerce2, etc. */
 $cc_var = 'CC_' . preg_replace( '/[^a-zA-Z0-9_]/', '_', $instance_id );
 
 /* ── Max toppings ──────────────────────────────────────────────────────── */
@@ -45,16 +45,17 @@ $layer_anim_speed = isset( $atts['layer_anim_speed'] ) && (int) $atts['layer_ani
     ? max( 80, min( 800, (int) $atts['layer_anim_speed'] ) )
     : max( 80, min( 800, (int) get_option( 'pizzatier_setting_layer_anim_speed', 320 ) ) );
 
-/* ── PizzaTierPro: inline size selector helpers ──────────────────────── */
+/* ── Add-on: inline size selector helpers ──────────────────────── */
 if ( ! function_exists( 'pzt_get_pro_sizes' ) ) :
 function pzt_get_pro_sizes(): array {
-    if ( ! function_exists( 'pztpro_get_setting' ) || ! class_exists( 'PizzaTierPro\\Pro\\PriceGrid\\Grid' ) ) {
-        return [];
-    }
-    $product_id = ( function_exists( 'get_queried_object_id' ) ? (int) get_queried_object_id() : 0 );
-    if ( ! $product_id ) { global $post; if ( $post instanceof \WP_Post ) { $product_id = $post->ID; } }
-    $grid = new \PizzaTierPro\Pro\PriceGrid\Grid();
-    return $grid->get_sizes( $product_id );
+	// Sizes come from a pricing add-on when one is installed; pzt_addon_sizes()
+	// returns an empty array otherwise and the selector simply does not render.
+	$product_id = ( function_exists( 'get_queried_object_id' ) ? (int) get_queried_object_id() : 0 );
+	if ( ! $product_id ) {
+		global $post;
+		if ( $post instanceof \WP_Post ) { $product_id = $post->ID; }
+	}
+	return pzt_addon_sizes( $product_id );
 }
 endif;
 
@@ -63,11 +64,11 @@ function pzt_render_inline_size_selector( array $sizes, string $instance_id, str
     if ( empty( $sizes ) ) { return; }
     preg_match( '/-(\\d+)$/', $instance_id, $_m_suf );
     $radio_name_raw = ! empty( $_m_suf[1] ) ? $_m_suf[1] : preg_replace( '/[^a-zA-Z0-9_]/', '_', $instance_id );
-    $radio_name = 'pztpro_size_' . $radio_name_raw;
-    $heading = function_exists( 'pztpro_get_setting' ) ? (string) pztpro_get_setting( 'size_selector_label', '' ) : '';
+    $radio_name = 'pizzatier_commerce_size_' . $radio_name_raw;
+    $heading = (string) pzt_addon_setting( 'size_selector_label', '' );
     if ( '' === $heading ) { $heading = __( 'Choose a Size', 'pizzatier' ); }
     ?>
-    <div class="<?php echo esc_attr( $css_prefix ); ?>-size-selector pztpro-inline-size-selector"
+    <div class="<?php echo esc_attr( $css_prefix ); ?>-size-selector pztc-inline-size-selector"
          id="<?php echo esc_attr( $instance_id ); ?>-size-selector"
          role="group" aria-label="<?php echo esc_attr( $heading ); ?>">
         <p class="<?php echo esc_attr( $css_prefix ); ?>-size-selector__heading"><?php echo esc_html( $heading ); ?></p>
@@ -75,13 +76,13 @@ function pzt_render_inline_size_selector( array $sizes, string $instance_id, str
             <?php foreach ( $sizes as $i => $size ) :
                 $inp_id = esc_attr( $instance_id ) . '-sz-' . sanitize_html_class( strtolower( $size ) );
             ?>
-            <label class="<?php echo esc_attr( $css_prefix ); ?>-size-option pztpro-size-option<?php echo 0 === $i ? ' pztpro-size-option--active' : ''; ?>"
+            <label class="<?php echo esc_attr( $css_prefix ); ?>-size-option pztc-size-option<?php echo 0 === $i ? ' pztc-size-option--active' : ''; ?>"
                    for="<?php echo esc_attr( $inp_id ); ?>">
                 <input type="radio"
                        id="<?php echo esc_attr( $inp_id ); ?>"
                        name="<?php echo esc_attr( $radio_name ); ?>"
                        value="<?php echo esc_attr( $size ); ?>"
-                       class="pztpro-size-radio"
+                       class="pztc-size-radio"
                        <?php checked( 0, $i ); ?> />
                 <span class="<?php echo esc_attr( $css_prefix ); ?>-size-option__name"><?php echo esc_html( $size ); ?></span>
             </label>
@@ -147,7 +148,9 @@ function pzt_commandcenter_exclusive_card( $post, string $layer_type, string $cc
     $js_add    = "window['{$cc_var}']&&window['{$cc_var}'].swapBase('{$layer_type}','{$slug}','{$js_title}','{$js_layer}',this)";
     $js_remove = "window['{$cc_var}']&&window['{$cc_var}'].removeBase('{$layer_type}','{$slug}',this)";
 
-    ob_start();
+    $card_html = '';
+	ob_start();
+	try {
     do_action( 'pizzatier_before_layer_card', $post, $layer_type );
     ?>
     <div class="cc-card cc-card--exclusive"
@@ -182,7 +185,11 @@ function pzt_commandcenter_exclusive_card( $post, string $layer_type, string $cc
     </div>
     <?php
     do_action( 'pizzatier_after_layer_card', $post, $layer_type );
-    return apply_filters( 'pizzatier_card_html', ob_get_clean(), $post, $layer_type );
+    $card_html = ob_get_contents();
+	} finally {
+		ob_end_clean();
+	}
+	return apply_filters( 'pizzatier_card_html', $card_html, $post, $layer_type  );
 }
 endif;
 
@@ -207,7 +214,9 @@ function pzt_commandcenter_topping_card( $post, string $cc_var, int $zindex ): s
     $js_add    = "window['{$cc_var}']&&window['{$cc_var}'].addTopping({$zindex},'{$js_slug}','{$js_layer}','{$js_title}','{$layer_id}','{$layer_id}',this)";
     $js_remove = "window['{$cc_var}']&&window['{$cc_var}'].removeTopping('pizzatier-topping-{$js_slug}','{$js_slug}',this)";
 
-    ob_start();
+    $card_html = '';
+	ob_start();
+	try {
     do_action( 'pizzatier_before_layer_card', $post, 'toppings' );
     ?>
     <div class="cc-card cc-card--topping"
@@ -268,37 +277,41 @@ function pzt_commandcenter_topping_card( $post, string $cc_var, int $zindex ): s
     </div>
     <?php
     do_action( 'pizzatier_after_layer_card', $post, 'toppings' );
-    return apply_filters( 'pizzatier_card_html', ob_get_clean(), $post, 'toppings' );
+    $card_html = ob_get_contents();
+	} finally {
+		ob_end_clean();
+	}
+	return apply_filters( 'pizzatier_card_html', $card_html, $post, 'toppings'  );
 }
 endif;
 
 /* ── Pre-render card pools ────────────────────────────────────────────── */
 $crusts_html = '';
-foreach ( $crusts as $post ) { $crusts_html .= pzt_commandcenter_exclusive_card( $post, 'crust', $cc_var, 100 ); }
+foreach ( $crusts as $pzt_layer ) { $crusts_html .= pzt_commandcenter_exclusive_card( $pzt_layer, 'crust', $cc_var, 100 ); }
 if ( ! $crusts_html ) { $crusts_html = '<p class="cc-empty">' . esc_html__( 'No crusts found.', 'pizzatier' ) . '</p>'; }
 
 $sauces_html = '';
-foreach ( $sauces as $post ) { $sauces_html .= pzt_commandcenter_exclusive_card( $post, 'sauce', $cc_var, 150 ); }
+foreach ( $sauces as $pzt_layer ) { $sauces_html .= pzt_commandcenter_exclusive_card( $pzt_layer, 'sauce', $cc_var, 150 ); }
 if ( ! $sauces_html ) { $sauces_html = '<p class="cc-empty">' . esc_html__( 'No sauces found.', 'pizzatier' ) . '</p>'; }
 
 $cheeses_html = '';
-foreach ( $cheeses as $post ) { $cheeses_html .= pzt_commandcenter_exclusive_card( $post, 'cheese', $cc_var, 200 ); }
+foreach ( $cheeses as $pzt_layer ) { $cheeses_html .= pzt_commandcenter_exclusive_card( $pzt_layer, 'cheese', $cc_var, 200 ); }
 if ( ! $cheeses_html ) { $cheeses_html = '<p class="cc-empty">' . esc_html__( 'No cheeses found.', 'pizzatier' ) . '</p>'; }
 
 $drizzles_html = '';
-foreach ( $drizzles as $post ) { $drizzles_html .= pzt_commandcenter_exclusive_card( $post, 'drizzle', $cc_var, 900 ); }
+foreach ( $drizzles as $pzt_layer ) { $drizzles_html .= pzt_commandcenter_exclusive_card( $pzt_layer, 'drizzle', $cc_var, 900 ); }
 if ( ! $drizzles_html ) { $drizzles_html = '<p class="cc-empty">' . esc_html__( 'No drizzles found.', 'pizzatier' ) . '</p>'; }
 
 $toppings_html = '';
 $_t_z = 400;
-foreach ( $toppings as $post ) {
-    $toppings_html .= pzt_commandcenter_topping_card( $post, $cc_var, $_t_z );
+foreach ( $toppings as $pzt_layer ) {
+    $toppings_html .= pzt_commandcenter_topping_card( $pzt_layer, $cc_var, $_t_z );
     $_t_z += 10;
 }
 if ( ! $toppings_html ) { $toppings_html = '<p class="cc-empty">' . esc_html__( 'No toppings found.', 'pizzatier' ) . '</p>'; }
 
 $cuts_html = '';
-foreach ( $cuts as $post ) { $cuts_html .= pzt_commandcenter_exclusive_card( $post, 'cut', $cc_var, 950 ); }
+foreach ( $cuts as $pzt_layer ) { $cuts_html .= pzt_commandcenter_exclusive_card( $pzt_layer, 'cut', $cc_var, 950 ); }
 if ( ! $cuts_html ) { $cuts_html = '<p class="cc-empty">' . esc_html__( 'No cut styles found.', 'pizzatier' ) . '</p>'; }
 
 /* ── Initial pizza display ────────────────────────────────────────────── */
@@ -370,14 +383,14 @@ do_action( 'pizzatier_before_builder', $instance_id, $template_slug );
     <div class="cc-wizard-header" aria-label="<?php esc_attr_e( 'Order steps', 'pizzatier' ); ?>">
         <div class="cc-wizard-steps" id="<?php echo esc_attr( $instance_id ); ?>-steps">
             <?php
-            foreach ( $visible_tabs as $tab ) :
-                if ( 'yourpizza' === $tab || ! isset( $tab_meta[ $tab ] ) ) { continue; }
-                $step_n = $step_numbers[ $tab ] ?? 0;
-                [ $icon_key, $label ] = $tab_meta[ $tab ];
+            foreach ( $visible_tabs as $pzt_tab ) :
+                if ( 'yourpizza' === $pzt_tab || ! isset( $tab_meta[ $pzt_tab ] ) ) { continue; }
+                $step_n = $step_numbers[ $pzt_tab ] ?? 0;
+                [ $icon_key, $label ] = $tab_meta[ $pzt_tab ];
             ?>
-            <div class="cc-step" data-tab="<?php echo esc_attr( $tab ); ?>" data-step="<?php echo esc_attr( (string) $step_n ); ?>"
+            <div class="cc-step" data-tab="<?php echo esc_attr( $pzt_tab ); ?>" data-step="<?php echo esc_attr( (string) $step_n ); ?>"
                  role="button" tabindex="0"
-                 onclick="window['<?php echo esc_js( $cc_var ); ?>']&&window['<?php echo esc_js( $cc_var ); ?>'].goTab('<?php echo esc_js( $tab ); ?>')"
+                 onclick="window['<?php echo esc_js( $cc_var ); ?>']&&window['<?php echo esc_js( $cc_var ); ?>'].goTab('<?php echo esc_js( $pzt_tab ); ?>')"
                  onkeydown="if(event.key==='Enter'||event.key===' ')this.click()"
                  aria-label="<?php echo esc_attr( sprintf( /* translators: 1: step number, 2: step label. */ __( 'Step %1$s: %2$s', 'pizzatier' ), $step_n, $label ) ); ?>">
                 <div class="cc-step__bubble">
@@ -417,7 +430,7 @@ do_action( 'pizzatier_before_builder', $instance_id, $template_slug );
             <!-- Pizza canvas (full-width on mobile, sits above panels) -->
             <div class="cc-canvas-wrap" id="<?php echo esc_attr( $instance_id ); ?>-canvas-wrap">
                 <div class="cc-canvas" id="<?php echo esc_attr( $instance_id ); ?>-canvas">
-                    <?php echo $initial_pizza; // phpcs:ignore WordPress.Security.EscapeOutput -- built by PizzaBuilder ?>
+                    <?php echo wp_kses( $initial_pizza, pzt_card_allowed_html() );?>
                 </div>
                 <div class="cc-canvas-reset">
                     <button type="button" class="cc-ghost-btn"
@@ -468,7 +481,7 @@ do_action( 'pizzatier_before_builder', $instance_id, $template_slug );
                             <p class="cc-panel__hint"><?php esc_html_e( 'The foundation of a great pizza.', 'pizzatier' ); ?></p>
                         </div>
                     </div>
-                    <div class="cc-cards-grid cc-cards-grid--exclusive"><?php echo $crusts_html; // phpcs:ignore ?></div>
+                    <div class="cc-cards-grid cc-cards-grid--exclusive"><?php echo wp_kses( $crusts_html, pzt_card_allowed_html() );?></div>
                     <div class="cc-panel__nav">
                         <?php if ( $_has_pro ) : ?>
                         <button type="button" class="cc-nav-btn cc-nav-btn--prev" onclick="window['<?php echo esc_js( $cc_var ); ?>']&&window['<?php echo esc_js( $cc_var ); ?>'].goTab('size')">
@@ -495,7 +508,7 @@ do_action( 'pizzatier_before_builder', $instance_id, $template_slug );
                             <p class="cc-panel__hint"><?php esc_html_e( 'Pick the flavor base.', 'pizzatier' ); ?></p>
                         </div>
                     </div>
-                    <div class="cc-cards-grid cc-cards-grid--exclusive"><?php echo $sauces_html; // phpcs:ignore ?></div>
+                    <div class="cc-cards-grid cc-cards-grid--exclusive"><?php echo wp_kses( $sauces_html, pzt_card_allowed_html() );?></div>
                     <div class="cc-panel__nav">
                         <button type="button" class="cc-nav-btn cc-nav-btn--prev" onclick="window['<?php echo esc_js( $cc_var ); ?>']&&window['<?php echo esc_js( $cc_var ); ?>'].goTab('crust')">
                             <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><polyline points="10 3 5 8 10 13"/></svg>
@@ -520,7 +533,7 @@ do_action( 'pizzatier_before_builder', $instance_id, $template_slug );
                             <p class="cc-panel__hint"><?php esc_html_e( 'Melt it your way.', 'pizzatier' ); ?></p>
                         </div>
                     </div>
-                    <div class="cc-cards-grid cc-cards-grid--exclusive"><?php echo $cheeses_html; // phpcs:ignore ?></div>
+                    <div class="cc-cards-grid cc-cards-grid--exclusive"><?php echo wp_kses( $cheeses_html, pzt_card_allowed_html() );?></div>
                     <div class="cc-panel__nav">
                         <button type="button" class="cc-nav-btn cc-nav-btn--prev" onclick="window['<?php echo esc_js( $cc_var ); ?>']&&window['<?php echo esc_js( $cc_var ); ?>'].goTab('sauce')">
                             <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><polyline points="10 3 5 8 10 13"/></svg>
@@ -547,7 +560,7 @@ do_action( 'pizzatier_before_builder', $instance_id, $template_slug );
                             </p>
                         </div>
                     </div>
-                    <div class="cc-cards-grid cc-cards-grid--toppings"><?php echo $toppings_html; // phpcs:ignore ?></div>
+                    <div class="cc-cards-grid cc-cards-grid--toppings"><?php echo wp_kses( $toppings_html, pzt_card_allowed_html() );?></div>
                     <div class="cc-panel__nav">
                         <button type="button" class="cc-nav-btn cc-nav-btn--prev" onclick="window['<?php echo esc_js( $cc_var ); ?>']&&window['<?php echo esc_js( $cc_var ); ?>'].goTab('cheese')">
                             <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><polyline points="10 3 5 8 10 13"/></svg>
@@ -572,7 +585,7 @@ do_action( 'pizzatier_before_builder', $instance_id, $template_slug );
                             <p class="cc-panel__hint"><?php esc_html_e( 'Optional. Skip if you prefer.', 'pizzatier' ); ?></p>
                         </div>
                     </div>
-                    <div class="cc-cards-grid cc-cards-grid--exclusive"><?php echo $drizzles_html; // phpcs:ignore ?></div>
+                    <div class="cc-cards-grid cc-cards-grid--exclusive"><?php echo wp_kses( $drizzles_html, pzt_card_allowed_html() );?></div>
                     <div class="cc-panel__nav">
                         <button type="button" class="cc-nav-btn cc-nav-btn--prev" onclick="window['<?php echo esc_js( $cc_var ); ?>']&&window['<?php echo esc_js( $cc_var ); ?>'].goTab('toppings')">
                             <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><polyline points="10 3 5 8 10 13"/></svg>
@@ -597,7 +610,7 @@ do_action( 'pizzatier_before_builder', $instance_id, $template_slug );
                             <p class="cc-panel__hint"><?php esc_html_e( 'Choose a cut style.', 'pizzatier' ); ?></p>
                         </div>
                     </div>
-                    <div class="cc-cards-grid cc-cards-grid--exclusive"><?php echo $cuts_html; // phpcs:ignore ?></div>
+                    <div class="cc-cards-grid cc-cards-grid--exclusive"><?php echo wp_kses( $cuts_html, pzt_card_allowed_html() );?></div>
                     <div class="cc-panel__nav">
                         <button type="button" class="cc-nav-btn cc-nav-btn--prev" onclick="window['<?php echo esc_js( $cc_var ); ?>']&&window['<?php echo esc_js( $cc_var ); ?>'].goTab('drizzle')">
                             <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><polyline points="10 3 5 8 10 13"/></svg>
@@ -703,7 +716,7 @@ do_action( 'pizzatier_before_builder', $instance_id, $template_slug );
     </div><!-- /.cc-layout -->
 
     <!-- ── Checkout dock ───────────────────────────────────────────────
-         PizzaTierPro renders its Add to Cart / checkout bar here when active.
+         PizzaTier renders its Add to Cart / checkout bar here when active.
          This dock is always present (it does NOT depend on the optional order
          summary sidebar), spans the full builder width, and sits at the end of
          the wizard so the final custom pizza can always be added to the cart. -->

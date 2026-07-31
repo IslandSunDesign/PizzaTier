@@ -4,7 +4,7 @@ Tags: pizza, restaurant, woocommerce, customizer, builder
 Requires at least: 6.2
 Tested up to: 7.0
 Requires PHP: 7.4
-Stable tag: 1.15.0
+Stable tag: 2.1.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -19,7 +19,7 @@ Built and maintained by [Ryan Bishop](https://islandsundesign.com) at [Island Su
 = Key Features =
 
 * **Live visual pizza builder** — layered transparent PNG images stack and update as customers make selections
-* **7 built-in templates** — choose from Colorbox, Metro, NightPie, Fornaia, PocketPie, Plainlist, and Scaffold
+* **8 built-in templates** — choose from Colorbox, Metro, NightPie, Fornaia, PocketPie, Plainlist, Command Center, and Scaffold
 * **Shortcode & Gutenberg block support** — embed anywhere with `[pizza_builder]` or the Pizza Builder block
 * **Custom Post Types** — manage Toppings, Crusts, Sauces, Cheeses, Drizzles, Cuts, and Sizes via the WordPress admin
 * **Static pizza shortcode** — render a non-interactive layered pizza image with `[pizza_static]`
@@ -33,7 +33,10 @@ Built and maintained by [Ryan Bishop](https://islandsundesign.com) at [Island Su
 * **Theme-compatible** — CSS custom properties let you match any theme's colour palette and typography
 * **Developer-friendly** — action/filter hooks throughout, public PHP and JS APIs, Scaffold starter template for custom builds
 * **Translation-ready** — `.pot` file included, Spanish and German translations bundled
-* **WooCommerce ready** — pairs with the PizzaTier Pro extension for full cart, pricing, and order management
+* **Built-in WooCommerce integration** — a "Pizza" product type, the builder embedded on its product page, server-verified pricing, and the full build stored on the order line item
+* **Per-layer price grids** — price every ingredient by size and coverage fraction, with bulk editing and CSV import/export
+* **Built-in ordering** — take orders without WooCommerce at all, recorded straight in WordPress with no cart or payment step
+* **Pizza presets** — save complete pizzas customers can pick in one click
 
 = Templates =
 
@@ -67,7 +70,7 @@ Example: `[pizza_static crust="thin-crust" sauce="classic-tomato" cheese="mozzar
 
 Attributes: `type`, `slug`, `size`
 
-**`[pizza_layer_info]`** — Renders text metadata about a layer (name, description, price if Pro is active).
+**`[pizza_layer_info]`** — Renders text metadata about a layer (name, description, price).
 
 = REST API =
 
@@ -107,7 +110,7 @@ PizzaTier exposes a public PHP API for use in themes and other plugins:
 
 * `pizzatier_before_builder` — Fires before the builder canvas renders
 * `pizzatier_after_builder` — Fires after the builder canvas renders
-* `pizzatier_builder_action_bar` — Fires inside the builder action bar (used by Pro for the checkout bar)
+* `pizzatier_builder_action_bar` — Fires inside the builder action bar (where the Add to Cart and Order Now bars render)
 
 See the plugin documentation at [pizzatier.com](https://pizzatier.com) for a full hook reference.
 
@@ -115,34 +118,22 @@ See the plugin documentation at [pizzatier.com](https://pizzatier.com) for a ful
 
 Duplicate the **Scaffold** template folder, give it a unique `function_prefix` in `pztp-template-info.php`, and register it via the `pizzatier_template_dirs` filter. The Scaffold template includes detailed comments and modular HTML partials designed for this purpose.
 
-= Pro Version =
+= Selling pizzas =
 
-**PizzaTier Pro** extends this plugin with full WooCommerce integration:
+Everything needed to sell is included — there is no separate add-on to buy.
 
-* Custom "Pizza" WooCommerce product type
-* Per-layer live pricing with 6 engine modes (add-on per layer, flat per size, highest wins, tiered by count, free first N, bundle)
-* Add-to-cart AJAX flow with server-side price verification
-* Order meta — full ingredient breakdown saved with every order and displayed in admin
-* Cart display — size, toppings, base price, and order notes shown in cart and checkout
-* Order emails — pizza configuration in WC order emails or as a standalone summary
-* Nutrition display — calories and nutritional data per ingredient
-* Cart editing — "Edit pizza" link in cart rehydrates the builder with saved configuration
-* Order again — redirects to the builder pre-filled from a previous order
-* JSON-LD schema markup for pizza products
-* Full German and Spanish translations
+**With WooCommerce**
+* A dedicated "Pizza" WooCommerce product type with its own configurator tab
+* The builder embedded automatically on pizza product pages, with a size selector and a live price bar
+* Size x coverage price grids per product, per ingredient, or site-wide, with CSV import/export and a bulk editor
+* Six pricing models — add-on per layer, flat per size, highest layer wins, tiered by topping count, free first N, and bundle
+* Server-verified pricing on add to cart, with the full build stored as order line-item meta
+* Pizza configuration shown in the cart, on the order, and in order emails
 
-Learn more at [pizzatier.com](https://pizzatier.com).
-
-== Installation ==
-
-1. Upload the `PizzaTier` folder to the `/wp-content/plugins/` directory, or install via the WordPress Plugins screen.
-2. Activate the plugin through the **Plugins** menu in WordPress.
-3. Go to **PizzaTier → Setup Guide** for a step-by-step walkthrough.
-4. Add ingredient images via **PizzaTier → Content** for each CPT (Toppings, Crusts, Sauces, Cheeses, Drizzles, Cuts).
-5. Choose a template under **PizzaTier → Template**.
-6. Embed the builder using the `[pizza_builder]` shortcode or the **Pizza Builder** Gutenberg block.
-
-== Frequently Asked Questions ==
+**Without WooCommerce**
+* PizzaTier's own ordering system records orders straight in WordPress — no cart, no payment step
+* Kitchen-oriented order statuses, an orders screen, and staff-only customer notes
+* Suits pay-on-collection, phone-order and delivery-on-account shops
 
 = What image format should I use for ingredient layers? =
 
@@ -166,7 +157,7 @@ The `[pizza_builder]` shortcode works anywhere shortcodes are supported. A dedic
 
 = Is WooCommerce required? =
 
-No. PizzaTier is fully functional as a standalone visualizer and customizer without WooCommerce. The Pro extension adds WooCommerce integration for e-commerce functionality.
+No. The builder, price grids, presets and PizzaTier's own ordering system all work without it. WooCommerce is only needed if you want a cart, a checkout and online payment.
 
 = What PHP version is required? =
 
@@ -193,58 +184,48 @@ Visit [pizzatier.com/support](https://pizzatier.com/support) or use the WordPres
 9. Settings — shape, layer spacing, and customer experience controls
 10. Setup Guide — step-by-step guided walkthrough
 
-== Changelog ==
-
-
-= 1.15.0 =
-* Renamed the plugin from **PizzaLayer** to **PizzaTier**. This is a name change only — no features added or removed. The text domain, plugin slug, namespace, constants, hooks/filters, block names, REST namespace, and bundled asset/translation filenames are all updated to the `pizzatier` naming, and the homepage is now https://pizzatier.com. Stored settings, content, and layer images are preserved (internal meta keys are unchanged), so the update is safe in place. The companion premium extension is renamed to **PizzaTier Pro** and should be updated alongside this release.
-
-= 1.14.0 =
-* Removed the Custom CSS and Custom JS code-insertion fields (global "Advanced & Developer" fields and the per-template Custom CSS boxes for Scaffold and PocketPie), per WordPress.org guidelines against saving arbitrary CSS/JavaScript. Each template's own appearance settings (colors, fonts, spacing, animation) are unchanged; for site-wide tweaks, use the Customizer's Additional CSS. Any previously stored custom code is ignored and cleaned up on uninstall.
-* Static builder output from the `[pizza_static]` / `[pizzatier-static]` shortcodes and the matching block is now escaped at the output boundary through a filterable allowlist (`pizzatier_builder_kses`), so add-on markup stays sanitized.
-* Admin styling that was previously inlined is now enqueued through the stylesheet pipeline: roughly 2,100 lines of admin CSS across thirteen screens moved into a single enqueued stylesheet, and the admin-bar and sidebar styles now load via `wp_add_inline_style()`. No visual change.
-
-= 1.13.3 =
-* Updated the plugin Author URI to https://islandsundesign.com (the Plugin URI remains https://pizzatier.com). No functional change.
-
-= 1.13.2 =
-* Plugin Check cleanup (no behavior change): replaced the version-gated `wp_is_serving_rest_request()` calls in the block render callbacks with a small internal `REST_REQUEST` check, so block editor previews are detected without referencing a function newer than the plugin's minimum WordPress version.
-* Fixed the nonce-verification suppression on the admin sidebar's active-CPT highlight — the `phpcs:ignore` now sits on the line that actually reads `$_GET`, and the read is `wp_unslash()`'d before sanitizing. This is a read-only menu highlight with no state change.
-
-= 1.13.1 =
-* Security & hardening pass for WordPress.org Plugin Check: added defense-in-depth nonce re-checks to all settings/import save handlers, added missing `wp_unslash()` on AJAX uploads, sanitized the REST rate-limiter IP read, and moved output escaping to the point of output across the admin screens and the PocketPie/Plainlist/Scaffold templates (behavior unchanged).
-* The Template-Choice preview-page lookup is now object-cached; fixed several `phpcs:ignore` comments that used an em-dash instead of `--` (which silently disabled the suppression, including real escaping cases).
-* Internationalization: standardized the entire plugin to the `pizzatier` text domain (the 8 checkout-bar templates previously used `pizzatierpro`, which broke their translations and caused mismatch errors); added translator comments to every placeholder string; removed the redundant manual text-domain load (auto-loaded since WP 4.6).
-* Compatibility: guarded `wp_is_serving_rest_request()` for WP < 6.5; "Tested up to" set to 7.0; prefixed globals in uninstall.php.
-
-= 1.13.0 =
-* **Fixed: template card & background settings that appeared to "do nothing."** A dormant global-skin override block in the Metro and Nightpie stylesheets was collapsing card and root styling to `inherit`, overriding each template's own values. This was the shared root cause behind: Metro's **Page Background Color** not applying, Nightpie's **Item Card Border** setting having no effect, and Nightpie's item cards losing their interior padding. All three now work as intended, and selected-card accent borders and idle card backgrounds resolve correctly again.
-* **Metro → new UI Container Background setting.** Colour the builder panel (hero + ingredient sections) as one cohesive surface, separate from the Page Background (which now visibly frames the panel) and the card background.
-* **Metro → new Card Text Color and Section Title Color settings.** Tune the ingredient-name text and the section headings/hero tagline independently.
-* **Metro → roomier framing & uniform cards.** The Page Background now frames the builder, and each card's image area shares the card background so the whole card reads as one colour. Preset colour schemes updated to match.
-
-For the complete version history, see CHANGELOG.md in the plugin folder or https://github.com/IslandSunDesign/PizzaTier
-
 == Upgrade Notice ==
 
-= 1.1.2 =
-Maintenance release. Fixes inline script extraction (WordPress.org compliance), standardizes plugin name, and adds GPL license file. No database changes. Safe to update in place.
+= 2.1.0 =
+Adds order routing: choose whether orders go to the WooCommerce cart, the pizza order list, both, or straight out by email and webhook. If your builder currently shows both an Add to Cart button and an Order Now button, it will now show one button that does both — see the changelog.
 
-= 1.1.0 =
-Feature release. Adds the Layer Builder Wizard, Settings Wizard, admin dark mode, and bundled Spanish/German translations. No database changes. Safe to update in place.
+== Changelog ==
 
-= 1.0.4 =
-Fix release. Relocates the Pro checkout bar to the bottom of all templates. No database changes. Safe to update in place.
+= 2.1.0 =
 
-= 1.0.3 =
-Security update. Hardens Layer Image Maker upload handling and REST endpoint sanitization. No database changes. Safe to update in place.
+**Order routing** — where an order goes is now a setting, not a consequence of which button is on screen. Orders → Ordering Settings gains five routes: record it in the pizza order list; add it to the WooCommerce cart; add it and go straight to checkout; both (one button records the order *and* carts it); or notify only, which emails and webhooks the ticket and keeps no record.
 
-= 1.0.2 =
-Security update. Adds capability checks, output escaping, and PHP 7.4 compatibility fixes. No database changes. Safe to update in place.
+* Added: order webhook. Every order is POSTed as JSON to a configurable endpoint for a kitchen display, POS or automation service, signed with HMAC-SHA256 when a secret is set.
+* Added: a "Pizza product" setting, so the cart routes work from a shortcode on an ordinary page and not only on a product page.
+* Fixed: orders recorded in the pizza order list were always priced at zero. The `pizzatier_order_item_price` filter had never been connected to the price grid after the Pro merge in 2.0. It is now. An order that cannot be priced is still recorded, unpriced, rather than failing.
+* Changed: "both" no longer means two buttons for the customer to choose between — it is one button, and the store chooses. Affected sites are migrated and shown a one-time notice.
+* Added: the notify-only route never discards an order it could not deliver. If neither the email nor the webhook succeeded, the record is kept regardless of the setting.
+* Fixed: the site exporter no longer carries the webhook secret or the pizza product ID to another site.
 
-= 1.0.1 =
-Fix release. Corrects plugin header text domain and resolves first-activation edge cases. No database changes. Safe to update in place.
+= 2.0.7 =
 
-== Credits ==
+* Fixed: `src/Core/OptionRegistry.php` used a compound direct-access guard (`! defined( 'ABSPATH' ) && ! defined( 'WP_UNINSTALL_PLUGIN' )`) that the WordPress.org Plugin Check scanner does not recognise. Replaced with the canonical single-condition guard. The second clause was redundant — `uninstall_plugin()` includes `uninstall.php` from inside a fully loaded WordPress, so `ABSPATH` is always defined when this file is required.
 
-PizzaTier was created by **Ryan Bishop** of [Island Sun Design](https://islandsundesign.com).
+= 2.0.6 =
+
+**Resilience against damaged installs**
+
+* Fixed: a missing or unreadable file under `src/` no longer takes the whole site down. The four shortcodes were the only classes instantiated lazily on `init`, so an incomplete upload threw an uncaught `Error` out of `do_action( 'init' )` — fatalling every request including wp-admin and locking the site owner out. Each shortcode is now registered independently and skipped if its class cannot be loaded.
+* Added: the autoloader now records and logs every class it cannot resolve, naming the expected file path and whether it is absent or merely unreadable, instead of returning silently and leaving a bare "Class not found" fatal.
+* Added: an admin notice listing any files the autoloader could not load, with instructions to re-extract the plugin server-side.
+
+= 2.0.5 =
+
+**Personal data / GDPR tooling for native orders**
+
+* Added: orders are now included in Tools → Export Personal Data. A request returns the order number, date, status, contact details, delivery address, instructions, order notes, line items and total.
+* Added: orders are now included in Tools → Erase Personal Data. Erasure **anonymises rather than deletes** — name, contact details, address and notes are cleared while the order number, date, items and total survive, because tax and accounting rules require the store to keep a record of the transaction. The requester is told this in the confirmation message.
+* Added: staff notes are included in personal-data exports by default. Notes written about an identifiable customer are that customer's data and a subject access request generally reaches them; "staff-only" is a display choice, not a legal exemption. Sites needing to withhold them can use the new `pizzatier_privacy_export_staff_notes` filter.
+* Added: suggested privacy-policy text, surfaced in Settings → Privacy, describing exactly what the plugin stores.
+* Added: optional retention sweep. Set "Auto-anonymise after" on the Orders settings screen and orders older than that are anonymised on a daily cron. Off by default.
+* Added: orders are now indexed by customer email so a personal-data request can actually find them — the customer record is a serialised array and could not be queried. Existing orders are backfilled on upgrade. Guest orders are covered, not just orders from registered users.
+* Added: the Orders settings screen now warns when "Require email" is off, because orders without an email address cannot be located by WordPress's email-keyed personal-data tools and must be handled manually.
+* Added: `pizzatier_order_anonymised` action, fired after an order's personal fields are cleared.
+* The retention cron is removed on deactivation.
+
+Older entries are listed in CHANGELOG.md, included with the plugin.

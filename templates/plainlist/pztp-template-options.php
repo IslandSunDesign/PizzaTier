@@ -355,15 +355,15 @@ return [
 		'placeholder' => 'e.g. Start over',
 	],
 
-	// ── Add-to-Cart Button (PizzaTierPro) ───────────────────────────
-	// These style the WooCommerce checkout bar that PizzaTierPro renders
-	// for this template. They have no visible effect unless PizzaTierPro
+	// ── Add-to-Cart Button (PizzaTier) ───────────────────────────
+	// These style the WooCommerce checkout bar that PizzaTier renders
+	// for this template. They have no visible effect unless PizzaTier
 	// + WooCommerce are active.
 	[
 		'key'         => 'plainlist_setting_cart_btn_text',
 		'type'        => 'text',
 		'label'       => 'Add-to-Cart — Button Text',
-		'desc'        => 'CTA label shown on the checkout bar. Requires PizzaTierPro + WooCommerce.',
+		'desc'        => 'CTA label shown on the checkout bar. Requires PizzaTier + WooCommerce.',
 		'default'     => 'Add to Cart',
 		'placeholder' => 'e.g. Add to Order',
 	],

@@ -240,22 +240,22 @@
 		.plh-header__actions .dashicons { font-size: 15px !important; width: 15px !important; height: 15px !important; margin: 0; }
 
 		/* ── Pro CTA ──────────────────────────────────────────────────── */
-		.plh-pro-cta {
+		.plh-cta {
 			display: flex; align-items: center; gap: 12px;
 			background: linear-gradient(135deg, #7a2e00 0%, #5c1f00 100%);
 			border: 1px solid #c84b00; border-radius: 8px;
 			padding: 12px 16px; margin-bottom: 16px; font-size: 13px; color: #ffd9b8;
 		}
-		.plh-pro-cta__icon { font-size: 18px; }
-		.plh-pro-cta__text { flex: 1; }
-		.plh-pro-cta__text strong { color: #fff; }
-		.plh-pro-cta__text a { font-weight: 600; color: #ffad73; }
-		.plh-pro-cta__text a:hover { color: #ffd0a8; }
-		.plh-pro-cta__dismiss {
+		.plh-cta__icon { font-size: 18px; }
+		.plh-cta__text { flex: 1; }
+		.plh-cta__text strong { color: #fff; }
+		.plh-cta__text a { font-weight: 600; color: #ffad73; }
+		.plh-cta__text a:hover { color: #ffd0a8; }
+		.plh-cta__dismiss {
 			color: #ffad73; text-decoration: none; font-size: 14px;
 			padding: 2px 6px; border-radius: 3px; transition: background .15s;
 		}
-		.plh-pro-cta__dismiss:hover { background: rgba(255,107,53,.25); color: #fff; }
+		.plh-cta__dismiss:hover { background: rgba(255,107,53,.25); color: #fff; }
 
 		/* ── Setup nag ────────────────────────────────────────────────── */
 		.plh-nag {
@@ -1837,7 +1837,7 @@
 		.psm-stats strong { color:#1a1e23; font-size:15px; }
 
 		.psm-pill { display:inline-block; font-size:10px; font-weight:700; padding:2px 7px; border-radius:3px; background:#fef3c7; color:#92400e; vertical-align:middle; margin-right:4px; }
-		.psm-pill--pro { background:#fde68a; color:#92400e; }
+		.psm-pill--commerce { background:#fde68a; color:#92400e; }
 
 		.psm-details { margin:0 0 14px; }
 		.psm-details summary { cursor:pointer; font-size:12px; color:#646970; padding:6px 0; }

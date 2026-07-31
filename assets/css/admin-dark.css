@@ -142,22 +142,22 @@ body.pzl-admin-dark .plh-nag {
 body.pzl-admin-dark .plh-nag strong { color: var(--pzl-text-head) !important; }
 body.pzl-admin-dark .plh-nag__list a { color: var(--pzl-blue) !important; }
 
-body.pzl-admin-dark .plh-pro-cta {
+body.pzl-admin-dark .plh-cta {
 	background: rgba(255,255,255,.04) !important;
 	border-color: rgba(255,255,255,.1) !important;
 	color: var(--pzl-text) !important;
 }
 
-body.pzl-admin-dark .pset-pro-notice {
+body.pzl-admin-dark .pset-info-notice {
 	background: var(--pzl-warn-bg) !important;
 	border-color: var(--pzl-warn-border) !important;
 	color: var(--pzl-text) !important;
 }
-body.pzl-admin-dark .pset-pro-notice--active {
+body.pzl-admin-dark .pset-info-notice--active {
 	background: var(--pzl-info-bg) !important;
 	border-color: var(--pzl-info-border) !important;
 }
-body.pzl-admin-dark .pset-pro-notice p { color: var(--pzl-text-muted) !important; }
+body.pzl-admin-dark .pset-info-notice p { color: var(--pzl-text-muted) !important; }
 
 body.pzl-admin-dark .plhelp-alert--warn,
 body.pzl-admin-dark .plhelp-tip,

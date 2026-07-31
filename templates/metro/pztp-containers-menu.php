@@ -37,11 +37,11 @@ $mt_var = 'MT_' . preg_replace( '/[^a-zA-Z0-9_]/', '_', $instance_id );
 $mt_layout       = sanitize_key( get_option( 'metro_setting_layout_mode',             'centered' ) );
 $mt_show_tray    =               get_option( 'metro_setting_show_summary_bar',         'yes' ) === 'yes';
 $mt_show_count   =               get_option( 'metro_setting_show_ingredient_count',    'yes' ) === 'yes';
-// NOTE: pricing is provided by PizzaTierPro; the legacy
+// NOTE: pricing is provided by PizzaTier; the legacy
 // 'metro_setting_show_ingredient_prices' option is no longer read here.
 $mt_sticky_viz   =               get_option( 'metro_setting_sticky_visualizer',        'no'  ) === 'yes';
 $mt_hero_tagline = sanitize_text_field( get_option( 'metro_setting_hero_tagline',     '' ) );
-$mt_footer_note  = wp_kses_post( get_option( 'metro_setting_footer_note',             '' ) );
+$mt_footer_note  = (string) get_option( 'metro_setting_footer_note', '' ); // Escaped at output via wp_kses_post().
 $mt_columns      = sanitize_key( get_option( 'metro_setting_card_columns',            '3'  ) );
 $mt_card_style   = sanitize_key( get_option( 'metro_setting_card_style',              'standard' ) );
 $mt_tab_style    = sanitize_key( get_option( 'metro_setting_tab_style',               'scrollbar' ) );
@@ -96,32 +96,36 @@ $layer_offsets = [
 $offsets_json = wp_json_encode( $layer_offsets );
 
 
-// ── PizzaTierPro: inline size selector ──────────────────────────────────────
+// ── Add-on: inline size selector ──────────────────────────────────────
 if ( ! function_exists( 'pzt_get_pro_sizes' ) ) :
 function pzt_get_pro_sizes(): array {
-	if ( ! function_exists( 'pztpro_get_setting' ) || ! class_exists( 'PizzaTierPro\\Pro\\PriceGrid\\Grid' ) ) { return []; }
+	// Sizes come from a pricing add-on when one is installed; pzt_addon_sizes()
+	// returns an empty array otherwise and the selector simply does not render.
 	$product_id = ( function_exists( 'get_queried_object_id' ) ? (int) get_queried_object_id() : 0 );
-	if ( ! $product_id ) { global $post; if ( $post instanceof \WP_Post ) { $product_id = $post->ID; } }
-	$grid = new \PizzaTierPro\Pro\PriceGrid\Grid(); return $grid->get_sizes( $product_id );
+	if ( ! $product_id ) {
+		global $post;
+		if ( $post instanceof \WP_Post ) { $product_id = $post->ID; }
+	}
+	return pzt_addon_sizes( $product_id );
 }
 endif;
 if ( ! function_exists( 'pzt_render_inline_size_selector' ) ) :
 function pzt_render_inline_size_selector( array $sizes, string $instance_id, string $css_prefix = 'cb' ): void {
 	if ( empty( $sizes ) ) { return; }
-	// Extract numeric suffix from instance_id (handles pztpro-1, pizzabuilder-1, pztpro-1-2, etc)
+	// Extract numeric suffix from instance_id (handles pztc-1, pizzabuilder-1, pztc-1-2, etc)
 	preg_match( '/-(\d+)$/', $instance_id, $_m_suf );
 	$radio_name_raw = ! empty( $_m_suf[1] ) ? $_m_suf[1] : preg_replace( '/[^a-zA-Z0-9_]/', '_', $instance_id );
-	$radio_name = 'pztpro_size_' . $radio_name_raw;
-	$heading = function_exists( 'pztpro_get_setting' ) ? (string) pztpro_get_setting( 'size_selector_label', '' ) : '';
+	$radio_name = 'pizzatier_commerce_size_' . $radio_name_raw;
+	$heading = (string) pzt_addon_setting( 'size_selector_label', '' );
 	if ( '' === $heading ) { $heading = __( 'Choose a Size', 'pizzatier' ); }
 	?>
-	<div class="<?php echo esc_attr( $css_prefix ); ?>-size-selector pztpro-inline-size-selector" id="<?php echo esc_attr( $instance_id ); ?>-size-selector" role="group" aria-label="<?php echo esc_attr( $heading ); ?>">
+	<div class="<?php echo esc_attr( $css_prefix ); ?>-size-selector pztc-inline-size-selector" id="<?php echo esc_attr( $instance_id ); ?>-size-selector" role="group" aria-label="<?php echo esc_attr( $heading ); ?>">
 		<p class="<?php echo esc_attr( $css_prefix ); ?>-size-selector__heading"><?php echo esc_html( $heading ); ?></p>
 		<div class="<?php echo esc_attr( $css_prefix ); ?>-size-selector__options">
 			<?php foreach ( $sizes as $i => $size ) :
 				$inp_id = esc_attr( $instance_id ) . '-sz-' . sanitize_html_class( strtolower( $size ) ); ?>
-			<label class="<?php echo esc_attr( $css_prefix ); ?>-size-option pztpro-size-option<?php echo 0 === $i ? ' pztpro-size-option--active' : ''; ?>" for="<?php echo esc_attr( $inp_id ); ?>">
-				<input type="radio" id="<?php echo esc_attr( $inp_id ); ?>" name="<?php echo esc_attr( $radio_name ); ?>" value="<?php echo esc_attr( $size ); ?>" class="pztpro-size-radio" <?php checked( 0, $i ); ?> />
+			<label class="<?php echo esc_attr( $css_prefix ); ?>-size-option pztc-size-option<?php echo 0 === $i ? ' pztc-size-option--active' : ''; ?>" for="<?php echo esc_attr( $inp_id ); ?>">
+				<input type="radio" id="<?php echo esc_attr( $inp_id ); ?>" name="<?php echo esc_attr( $radio_name ); ?>" value="<?php echo esc_attr( $size ); ?>" class="pztc-size-radio" <?php checked( 0, $i ); ?> />
 				<span class="<?php echo esc_attr( $css_prefix ); ?>-size-option__name"><?php echo esc_html( $size ); ?></span>
 			</label>
 			<?php endforeach; ?>
@@ -185,7 +189,9 @@ function pzt_metro_exclusive_card( $post, string $layer_type, string $mt_var, in
 	$js_add    = "window['{$mt_var}']&&window['{$mt_var}'].swapBase('{$layer_type}','{$slug}','{$js_title}','{$js_layer}',this)";
 	$js_remove = "window['{$mt_var}']&&window['{$mt_var}'].removeBase('{$layer_type}','{$slug}',this)";
 
+	$card_html = '';
 	ob_start();
+	try {
 	do_action( 'pizzatier_before_layer_card', $post, $layer_type );
 	?>
 	<div class="mt-card mt-card--exclusive"
@@ -204,7 +210,7 @@ function pzt_metro_exclusive_card( $post, string $layer_type, string $mt_var, in
 		<div class="mt-card__footer">
 			<div class="mt-card__footer-row mt-card__footer-row--title">
 				<span class="mt-card__name"><?php echo esc_html( $title ); ?></span>
-				<?php /* Pricing is provided by PizzaTierPro; no inline price here. */ ?>
+				<?php /* Pricing is provided by PizzaTier; no inline price here. */ ?>
 			</div>
 			<div class="mt-card__footer-row mt-card__footer-row--actions">
 				<button type="button" class="mt-card__btn mt-card__btn--add" onclick="<?php echo esc_attr( $js_add ); ?>">
@@ -218,7 +224,11 @@ function pzt_metro_exclusive_card( $post, string $layer_type, string $mt_var, in
 	</div>
 	<?php
 	do_action( 'pizzatier_after_layer_card', $post, $layer_type );
-	return apply_filters( 'pizzatier_card_html', ob_get_clean(), $post, $layer_type );
+	$card_html = ob_get_contents();
+	} finally {
+		ob_end_clean();
+	}
+	return apply_filters( 'pizzatier_card_html', $card_html, $post, $layer_type  );
 }
 endif;
 
@@ -245,7 +255,9 @@ function pzt_metro_topping_card( $post, string $mt_var, int $zindex ): string {
 	$js_remove = "window['{$mt_var}']&&window['{$mt_var}'].removeTopping('pizzatier-topping-{$js_slug}','{$js_slug}',this)";
 	$js_cov    = "window['{$mt_var}']&&window['{$mt_var}'].openCoverageModal('{$js_slug}','{$js_title}','{$js_thumb}')";
 
+	$card_html = '';
 	ob_start();
+	try {
 	do_action( 'pizzatier_before_layer_card', $post, 'toppings' );
 	?>
 	<div class="mt-card mt-card--topping"
@@ -265,7 +277,7 @@ function pzt_metro_topping_card( $post, string $mt_var, int $zindex ): string {
 		<div class="mt-card__footer">
 			<div class="mt-card__footer-row mt-card__footer-row--title">
 				<span class="mt-card__name"><?php echo esc_html( $title ); ?></span>
-				<?php /* Pricing is provided by PizzaTierPro; no inline price here. */ ?>
+				<?php /* Pricing is provided by PizzaTier; no inline price here. */ ?>
 			</div>
 			<div class="mt-card__footer-row mt-card__footer-row--actions">
 				<button type="button" class="mt-card__btn mt-card__btn--add" onclick="<?php echo esc_attr( $js_add ); ?>">
@@ -284,34 +296,38 @@ function pzt_metro_topping_card( $post, string $mt_var, int $zindex ): string {
 	</div>
 	<?php
 	do_action( 'pizzatier_after_layer_card', $post, 'toppings' );
-	return apply_filters( 'pizzatier_card_html', ob_get_clean(), $post, 'toppings' );
+	$card_html = ob_get_contents();
+	} finally {
+		ob_end_clean();
+	}
+	return apply_filters( 'pizzatier_card_html', $card_html, $post, 'toppings'  );
 }
 endif;
 
 // Build all card HTML
 $crusts_html = '';
-foreach ( $crusts as $post ) { $crusts_html .= pzt_metro_exclusive_card( $post, 'crust', $mt_var, 100 ); }
+foreach ( $crusts as $pzt_layer ) { $crusts_html .= pzt_metro_exclusive_card( $pzt_layer, 'crust', $mt_var, 100 ); }
 if ( ! $crusts_html ) { $crusts_html = '<p class="mt-empty">' . esc_html__( 'No crusts found.', 'pizzatier' ) . '</p>'; }
 
 $sauces_html = '';
-foreach ( $sauces as $post ) { $sauces_html .= pzt_metro_exclusive_card( $post, 'sauce', $mt_var, 150 ); }
+foreach ( $sauces as $pzt_layer ) { $sauces_html .= pzt_metro_exclusive_card( $pzt_layer, 'sauce', $mt_var, 150 ); }
 if ( ! $sauces_html ) { $sauces_html = '<p class="mt-empty">' . esc_html__( 'No sauces found.', 'pizzatier' ) . '</p>'; }
 
 $cheeses_html = '';
-foreach ( $cheeses as $post ) { $cheeses_html .= pzt_metro_exclusive_card( $post, 'cheese', $mt_var, 200 ); }
+foreach ( $cheeses as $pzt_layer ) { $cheeses_html .= pzt_metro_exclusive_card( $pzt_layer, 'cheese', $mt_var, 200 ); }
 if ( ! $cheeses_html ) { $cheeses_html = '<p class="mt-empty">' . esc_html__( 'No cheeses found.', 'pizzatier' ) . '</p>'; }
 
 $drizzles_html = '';
-foreach ( $drizzles as $post ) { $drizzles_html .= pzt_metro_exclusive_card( $post, 'drizzle', $mt_var, 900 ); }
+foreach ( $drizzles as $pzt_layer ) { $drizzles_html .= pzt_metro_exclusive_card( $pzt_layer, 'drizzle', $mt_var, 900 ); }
 if ( ! $drizzles_html ) { $drizzles_html = '<p class="mt-empty">' . esc_html__( 'No drizzles found.', 'pizzatier' ) . '</p>'; }
 
 $toppings_html = '';
 $t_z = 400;
-foreach ( $toppings as $post ) { $toppings_html .= pzt_metro_topping_card( $post, $mt_var, $t_z ); $t_z += 10; }
+foreach ( $toppings as $pzt_layer ) { $toppings_html .= pzt_metro_topping_card( $pzt_layer, $mt_var, $t_z ); $t_z += 10; }
 if ( ! $toppings_html ) { $toppings_html = '<p class="mt-empty">' . esc_html__( 'No toppings found.', 'pizzatier' ) . '</p>'; }
 
 $cuts_html = '';
-foreach ( $cuts as $post ) { $cuts_html .= pzt_metro_exclusive_card( $post, 'cut', $mt_var, 950 ); }
+foreach ( $cuts as $pzt_layer ) { $cuts_html .= pzt_metro_exclusive_card( $pzt_layer, 'cut', $mt_var, 950 ); }
 if ( ! $cuts_html ) { $cuts_html = '<p class="mt-empty">' . esc_html__( 'No cut styles found.', 'pizzatier' ) . '</p>'; }
 
 // Initial pizza render
@@ -365,7 +381,7 @@ $section_meta = [
 
 			<div class="mt-hero__pizza-wrap">
 				<div class="mt-hero__canvas" id="<?php echo esc_attr( $instance_id ); ?>-canvas">
-					<?php echo $initial_pizza; // phpcs:ignore WordPress.Security.EscapeOutput -- built by PizzaBuilder ?>
+					<?php echo wp_kses( $initial_pizza, pzt_card_allowed_html() );?>
 				</div>
 			</div>
 
@@ -414,7 +430,7 @@ $section_meta = [
 			<?php endif; ?>
 			<div class="mt-sidebar__pizza-wrap">
 				<div class="mt-hero__canvas mt-sidebar__canvas" id="<?php echo esc_attr( $instance_id ); ?>-sidebar-canvas">
-					<?php echo $initial_pizza; // phpcs:ignore WordPress.Security.EscapeOutput ?>
+					<?php echo wp_kses( $initial_pizza, pzt_card_allowed_html() );?>
 				</div>
 			</div>
 			<div class="mt-hero__meta">
@@ -436,12 +452,12 @@ $section_meta = [
 		<!-- Section nav (anchors + step-mode toggle) -->
 		<nav class="mt-section-nav" id="<?php echo esc_attr( $instance_id ); ?>-section-nav" aria-label="<?php esc_attr_e( 'Builder sections', 'pizzatier' ); ?>">
 			<div class="mt-section-nav__links">
-				<?php foreach ( $visible_tabs as $tab ) :
-					if ( ! isset( $section_meta[ $tab ] ) ) { continue; }
-					[ $icon, $label ] = $section_meta[ $tab ];
+				<?php foreach ( $visible_tabs as $pzt_tab ) :
+					if ( ! isset( $section_meta[ $pzt_tab ] ) ) { continue; }
+					[ $icon, $label ] = $section_meta[ $pzt_tab ];
 				?>
-				<a class="mt-section-nav__item" data-section="<?php echo esc_attr( $tab ); ?>"
-				   href="#<?php echo esc_attr( $instance_id . '-section-' . $tab ); ?>">
+				<a class="mt-section-nav__item" data-section="<?php echo esc_attr( $pzt_tab ); ?>"
+				   href="#<?php echo esc_attr( $instance_id . '-section-' . $pzt_tab ); ?>">
 					<i class="fa <?php echo esc_attr( $icon ); ?>"></i>
 					<span><?php echo esc_html( $label ); ?></span>
 				</a>
@@ -487,13 +503,13 @@ $section_meta = [
 	<?php do_action( 'pizzatier_after_tab_size', $instance_id ); ?>
 	<?php endif; ?>
 
-		<?php foreach ( $visible_tabs as $tab ) :
-			if ( ! isset( $section_meta[ $tab ] ) ) { continue; }
-			[ $icon, $label, $cards_html ] = $section_meta[ $tab ];
-			$is_toppings = ( $tab === 'toppings' );
+		<?php foreach ( $visible_tabs as $pzt_tab ) :
+			if ( ! isset( $section_meta[ $pzt_tab ] ) ) { continue; }
+			[ $icon, $label, $cards_html ] = $section_meta[ $pzt_tab ];
+			$is_toppings = ( $pzt_tab === 'toppings' );
 		?>
-		<?php do_action( 'pizzatier_before_tab_' . $tab, $instance_id ); ?>
-		<section class="mt-section" id="<?php echo esc_attr( $instance_id . '-section-' . $tab ); ?>" data-section="<?php echo esc_attr( $tab ); ?>">
+		<?php do_action( 'pizzatier_before_tab_' . $pzt_tab, $instance_id ); ?>
+		<section class="mt-section" id="<?php echo esc_attr( $instance_id . '-section-' . $pzt_tab ); ?>" data-section="<?php echo esc_attr( $pzt_tab ); ?>">
 
 			<div class="mt-section__header">
 				<div class="mt-section__header-inner">
@@ -515,18 +531,18 @@ $section_meta = [
 			</div>
 
 			<div class="mt-cards-grid<?php echo $is_toppings ? ' mt-cards-grid--toppings' : ' mt-cards-grid--exclusive'; ?> <?php echo esc_attr( $mt_col_class ); ?>">
-				<?php echo $cards_html; // phpcs:ignore WordPress.Security.EscapeOutput ?>
+				<?php echo wp_kses( $cards_html, pzt_card_allowed_html() );?>
 			</div>
 
-			<?php if ( $tab === 'slicing' ) : ?>
-			<!-- Action bar: PizzaTierPro hooks here -->
+			<?php if ( $pzt_tab === 'slicing' ) : ?>
+			<!-- Action bar: PizzaTier hooks here -->
 			<div class="mt-action-bar">
 				<!-- Action bar moved to root level below -->
 			</div>
 			<?php endif; ?>
 
 		</section>
-		<?php do_action( 'pizzatier_after_tab_' . $tab, $instance_id ); ?>
+		<?php do_action( 'pizzatier_after_tab_' . $pzt_tab, $instance_id ); ?>
 		<?php endforeach; ?>
 
 	</div><!-- /.mt-builder -->
@@ -580,7 +596,7 @@ $section_meta = [
 	<?php if ( $mt_footer_note ) : ?>
 	<!-- ── Builder footer note ───────────────────────────────── -->
 	<div class="mt-footer-note">
-		<?php echo $mt_footer_note; // phpcs:ignore WordPress.Security.EscapeOutput -- sanitized via wp_kses_post on read ?>
+		<?php echo wp_kses_post( $mt_footer_note );?>
 	</div>
 	<?php endif; ?>
 

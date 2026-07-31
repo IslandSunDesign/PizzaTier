@@ -83,11 +83,41 @@ class Help {
 			'migration'  => [ 'icon' => '↗',  'title' => __( 'Site Migration', 'pizzatier' )        ],
 			'faq'        => [ 'icon' => '❓', 'title' => __( 'FAQ', 'pizzatier' )                   ],
 			'developer'  => [ 'icon' => '⚙',  'title' => __( 'Developer Reference', 'pizzatier' )   ],
+
+			// ── Cart & pricing ───────────────────────────────────────
+			// Documentation for the feature set that arrived with the
+			// PizzaTier merge. Rendered by PizzaTier\Commerce\Admin\Help so a
+			// single Help screen covers the whole plugin. See COMMERCE_SECTIONS.
+			'commerce-overview'   => [ 'icon' => '🛒', 'title' => __( 'Cart & Pricing Overview', 'pizzatier' ) ],
+			'commerce-price-grid' => [ 'icon' => '💲', 'title' => __( 'Price Grids', 'pizzatier' )             ],
+			'commerce-cart'       => [ 'icon' => '🧾', 'title' => __( 'Cart & Orders', 'pizzatier' )           ],
+			'commerce-display'    => [ 'icon' => '👁',  'title' => __( 'Cart Display Settings', 'pizzatier' )   ],
 		];
 	}
 
+	/**
+	 * Help sections owned by the cart-and-pricing feature set.
+	 *
+	 * Map of this page's section key => the slug used by
+	 * PizzaTier\Commerce\Admin\Help. Sections whose subject matter already has a
+	 * home on this page — migration, FAQ and developer reference — are
+	 * deliberately not duplicated here.
+	 */
+	private const COMMERCE_SECTIONS = [
+		'commerce-overview'   => 'overview',
+		'commerce-price-grid' => 'price-grid',
+		'commerce-cart'       => 'cart',
+		'commerce-display'    => 'display',
+	];
+
 	private function render_section( string $key, array $meta ): void {
 		echo '<h2 class="plhelp-section-title">' . esc_html( $meta['icon'] ) . ' ' . esc_html( $meta['title'] ) . '</h2>';
+
+		if ( isset( self::COMMERCE_SECTIONS[ $key ] ) ) {
+			( new \PizzaTier\Commerce\Admin\Help() )->render_embedded_section( self::COMMERCE_SECTIONS[ $key ] );
+			return;
+		}
+
 		$method = 'section_' . $key;
 		if ( method_exists( $this, $method ) ) { $this->$method(); }
 	}
@@ -253,7 +283,7 @@ class Help {
 					'Optionally add a <strong>Topping Image</strong> (<code>topping_image</code>) for the card thumbnail.',
 					'Set a <strong>Max Toppings</strong> limit in <em>PizzaTier → Settings</em> if desired.',
 					'Click <strong>Publish</strong>. Repeat for each topping.',
-					'<em>Pricing:</em> install <strong>PizzaTierPro</strong> to configure per-topping price grids and WooCommerce checkout.',
+					'<em>Pricing:</em> set per-topping price grids and checkout behaviour under <strong>PizzaTier → Cart &amp; Pricing</strong>.',
 				],
 				'tip'   => 'Spread topping art across the <em>entire</em> 800×800 px canvas — do not centre or crop to one half. PizzaTier clips the image automatically for half/quarter portions.',
 				'cpt'   => 'toppings',
@@ -463,7 +493,7 @@ class Help {
 		</ul>
 
 		<h3>Sizes and pricing data</h3>
-		<p>Sizes are not visual layers — they carry dimension metadata for PizzaTierPro pricing calculations. For each Size post, add these custom fields:</p>
+		<p>Sizes are not visual layers — they carry the dimension metadata used for pricing calculations. For each Size post, add these custom fields:</p>
 		<table class="plhelp-attr-table">
 			<thead><tr><th>Custom Field</th><th>Example value</th><th>Description</th></tr></thead>
 			<tbody>
@@ -477,7 +507,7 @@ class Help {
 			<li>Create a "Plain / No Sauce" sauce item so customers can opt out of sauce without breaking the builder.</li>
 			<li>Create a "No Cheese" cheese item similarly.</li>
 			<li>Keep your layer image filenames descriptive (e.g. <code>topping-pepperoni-layer.png</code>) for easier management in the Media Library.</li>
-			<li>Use WordPress <strong>Categories</strong> (available on all PizzaTier CPTs) to group items — some Pro templates use category filtering.</li>
+			<li>Use WordPress <strong>Categories</strong> (available on all PizzaTier CPTs) to group items — some templates use category filtering.</li>
 		</ul>
 	<?php }
 
@@ -578,11 +608,11 @@ class Help {
 				'color'  => '#8c5af8',
 				'cpt'    => 'sizes',
 				'z'      => '—',
-				'desc'   => 'Defines available pizza dimensions. Not a visual layer — carries metadata used by PizzaTierPro for pricing.',
+				'desc'   => 'Defines available pizza dimensions. Not a visual layer — carries the metadata used for pricing.',
 				'fields' => [
 					'Title'            => 'Public name (e.g. "Small – 10″", "Medium – 12″", "Large – 16″").',
 					'size_diameter_in' => 'Custom field: diameter in inches.',
-					'size_area_sqin'   => 'Custom field: area in square inches (used for per-area topping pricing in Pro).',
+					'size_area_sqin'   => 'Custom field: area in square inches (used for per-area topping pricing).',
 				],
 				'tips'   => 'Calculate area accurately: area = π × (diameter/2)². For a 12″ pizza: π × 36 ≈ 113.1 sq in.',
 			],
@@ -925,7 +955,7 @@ class Help {
 	// 7. SITE MIGRATION
 	// ═══════════════════════════════════════════════════════════════════
 	private function section_migration(): void { ?>
-		<p class="plhelp-lead">Move an entire PizzaTier setup — settings, ingredients, custom fields, taxonomy, and Pro data — to another WordPress installation. Site Migration produces a single JSON file you can carry between sites.</p>
+		<p class="plhelp-lead">Move an entire PizzaTier setup — settings, ingredients, custom fields, taxonomy, prices and cart configuration — to another WordPress installation. Site Migration produces a single JSON file you can carry between sites.</p>
 
 		<h3>What gets exported</h3>
 		<ul class="plhelp-list">
@@ -934,13 +964,13 @@ class Help {
 			<li><strong>All custom fields (post meta)</strong> per item, including any user-added meta keys (allergens, ingredient lists, melt factors, etc.).</li>
 			<li><strong>The Ingredient Groups taxonomy tree</strong> with parent/child relationships, plus per-post term assignments.</li>
 			<li><strong>Layer image references</strong> — URL, filename, alt text, and caption — instead of packaged binary files. The destination site sideloads each image into its own media library by URL on import.</li>
-			<li><strong>PizzaTierPro data</strong>, when Pro is installed and active. Pro contributes its own settings, pricing grids, and Pro-specific post meta via the <code>pizzatier_export_payload</code> filter.</li>
+			<li><strong>Cart &amp; pricing data</strong> — settings, price grids, and your WooCommerce pizza products, contributed through the <code>pizzatier_export_payload</code> filter.</li>
 		</ul>
 
 		<h3>How to migrate a site</h3>
 		<ol class="plhelp-list plhelp-list--numbered">
 			<li>On the source site, go to <strong>PizzaTier → Site Migration</strong> and click <strong>Download Full Export</strong>. You'll get a <code>pizzatier-site-{date}.json</code> file.</li>
-			<li>On the destination WordPress installation, install and activate PizzaTier (and PizzaTierPro, if you used it on the source).</li>
+			<li>On the destination WordPress installation, install and activate PizzaTier (and PizzaTier, if you used it on the source).</li>
 			<li>Go to <strong>PizzaTier → Site Migration</strong> on the destination site, choose which sections to restore, upload the JSON, and click <strong>Run Import</strong>.</li>
 			<li>Wait for the sideload — each layer image is downloaded from its original URL into the destination media library. The source site must be reachable over HTTP for this step to succeed.</li>
 		</ol>
@@ -957,7 +987,7 @@ class Help {
 		<p>If the source site goes offline before you import, the JSON still imports cleanly — you just won't get the images. You can swap in replacement images per post afterwards via the standard <strong>Layer Image</strong> meta box.</p>
 
 		<h3>For developers — extending the export</h3>
-		<p>PizzaTierPro and other add-ons hook into two filters / actions:</p>
+		<p>Two filters and actions let you extend the export and import:</p>
 		<table class="plhelp-attr-table">
 			<thead><tr><th>Hook</th><th>Type</th><th>Args</th><th>Description</th></tr></thead>
 			<tbody>
@@ -965,7 +995,7 @@ class Help {
 					<td><code>pizzatier_export_payload</code></td>
 					<td>filter</td>
 					<td><code>$payload</code></td>
-					<td>Add your data to the export array before serialization. Standard convention: contribute under the <code>pro</code> key (Pro) or a clearly namespaced top-level key (other add-ons).</td>
+					<td>Add your data to the export array before serialization. PizzaTier contributes its own cart and pricing data under the <code>commerce</code> key; use a clearly namespaced top-level key of your own.</td>
 				</tr>
 				<tr>
 					<td><code>pizzatier_import_payload</code></td>
@@ -976,23 +1006,23 @@ class Help {
 			</tbody>
 		</table>
 
-		<h4>Example: Pro contributes its data</h4>
+		<h4>Example: contributing your own data</h4>
 		<pre class="plhelp-code"><?php echo esc_html(
 'add_filter( \'pizzatier_export_payload\', function( $payload ) {
-    $payload[\'pro\'] = [
+    $payload[\'commerce\'] = [
         \'settings\' => [
             \'pro_setting_currency\'   => get_option( \'pro_setting_currency\' ),
             \'pro_setting_price_grid\' => get_option( \'pro_setting_price_grid\' ),
         ],
-        // Per-post Pro meta is already exported under each post\'s `meta`
+        // Per-post meta is already exported under each post\'s `meta`
         // key, so you usually don\'t need to duplicate it here.
     ];
     return $payload;
 } );
 
 add_action( \'pizzatier_import_payload\', function( $payload, $results ) {
-    if ( empty( $payload[\'pro\'] ) ) { return; }
-    foreach ( $payload[\'pro\'][\'settings\'] ?? [] as $key => $value ) {
+    if ( empty( $payload[\'commerce\'] ) ) { return; }
+    foreach ( $payload[\'commerce\'][\'settings\'] ?? [] as $key => $value ) {
         if ( strpos( $key, \'pro_setting_\' ) !== 0 ) { continue; }
         update_option( sanitize_key( $key ), $value );
     }
@@ -1014,7 +1044,7 @@ add_action( \'pizzatier_import_payload\', function( $payload, $results ) {
 			[ 'q' => 'The builder CSS conflicts with my theme.',
 			  'a' => 'PizzaTier templates use namespaced CSS classes (e.g. <code>.np-*</code> for NightPie) to avoid conflicts. If you still see issues, open your browser inspector, identify the conflicting rule\'s selector, and add a more specific override in your theme\'s custom CSS or in a child template\'s <code>template.css</code>.' ],
 			[ 'q' => 'How do I add WooCommerce cart integration?',
-			  'a' => 'WooCommerce integration (add-to-cart, line item breakdown, per-topping pricing) is provided by <strong>PizzaTierPro</strong>. The base plugin handles the visual builder; Pro handles the commerce layer.' ],
+			  'a' => 'Yes — it is built in. PizzaTier registers a "Pizza" WooCommerce product type, embeds the builder on its product page, prices the build server-side from your price grids, and stores the full configuration on the order line item. Configure it under <strong>PizzaTier → Cart &amp; Pricing</strong>. WooCommerce is optional: without it you can still take orders through PizzaTier\'s own ordering system.' ],
 			[ 'q' => 'Can I display a static pizza without the full builder?',
 			  'a' => 'Yes — use <code>[pizza_static crust="thin-crust" sauce="tomato" cheese="mozzarella" toppings="pepperoni"]</code>. Specify each layer directly in the shortcode attributes. No builder UI is rendered.' ],
 			[ 'q' => 'How do I pre-load a state from JavaScript (e.g. from a WooCommerce cart)?',
@@ -1094,7 +1124,7 @@ add_action( \'pizzatier_import_payload\', function( $payload, $results ) {
 				<tr>
 					<td><code>pizzatier_import_payload</code></td>
 					<td><code>$payload, $results</code></td>
-					<td>Fires after the free-plugin import has run on Site Migration. Pro and other add-ons hook here to consume their own section of the JSON payload. See the Site Migration section for an example.</td>
+					<td>Fires after the main import has run on Site Migration. Hook here to consume your own section of the JSON payload. See the Site Migration section for an example.</td>
 				</tr>
 			</tbody>
 		</table>
@@ -1132,7 +1162,7 @@ add_action( \'pizzatier_import_payload\', function( $payload, $results ) {
 					<td><code>pizzatier_export_payload</code></td>
 					<td><code>$payload</code></td>
 					<td><code>$payload</code></td>
-					<td>Add data to the Site Migration export JSON before serialization. Pro hooks here to contribute its settings, pricing grids, and Pro-only meta under the <code>pro</code> key.</td>
+					<td>Add data to the Site Migration export JSON before serialization. PizzaTier uses it for its own cart and pricing data under the <code>commerce</code> key.</td>
 				</tr>
 			</tbody>
 		</table>
@@ -1257,7 +1287,7 @@ PizzaTier\Admin\TemplateChoice    — template picker UI + per-template settings
 PizzaTier\Admin\LayerBuilderWizard — step-by-step wizard for adding ingredients
 PizzaTier\Admin\LayerImageMaker   — in-admin layer image generation tool
 PizzaTier\Admin\LayerImageMetaBox — layer image custom field meta box
-PizzaTier\Admin\SiteMigration     — full-site export/import (settings + CPTs + meta + Pro hook)
+PizzaTier\Admin\SiteMigration     — full-site export/import (settings + CPTs + meta + extension hook)
 
 // Post Types
 PizzaTier\PostTypes\PostTypeRegistrar — all 8 CPT registrations (7 layer types + Presets)
@@ -1297,7 +1327,7 @@ PizzaTier\Blocks\BlockRegistrar   — Gutenberg block registration'
 		<div class="plhelp-info-box plhelp-info-box--dev">
 			<span class="dashicons dashicons-admin-plugins"></span>
 			<div>
-				<strong>Building an add-on?</strong> Check for <code>class_exists('PizzaTier\Plugin')</code> before hooking in. Use <code>pizzatier_cpt_registered</code> as your init point to guarantee all CPTs are available. The public JS API is available on any page the builder loads — no additional enqueue needed.
+				<strong>Building an extension?</strong> Check for <code>class_exists('PizzaTier\Plugin')</code> before hooking in. Use <code>pizzatier_cpt_registered</code> as your init point to guarantee all CPTs are available. The public JS API is available on any page the builder loads — no additional enqueue needed.
 			</div>
 		</div>
 	<?php }

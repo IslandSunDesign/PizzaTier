@@ -228,7 +228,19 @@ class AdminBar {
 			] );
 		}
 
-		// ── Hook for Pro / custom additions ─────────────────────────────
+		// ── WooCommerce products ────────────────────────────────────────
+		// Was PizzaTier's only admin-bar contribution, added through the
+		// hook below from a nine-line class. Folded in directly with the merge.
+		if ( class_exists( 'WooCommerce' ) ) {
+			$bar->add_menu( [
+				'parent' => 'pizzatier',
+				'id'     => 'pizzatier-wc-products',
+				'title'  => __( 'WC Products', 'pizzatier' ),
+				'href'   => admin_url( 'edit.php?post_type=product' ),
+			] );
+		}
+
+		// ── Hook for third-party additions ──────────────────────────────
 		do_action( 'pizzatier_admin_bar_menu', $bar );
 	}
 

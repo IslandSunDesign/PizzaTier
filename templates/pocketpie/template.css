@@ -1245,10 +1245,10 @@
    POCKETPIE — CHECKOUT BAR RESPONSIVE
    ══════════════════════════════════════════════════════════════ */
 @media (max-width: 540px) {
-    .pztpro-checkout-bar--pocketpie .pztpro-pp-bar__actions {
+    .pztc-checkout-bar--pocketpie .pztc-pp-bar__actions {
         flex-wrap: wrap;
     }
-    .pztpro-checkout-bar--pocketpie .pztpro-bar-row__btn {
+    .pztc-checkout-bar--pocketpie .pztc-bar-row__btn {
         width: 100%;
         justify-content: center;
     }
@@ -1309,7 +1309,7 @@
 .pp-size-chip input[type="radio"] { display: none; }
 .pp-size-chip:hover,
 .pp-size-chip.pp-size-chip--active,
-.pp-size-chip.pztpro-size-option--active {
+.pp-size-chip.pztc-size-option--active {
     border-color: var(--pp-accent, #ff9a1a);
     background: rgba(255,154,26,0.14);
     color: var(--pp-accent, #ff9a1a);
@@ -1320,7 +1320,7 @@
 }
 
 /* 2. Custom checkout bar — PocketPie edition */
-.pztpro-checkout-bar--pocketpie {
+.pztc-checkout-bar--pocketpie {
     margin-top: 10px;
 }
 
@@ -1351,7 +1351,7 @@
    Pro renders checkout-bar.php inside .pp-root; all visual styling
    for the CTA lives here in the template stylesheet.
    ══════════════════════════════════════════════════════════════ */
-.pp-root .pztpro-checkout-bar--pocketpie {
+.pp-root .pztc-checkout-bar--pocketpie {
     display: flex;
     flex-direction: column;
     gap: 10px;
@@ -1361,33 +1361,33 @@
     border-radius: var(--pp-radius);
 }
 
-.pp-root .pztpro-checkout-bar--pocketpie .pztpro-pp-bar__meta {
+.pp-root .pztc-checkout-bar--pocketpie .pztc-pp-bar__meta {
     display: flex;
     align-items: baseline;
     justify-content: space-between;
     gap: 10px;
 }
-.pp-root .pztpro-checkout-bar--pocketpie .pztpro-bar-row__size-label {
+.pp-root .pztc-checkout-bar--pocketpie .pztc-bar-row__size-label {
     font-size: 12px;
     color: var(--pp-muted);
     text-transform: uppercase;
     letter-spacing: 0.05em;
 }
-.pp-root .pztpro-checkout-bar--pocketpie .pztpro-bar-row__price {
+.pp-root .pztc-checkout-bar--pocketpie .pztc-bar-row__price {
     font-size: 20px;
     font-weight: 700;
     color: var(--pp-accent);
     font-family: var(--pp-font);
 }
 
-.pp-root .pztpro-checkout-bar--pocketpie .pztpro-pp-bar__actions {
+.pp-root .pztc-checkout-bar--pocketpie .pztc-pp-bar__actions {
     display: flex;
     align-items: stretch;
     gap: 10px;
 }
 
 /* Quantity stepper */
-.pp-root .pztpro-checkout-bar--pocketpie .pztpro-bar-qty {
+.pp-root .pztc-checkout-bar--pocketpie .pztc-bar-qty {
     display: inline-flex;
     align-items: center;
     gap: 2px;
@@ -1397,7 +1397,7 @@
     padding: 2px;
     flex-shrink: 0;
 }
-.pp-root .pztpro-checkout-bar--pocketpie .pztpro-qty-btn {
+.pp-root .pztc-checkout-bar--pocketpie .pztc-qty-btn {
     width: 34px;
     height: 38px;
     border: none;
@@ -1409,9 +1409,9 @@
     border-radius: var(--pp-radius-sm);
     transition: background var(--pp-trans), color var(--pp-trans);
 }
-.pp-root .pztpro-checkout-bar--pocketpie .pztpro-qty-btn:hover:not(:disabled) { background: var(--pp-accent); color: #1a1008; }
-.pp-root .pztpro-checkout-bar--pocketpie .pztpro-qty-btn:disabled { opacity: 0.4; cursor: not-allowed; }
-.pp-root .pztpro-checkout-bar--pocketpie .pztpro-qty-value {
+.pp-root .pztc-checkout-bar--pocketpie .pztc-qty-btn:hover:not(:disabled) { background: var(--pp-accent); color: #1a1008; }
+.pp-root .pztc-checkout-bar--pocketpie .pztc-qty-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+.pp-root .pztc-checkout-bar--pocketpie .pztc-qty-value {
     min-width: 28px;
     text-align: center;
     font-weight: 700;
@@ -1420,8 +1420,8 @@
 }
 
 /* The CTA itself — prominent amber gradient, full-width */
-.pp-root .pztpro-checkout-bar--pocketpie .pztpro-add-to-cart-btn,
-.pp-root .pztpro-checkout-bar--pocketpie .pztpro-bar-row__btn {
+.pp-root .pztc-checkout-bar--pocketpie .pztc-add-to-cart-btn,
+.pp-root .pztc-checkout-bar--pocketpie .pztc-bar-row__btn {
     flex: 1 1 auto;
     display: inline-flex;
     align-items: center;
@@ -1442,26 +1442,26 @@
     box-shadow: 0 4px 18px rgba(255,130,20,0.35);
     transition: transform 0.12s ease, box-shadow var(--pp-trans), filter var(--pp-trans);
 }
-.pp-root .pztpro-checkout-bar--pocketpie .pztpro-add-to-cart-btn:hover {
+.pp-root .pztc-checkout-bar--pocketpie .pztc-add-to-cart-btn:hover {
     transform: translateY(-1px);
     filter: brightness(1.05);
     box-shadow: 0 6px 24px rgba(255,130,20,0.45);
 }
-.pp-root .pztpro-checkout-bar--pocketpie .pztpro-add-to-cart-btn:active { transform: scale(0.98); }
-.pp-root .pztpro-checkout-bar--pocketpie .pztpro-add-to-cart-btn:disabled {
+.pp-root .pztc-checkout-bar--pocketpie .pztc-add-to-cart-btn:active { transform: scale(0.98); }
+.pp-root .pztc-checkout-bar--pocketpie .pztc-add-to-cart-btn:disabled {
     opacity: 0.55;
     cursor: not-allowed;
     box-shadow: none;
     filter: grayscale(0.3);
 }
-.pp-root .pztpro-checkout-bar--pocketpie .pztpro-add-to-cart-btn svg {
+.pp-root .pztc-checkout-bar--pocketpie .pztc-add-to-cart-btn svg {
     width: 20px;
     height: 20px;
     flex-shrink: 0;
 }
 
 /* Order-note input */
-.pp-root .pztpro-checkout-bar--pocketpie .pztpro-bar-notes__input {
+.pp-root .pztc-checkout-bar--pocketpie .pztc-bar-notes__input {
     width: 100%;
     resize: vertical;
     background: var(--pp-bg-3);
@@ -1472,7 +1472,7 @@
     font-size: 13px;
     padding: 8px 10px;
 }
-.pp-root .pztpro-checkout-bar--pocketpie .pztpro-bar-notes__input:focus {
+.pp-root .pztc-checkout-bar--pocketpie .pztc-bar-notes__input:focus {
     outline: none;
     border-color: var(--pp-accent);
 }

@@ -30,13 +30,13 @@ $pl_check_style  = sanitize_key( get_option( 'plainlist_setting_check_style',   
 $pl_columns      = sanitize_key( get_option( 'plainlist_setting_columns',           '1'           ) );
 $pl_show_dividers  = get_option( 'plainlist_setting_show_dividers',  'yes' ) === 'yes';
 $pl_show_icons     = get_option( 'plainlist_setting_show_section_icons', 'yes' ) === 'yes';
-// NOTE: pricing is provided by PizzaTierPro; the legacy
+// NOTE: pricing is provided by PizzaTier; the legacy
 // 'plainlist_setting_show_prices' option is no longer read here.
 $pl_show_count     = get_option( 'plainlist_setting_show_item_count','no'  ) === 'yes';
 $pl_show_summary   = get_option( 'plainlist_setting_show_summary',   'yes' ) === 'yes';
 $pl_show_reset     = get_option( 'plainlist_setting_show_reset',     'yes' ) === 'yes';
 $pl_intro_text     = sanitize_text_field( get_option( 'plainlist_setting_intro_text', '' ) );
-$pl_footer_note    = wp_kses_post( get_option( 'plainlist_setting_footer_note', '' ) );
+$pl_footer_note    = (string) get_option( 'plainlist_setting_footer_note', '' ); // Escaped at output via wp_kses_post().
 $pl_summary_heading = sanitize_text_field( get_option( 'plainlist_setting_summary_heading', 'Your Selection' ) );
 $pl_reset_label    = sanitize_text_field( get_option( 'plainlist_setting_reset_label', 'Clear all' ) );
 $pl_step_next      = sanitize_text_field( get_option( 'plainlist_setting_step_btn_label_next', 'Next →' ) );
@@ -72,32 +72,36 @@ $pl_col_class_map = [
 $pl_col_class = $pl_col_class_map[ $pl_columns ] ?? '';
 
 
-// ── PizzaTierPro: inline size selector ──────────────────────────────────────
+// ── Add-on: inline size selector ──────────────────────────────────────
 if ( ! function_exists( 'pzt_get_pro_sizes' ) ) :
 function pzt_get_pro_sizes(): array {
-	if ( ! function_exists( 'pztpro_get_setting' ) || ! class_exists( 'PizzaTierPro\\Pro\\PriceGrid\\Grid' ) ) { return []; }
+	// Sizes come from a pricing add-on when one is installed; pzt_addon_sizes()
+	// returns an empty array otherwise and the selector simply does not render.
 	$product_id = ( function_exists( 'get_queried_object_id' ) ? (int) get_queried_object_id() : 0 );
-	if ( ! $product_id ) { global $post; if ( $post instanceof \WP_Post ) { $product_id = $post->ID; } }
-	$grid = new \PizzaTierPro\Pro\PriceGrid\Grid(); return $grid->get_sizes( $product_id );
+	if ( ! $product_id ) {
+		global $post;
+		if ( $post instanceof \WP_Post ) { $product_id = $post->ID; }
+	}
+	return pzt_addon_sizes( $product_id );
 }
 endif;
 if ( ! function_exists( 'pzt_render_inline_size_selector' ) ) :
 function pzt_render_inline_size_selector( array $sizes, string $instance_id, string $css_prefix = 'cb' ): void {
 	if ( empty( $sizes ) ) { return; }
-	// Extract numeric suffix from instance_id (handles pztpro-1, pizzabuilder-1, pztpro-1-2, etc)
+	// Extract numeric suffix from instance_id (handles pztc-1, pizzabuilder-1, pztc-1-2, etc)
 	preg_match( '/-(\d+)$/', $instance_id, $_m_suf );
 	$radio_name_raw = ! empty( $_m_suf[1] ) ? $_m_suf[1] : preg_replace( '/[^a-zA-Z0-9_]/', '_', $instance_id );
-	$radio_name = 'pztpro_size_' . $radio_name_raw;
-	$heading = function_exists( 'pztpro_get_setting' ) ? (string) pztpro_get_setting( 'size_selector_label', '' ) : '';
+	$radio_name = 'pizzatier_commerce_size_' . $radio_name_raw;
+	$heading = (string) pzt_addon_setting( 'size_selector_label', '' );
 	if ( '' === $heading ) { $heading = __( 'Choose a Size', 'pizzatier' ); }
 	?>
-	<div class="<?php echo esc_attr( $css_prefix ); ?>-size-selector pztpro-inline-size-selector" id="<?php echo esc_attr( $instance_id ); ?>-size-selector" role="group" aria-label="<?php echo esc_attr( $heading ); ?>">
+	<div class="<?php echo esc_attr( $css_prefix ); ?>-size-selector pztc-inline-size-selector" id="<?php echo esc_attr( $instance_id ); ?>-size-selector" role="group" aria-label="<?php echo esc_attr( $heading ); ?>">
 		<p class="<?php echo esc_attr( $css_prefix ); ?>-size-selector__heading"><?php echo esc_html( $heading ); ?></p>
 		<div class="<?php echo esc_attr( $css_prefix ); ?>-size-selector__options">
 			<?php foreach ( $sizes as $i => $size ) :
 				$inp_id = esc_attr( $instance_id ) . '-sz-' . sanitize_html_class( strtolower( $size ) ); ?>
-			<label class="<?php echo esc_attr( $css_prefix ); ?>-size-option pztpro-size-option<?php echo 0 === $i ? ' pztpro-size-option--active' : ''; ?>" for="<?php echo esc_attr( $inp_id ); ?>">
-				<input type="radio" id="<?php echo esc_attr( $inp_id ); ?>" name="<?php echo esc_attr( $radio_name ); ?>" value="<?php echo esc_attr( $size ); ?>" class="pztpro-size-radio" <?php checked( 0, $i ); ?> />
+			<label class="<?php echo esc_attr( $css_prefix ); ?>-size-option pztc-size-option<?php echo 0 === $i ? ' pztc-size-option--active' : ''; ?>" for="<?php echo esc_attr( $inp_id ); ?>">
+				<input type="radio" id="<?php echo esc_attr( $inp_id ); ?>" name="<?php echo esc_attr( $radio_name ); ?>" value="<?php echo esc_attr( $size ); ?>" class="pztc-size-radio" <?php checked( 0, $i ); ?> />
 				<span class="<?php echo esc_attr( $css_prefix ); ?>-size-option__name"><?php echo esc_html( $size ); ?></span>
 			</label>
 			<?php endforeach; ?>
@@ -153,7 +157,7 @@ $cuts     = apply_filters( 'pizzatier_query_args_cuts',     get_posts( array_mer
  * Build the <li> for an exclusive item (crust/sauce/cheese/drizzle/cut).
  */
 if ( ! function_exists( 'pzt_plainlist_exclusive_item' ) ) :
-function pzt_plainlist_exclusive_item( $post, string $layer_type, string $pl_var ): string {
+function pzt_plainlist_exclusive_item( $post, string $layer_type, string $pl_var, string $instance_id = '' ): string {
 	if ( ! ( $post instanceof \WP_Post ) ) { return ''; }
 	$id     = $post->ID;
 	$title  = get_the_title( $post );
@@ -166,7 +170,9 @@ function pzt_plainlist_exclusive_item( $post, string $layer_type, string $pl_var
 	$js_layer  = esc_js( (string) $layer_url );
 	$js_toggle = "window['{$pl_var}']&&window['{$pl_var}'].plToggleExclusive('{$layer_type}','{$slug}','{$js_title}','{$js_layer}',this)";
 
+	$card_html = '';
 	ob_start();
+	try {
 	do_action( 'pizzatier_before_layer_card', $post, $layer_type );
 	?>
 	<li class="pl-item pl-item--exclusive"
@@ -190,7 +196,11 @@ function pzt_plainlist_exclusive_item( $post, string $layer_type, string $pl_var
 	</li>
 	<?php
 	do_action( 'pizzatier_after_layer_card', $post, $layer_type );
-	return apply_filters( 'pizzatier_card_html', ob_get_clean(), $post, $layer_type );
+	$card_html = ob_get_contents();
+	} finally {
+		ob_end_clean();
+	}
+	return apply_filters( 'pizzatier_card_html', $card_html, $post, $layer_type  );
 }
 endif;
 
@@ -215,7 +225,9 @@ function pzt_plainlist_topping_item( $post, int $zindex, string $pl_var ): strin
 
 	$js_toggle = "window['{$pl_var}']&&window['{$pl_var}'].plToggleTopping({$zindex},'{$js_slug}','{$js_layer}','{$js_title}','{$layer_id}','{$layer_id}','{$js_thumb}',this)";
 
+	$card_html = '';
 	ob_start();
+	try {
 	do_action( 'pizzatier_before_layer_card', $post, 'toppings' );
 	?>
 	<li class="pl-item pl-item--topping"
@@ -246,7 +258,11 @@ function pzt_plainlist_topping_item( $post, int $zindex, string $pl_var ): strin
 	</li>
 	<?php
 	do_action( 'pizzatier_after_layer_card', $post, 'toppings' );
-	return apply_filters( 'pizzatier_card_html', ob_get_clean(), $post, 'toppings' );
+	$card_html = ob_get_contents();
+	} finally {
+		ob_end_clean();
+	}
+	return apply_filters( 'pizzatier_card_html', $card_html, $post, 'toppings'  );
 }
 endif;
 
@@ -270,36 +286,36 @@ $sections_data['size'] = '';
 
 // Crusts
 $items_html = '';
-foreach ( $crusts as $post ) { $items_html .= pzt_plainlist_exclusive_item( $post, 'crust', $pl_var ); }
+foreach ( $crusts as $pzt_layer ) { $items_html .= pzt_plainlist_exclusive_item( $pzt_layer, 'crust', $pl_var, $instance_id ); }
 $sections_data['crust'] = $items_html ?: '<li class="pl-empty">' . esc_html__( 'No crusts found.', 'pizzatier' ) . '</li>';
 
 // Sauces
 $items_html = '';
-foreach ( $sauces as $post ) { $items_html .= pzt_plainlist_exclusive_item( $post, 'sauce', $pl_var ); }
+foreach ( $sauces as $pzt_layer ) { $items_html .= pzt_plainlist_exclusive_item( $pzt_layer, 'sauce', $pl_var, $instance_id ); }
 $sections_data['sauce'] = $items_html ?: '<li class="pl-empty">' . esc_html__( 'No sauces found.', 'pizzatier' ) . '</li>';
 
 // Cheeses
 $items_html = '';
-foreach ( $cheeses as $post ) { $items_html .= pzt_plainlist_exclusive_item( $post, 'cheese', $pl_var ); }
+foreach ( $cheeses as $pzt_layer ) { $items_html .= pzt_plainlist_exclusive_item( $pzt_layer, 'cheese', $pl_var, $instance_id ); }
 $sections_data['cheese'] = $items_html ?: '<li class="pl-empty">' . esc_html__( 'No cheeses found.', 'pizzatier' ) . '</li>';
 
 // Drizzles
 $items_html = '';
-foreach ( $drizzles as $post ) { $items_html .= pzt_plainlist_exclusive_item( $post, 'drizzle', $pl_var ); }
+foreach ( $drizzles as $pzt_layer ) { $items_html .= pzt_plainlist_exclusive_item( $pzt_layer, 'drizzle', $pl_var, $instance_id ); }
 $sections_data['drizzle'] = $items_html ?: '<li class="pl-empty">' . esc_html__( 'No drizzles found.', 'pizzatier' ) . '</li>';
 
 // Toppings
 $items_html = '';
 $t_z = 400;
-foreach ( $toppings as $post ) {
-	$items_html .= pzt_plainlist_topping_item( $post, $t_z, $pl_var );
+foreach ( $toppings as $pzt_layer ) {
+	$items_html .= pzt_plainlist_topping_item( $pzt_layer, $t_z, $pl_var );
 	$t_z += 10;
 }
 $sections_data['toppings'] = $items_html ?: '<li class="pl-empty">' . esc_html__( 'No toppings found.', 'pizzatier' ) . '</li>';
 
 // Cuts / Slicing
 $items_html = '';
-foreach ( $cuts as $post ) { $items_html .= pzt_plainlist_exclusive_item( $post, 'cut', $pl_var ); }
+foreach ( $cuts as $pzt_layer ) { $items_html .= pzt_plainlist_exclusive_item( $pzt_layer, 'cut', $pl_var, $instance_id ); }
 $sections_data['slicing'] = $items_html ?: '<li class="pl-empty">' . esc_html__( 'No cut styles found.', 'pizzatier' ) . '</li>';
 
 // ── Item counts ───────────────────────────────────────────────────────────────
@@ -358,9 +374,9 @@ $total_steps = count( $visible_tabs );
 		<!-- ── Sections ────────────────────────────────────── -->
 		<?php
 		$step_index = 0;
-		foreach ( $visible_tabs as $tab ) :
-			if ( ! isset( $section_meta[ $tab ], $sections_data[ $tab ] ) ) { continue; }
-			[ $icon, $label ] = $section_meta[ $tab ];
+		foreach ( $visible_tabs as $pzt_tab ) :
+			if ( ! isset( $section_meta[ $pzt_tab ], $sections_data[ $pzt_tab ] ) ) { continue; }
+			[ $icon, $label ] = $section_meta[ $pzt_tab ];
 			$is_first = ( $step_index === 0 );
 			$section_classes = 'pl-section';
 			if ( $pl_show_dividers ) { $section_classes .= ' pl-section--with-divider'; }
@@ -369,10 +385,10 @@ $total_steps = count( $visible_tabs );
 				if ( $is_first ) { $section_classes .= ' pl-section--active'; }
 			}
 		?>
-		<?php do_action( 'pizzatier_before_tab_' . $tab, $instance_id ); ?>
+		<?php do_action( 'pizzatier_before_tab_' . $pzt_tab, $instance_id ); ?>
 		<section class="<?php echo esc_attr( $section_classes ); ?>"
-		         id="<?php echo esc_attr( $instance_id . '-section-' . $tab ); ?>"
-		         data-section="<?php echo esc_attr( $tab ); ?>"
+		         id="<?php echo esc_attr( $instance_id . '-section-' . $pzt_tab ); ?>"
+		         data-section="<?php echo esc_attr( $pzt_tab ); ?>"
 		         data-step-index="<?php echo esc_attr( (string) $step_index ); ?>"
 		         <?php if ( $is_step ) : ?>aria-hidden="<?php echo $is_first ? 'false' : 'true'; ?>"<?php endif; ?>>
 
@@ -381,22 +397,22 @@ $total_steps = count( $visible_tabs );
 				<span class="pl-section__icon" aria-hidden="true"><i class="fa <?php echo esc_attr( $icon ); ?>"></i></span>
 				<?php endif; ?>
 				<h2 class="pl-section__title"><?php echo esc_html( $label ); ?></h2>
-				<?php if ( $pl_show_count && isset( $section_counts[ $tab ] ) && $section_counts[ $tab ] > 0 ) : ?>
-				<span class="pl-section__badge"><?php echo esc_html( (string) $section_counts[ $tab ] ); ?></span>
+				<?php if ( $pl_show_count && isset( $section_counts[ $pzt_tab ] ) && $section_counts[ $pzt_tab ] > 0 ) : ?>
+				<span class="pl-section__badge"><?php echo esc_html( (string) $section_counts[ $pzt_tab ] ); ?></span>
 				<?php endif; ?>
-				<?php if ( $tab === 'toppings' ) : ?>
+				<?php if ( $pzt_tab === 'toppings' ) : ?>
 				<span class="pl-section__badge pl-section__badge--selected" id="<?php echo esc_attr( $instance_id ); ?>-topping-count" style="display:none;">0</span>
 				<?php endif; ?>
 			</div>
 
-			<?php if ( $tab === 'size' ) : ?>
+			<?php if ( $pzt_tab === 'size' ) : ?>
 			<?php
 			// Build size modal trigger + modal (sizes moved out of radio list into a modal)
-			$_pl_size_heading = function_exists( 'pztpro_get_setting' ) ? (string) pztpro_get_setting( 'size_selector_label', '' ) : '';
+			$_pl_size_heading = (string) pzt_addon_setting( 'size_selector_label', '' );
 			if ( '' === $_pl_size_heading ) { $_pl_size_heading = __( 'Choose a Size', 'pizzatier' ); }
 			preg_match( '/-(\d+)$/', $instance_id, $_pl_m );
 			$_pl_radio_sfx  = ! empty( $_pl_m[1] ) ? $_pl_m[1] : preg_replace( '/[^a-zA-Z0-9_]/', '_', $instance_id );
-			$_pl_radio_name = 'pztpro_size_' . $_pl_radio_sfx;
+			$_pl_radio_name = 'pizzatier_commerce_size_' . $_pl_radio_sfx;
 			$_pl_modal_id   = $instance_id . '-size-modal';
 			?>
 			<button type="button"
@@ -429,21 +445,21 @@ $total_steps = count( $visible_tabs );
 						<?php foreach ( $_pro_sizes as $i => $size ) :
 							$_sz_id = esc_attr( $instance_id ) . '-sz-' . sanitize_html_class( strtolower( $size ) );
 						?>
-						<label class="pl-size-modal__option<?php echo 0 === $i ? ' is-active pztpro-size-option--active' : ''; ?>"
+						<label class="pl-size-modal__option<?php echo 0 === $i ? ' is-active pztc-size-option--active' : ''; ?>"
 						       for="<?php echo esc_attr( $_sz_id ); ?>"
 						       onclick="
 						       		var m=document.getElementById('<?php echo esc_attr( $_pl_modal_id ); ?>');
 						       		m.classList.remove('is-open');
 						       		var d=document.getElementById('<?php echo esc_attr( $instance_id ); ?>-size-display');
 						       		if(d)d.textContent=this.querySelector('.pl-size-modal__option-name').textContent;
-						       		m.querySelectorAll('.pl-size-modal__option').forEach(function(o){o.classList.remove('is-active','pztpro-size-option--active');});
-						       		this.classList.add('is-active','pztpro-size-option--active');
+						       		m.querySelectorAll('.pl-size-modal__option').forEach(function(o){o.classList.remove('is-active','pztc-size-option--active');});
+						       		this.classList.add('is-active','pztc-size-option--active');
 						       	">
 							<input type="radio"
 							       id="<?php echo esc_attr( $_sz_id ); ?>"
 							       name="<?php echo esc_attr( $_pl_radio_name ); ?>"
 							       value="<?php echo esc_attr( $size ); ?>"
-							       class="pztpro-size-radio"
+							       class="pztc-size-radio"
 							       <?php checked( 0, $i ); ?> />
 							<span class="pl-size-modal__option-check"></span>
 							<span class="pl-size-modal__option-name"><?php echo esc_html( $size ); ?></span>
@@ -454,21 +470,21 @@ $total_steps = count( $visible_tabs );
 			</div>
 			<?php else : ?>
 			<ul class="pl-list<?php echo $pl_col_class ? ' ' . esc_attr( $pl_col_class ) : ''; ?>"
-			    role="<?php echo ( $tab === 'toppings' ) ? 'group' : 'radiogroup'; ?>"
+			    role="<?php echo ( $pzt_tab === 'toppings' ) ? 'group' : 'radiogroup'; ?>"
 			    aria-label="<?php echo esc_attr( $label ); ?>">
-				<?php echo $sections_data[ $tab ]; // phpcs:ignore WordPress.Security.EscapeOutput -- built by safe functions above ?>
+				<?php echo wp_kses( $sections_data[ $pzt_tab ], pzt_card_allowed_html() );?>
 			</ul>
 			<?php endif; ?>
 
-			<?php if ( $tab === 'slicing' ) : ?>
-			<!-- Action bar: PizzaTierPro / WooCommerce hooks here -->
+			<?php if ( $pzt_tab === 'slicing' ) : ?>
+			<!-- Action bar: PizzaTier / WooCommerce hooks here -->
 			<div class="pl-action-bar">
 				<!-- Action bar moved to root level below -->
 			</div>
 			<?php endif; ?>
 
 		</section>
-		<?php do_action( 'pizzatier_after_tab_' . $tab, $instance_id ); ?>
+		<?php do_action( 'pizzatier_after_tab_' . $pzt_tab, $instance_id ); ?>
 		<?php $step_index++; endforeach; ?>
 
 		<?php if ( $is_step ) : ?>
@@ -512,7 +528,7 @@ $total_steps = count( $visible_tabs );
 		<?php if ( $pl_footer_note ) : ?>
 		<!-- ── Footer note ──────────────────────────────────── -->
 		<div class="pl-footer-note">
-			<?php echo $pl_footer_note; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Sanitized via wp_kses_post on read. ?>
+			<?php echo wp_kses_post( $pl_footer_note );?>
 		</div>
 		<?php endif; ?>
 

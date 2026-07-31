@@ -178,7 +178,7 @@
 
 		/**
 		 * Programmatically set selection state (PizzaTier JS API).
-		 * Consumed by PizzaTierPro to apply "Default Layers".
+		 * Consumed by PizzaTier to apply "Default Layers".
 		 *
 		 * @param {Object} newState { crust|sauce|cheese|drizzle|cut: slug|{slug},
 		 *                            toppings: { slug: {…} } }
@@ -408,7 +408,7 @@
 			setState:          plSetState,
 			getState:          function() {
 				/* Return both the raw state (for internal use) and a normalised
-				   layers array so PizzaTierPro frontend-builder.js can read
+				   layers array so PizzaTier frontend-builder.js can read
 				   selections via the standard getTemplateLayersNow() path. */
 				var layers = [];
 				/* Exclusive layers: crust, sauce, cheese, drizzle, cut */
@@ -467,7 +467,7 @@
 	window.PL = window.PL || {};
 	window.PL.createInstance = createInstance;
 
-	/* PizzaTierAPI — standard surface consumed by PizzaTierPro */
+	/* PizzaTierAPI — standard surface consumed by PizzaTier */
 	window.PizzaTierAPI = window.PizzaTierAPI || {
 		getState: function ( instanceId ) {
 			var inst = instances[ instanceId ];

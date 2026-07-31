@@ -20,7 +20,7 @@
 	// ── Coverage / portion contract (shared by all templates) ─────────
 	//
 	// A topping/layer's coverage has TWO distinct facets that downstream
-	// consumers (PizzaTierPro pricing + kitchen tickets) both need:
+	// consumers (PizzaTier pricing + kitchen tickets) both need:
 	//
 	//   fraction — the generic SIZE of the coverage ('whole' | 'half' | 'quarter').
 	//              This is what the price grid is keyed on.

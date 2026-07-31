@@ -135,12 +135,12 @@ body .pizzatier-toppings-wrapper.pizzatier-toppings-wrapper-static{margin:auto;}
 }
 
 /* ══════════════════════════════════════════════════════════════
-   PZTPRO CHECKOUT BAR — SHARED RESPONSIVE RULES
+   PIZZATIER_COMMERCE CHECKOUT BAR — SHARED RESPONSIVE RULES
    These complement the per-template rules in template.css files.
    ══════════════════════════════════════════════════════════════ */
 
 /* Qty selector: always inline-flex, shrinks gracefully */
-.pztpro-bar-qty {
+.pztc-bar-qty {
     display:     flex;
     align-items: center;
     gap:         4px;
@@ -148,7 +148,7 @@ body .pizzatier-toppings-wrapper.pizzatier-toppings-wrapper-static{margin:auto;}
 }
 
 /* Ensure price text doesn't overflow on narrow screens */
-.pztpro-bar-row__price {
+.pztc-bar-row__price {
     white-space: nowrap;
     overflow:    hidden;
     text-overflow: ellipsis;
@@ -157,13 +157,13 @@ body .pizzatier-toppings-wrapper.pizzatier-toppings-wrapper-static{margin:auto;}
 
 /* On phones (<= 480px): qty selector takes a fixed row */
 @media (max-width: 480px) {
-    .pztpro-bar-qty {
+    .pztc-bar-qty {
         width: 100%;
         justify-content: center;
         order: 2;
     }
-    .pztpro-bar-row__summary { order: 1; width: 100%; }
-    .pztpro-bar-row__btn     { order: 3; width: 100%; justify-content: center; }
+    .pztc-bar-row__summary { order: 1; width: 100%; }
+    .pztc-bar-row__btn     { order: 3; width: 100%; justify-content: center; }
 }
 
 /* ══════════════════════════════════════════════════════════════

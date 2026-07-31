@@ -64,32 +64,36 @@ $pizza_aspect  = sanitize_text_field( $atts['pizza_aspect'] ?? get_option( 'pizz
 $pizza_radius  = sanitize_text_field( $atts['pizza_radius'] ?? get_option( 'pizzatier_setting_pizza_radius', '8px' ) );
 
 
-// ── PizzaTierPro: inline size selector ──────────────────────────────────────
+// ── Add-on: inline size selector ──────────────────────────────────────
 if ( ! function_exists( 'pzt_get_pro_sizes' ) ) :
 function pzt_get_pro_sizes(): array {
-	if ( ! function_exists( 'pztpro_get_setting' ) || ! class_exists( 'PizzaTierPro\\Pro\\PriceGrid\\Grid' ) ) { return []; }
+	// Sizes come from a pricing add-on when one is installed; pzt_addon_sizes()
+	// returns an empty array otherwise and the selector simply does not render.
 	$product_id = ( function_exists( 'get_queried_object_id' ) ? (int) get_queried_object_id() : 0 );
-	if ( ! $product_id ) { global $post; if ( $post instanceof \WP_Post ) { $product_id = $post->ID; } }
-	$grid = new \PizzaTierPro\Pro\PriceGrid\Grid(); return $grid->get_sizes( $product_id );
+	if ( ! $product_id ) {
+		global $post;
+		if ( $post instanceof \WP_Post ) { $product_id = $post->ID; }
+	}
+	return pzt_addon_sizes( $product_id );
 }
 endif;
 if ( ! function_exists( 'pzt_render_inline_size_selector' ) ) :
 function pzt_render_inline_size_selector( array $sizes, string $instance_id, string $css_prefix = 'cb' ): void {
 	if ( empty( $sizes ) ) { return; }
-	// Extract numeric suffix from instance_id (handles pztpro-1, pizzabuilder-1, pztpro-1-2, etc)
+	// Extract numeric suffix from instance_id (handles pztc-1, pizzabuilder-1, pztc-1-2, etc)
 	preg_match( '/-(\d+)$/', $instance_id, $_m_suf );
 	$radio_name_raw = ! empty( $_m_suf[1] ) ? $_m_suf[1] : preg_replace( '/[^a-zA-Z0-9_]/', '_', $instance_id );
-	$radio_name = 'pztpro_size_' . $radio_name_raw;
-	$heading = function_exists( 'pztpro_get_setting' ) ? (string) pztpro_get_setting( 'size_selector_label', '' ) : '';
+	$radio_name = 'pizzatier_commerce_size_' . $radio_name_raw;
+	$heading = (string) pzt_addon_setting( 'size_selector_label', '' );
 	if ( '' === $heading ) { $heading = __( 'Choose a Size', 'pizzatier' ); }
 	?>
-	<div class="<?php echo esc_attr( $css_prefix ); ?>-size-selector pztpro-inline-size-selector" id="<?php echo esc_attr( $instance_id ); ?>-size-selector" role="group" aria-label="<?php echo esc_attr( $heading ); ?>">
+	<div class="<?php echo esc_attr( $css_prefix ); ?>-size-selector pztc-inline-size-selector" id="<?php echo esc_attr( $instance_id ); ?>-size-selector" role="group" aria-label="<?php echo esc_attr( $heading ); ?>">
 		<p class="<?php echo esc_attr( $css_prefix ); ?>-size-selector__heading"><?php echo esc_html( $heading ); ?></p>
 		<div class="<?php echo esc_attr( $css_prefix ); ?>-size-selector__options">
 			<?php foreach ( $sizes as $i => $size ) :
 				$inp_id = esc_attr( $instance_id ) . '-sz-' . sanitize_html_class( strtolower( $size ) ); ?>
-			<label class="<?php echo esc_attr( $css_prefix ); ?>-size-option pztpro-size-option<?php echo 0 === $i ? ' pztpro-size-option--active' : ''; ?>" for="<?php echo esc_attr( $inp_id ); ?>">
-				<input type="radio" id="<?php echo esc_attr( $inp_id ); ?>" name="<?php echo esc_attr( $radio_name ); ?>" value="<?php echo esc_attr( $size ); ?>" class="pztpro-size-radio" <?php checked( 0, $i ); ?> />
+			<label class="<?php echo esc_attr( $css_prefix ); ?>-size-option pztc-size-option<?php echo 0 === $i ? ' pztc-size-option--active' : ''; ?>" for="<?php echo esc_attr( $inp_id ); ?>">
+				<input type="radio" id="<?php echo esc_attr( $inp_id ); ?>" name="<?php echo esc_attr( $radio_name ); ?>" value="<?php echo esc_attr( $size ); ?>" class="pztc-size-radio" <?php checked( 0, $i ); ?> />
 				<span class="<?php echo esc_attr( $css_prefix ); ?>-size-option__name"><?php echo esc_html( $size ); ?></span>
 			</label>
 			<?php endforeach; ?>
@@ -149,7 +153,9 @@ function pzt_pocketpie_chip( $post, string $layer_type, string $pp_var, int $zin
 
     $js_add    = "window['{$pp_var}']&&window['{$pp_var}'].swapBase('{$layer_type}','".esc_js($slug)."','".esc_js($title)."','".esc_js((string)$layer_url)."',this)";
     $js_remove = "window['{$pp_var}']&&window['{$pp_var}'].removeBase('{$layer_type}','".esc_js($slug)."',this)";
-    ob_start();
+    $card_html = '';
+	ob_start();
+	try {
     do_action( 'pizzatier_before_layer_card', $post, $layer_type );
     ?>
     <div class="pp-chip pp-chip--exclusive"
@@ -174,7 +180,11 @@ function pzt_pocketpie_chip( $post, string $layer_type, string $pp_var, int $zin
     </div>
     <?php
     do_action( 'pizzatier_after_layer_card', $post, $layer_type );
-    return apply_filters( 'pizzatier_card_html', ob_get_clean(), $post, $layer_type );
+    $card_html = ob_get_contents();
+	} finally {
+		ob_end_clean();
+	}
+	return apply_filters( 'pizzatier_card_html', $card_html, $post, $layer_type  );
 }
 endif;
 
@@ -194,7 +204,9 @@ function pzt_pocketpie_topping_chip( $post, string $pp_var, int $zindex ): strin
 
     $js_add    = "window['{$pp_var}']&&window['{$pp_var}'].addTopping({$zindex},'".esc_js($slug)."','".esc_js((string)$layer_url)."','".esc_js($title)."','{$layer_id}','{$layer_id}',this)";
     $js_remove = "window['{$pp_var}']&&window['{$pp_var}'].removeTopping('pizzatier-topping-".esc_js($slug)."','".esc_js($slug)."',this)";
-    ob_start();
+    $card_html = '';
+	ob_start();
+	try {
     do_action( 'pizzatier_before_layer_card', $post, 'toppings' );
     ?>
     <div class="pp-chip pp-chip--topping"
@@ -226,7 +238,7 @@ function pzt_pocketpie_topping_chip( $post, string $pp_var, int $zindex ): strin
                 $js_cov = "window['{$pp_var}']&&window['{$pp_var}'].setCoverage('".esc_js($slug)."','".esc_js($fraction)."',this)";
             ?>
             <button type="button" class="pp-cov-btn" data-fraction="<?php echo esc_attr( $fraction ); ?>" onclick="<?php echo esc_attr( $js_cov ); ?>">
-                <?php echo $label; // phpcs:ignore -- safe, ascii symbols ?>
+                <?php echo esc_html( $label );?>
             </button>
             <?php endforeach; ?>
         </div>
@@ -239,34 +251,38 @@ function pzt_pocketpie_topping_chip( $post, string $pp_var, int $zindex ): strin
     </div>
     <?php
     do_action( 'pizzatier_after_layer_card', $post, 'toppings' );
-    return apply_filters( 'pizzatier_card_html', ob_get_clean(), $post, 'toppings' );
+    $card_html = ob_get_contents();
+	} finally {
+		ob_end_clean();
+	}
+	return apply_filters( 'pizzatier_card_html', $card_html, $post, 'toppings'  );
 }
 endif;
 
 // Build all HTML pools
 $crusts_html = '';
-foreach ( $crusts as $post )  { $crusts_html  .= pzt_pocketpie_chip( $post, 'crust',  $pp_var, 100 ); }
+foreach ( $crusts as $pzt_layer )  { $crusts_html  .= pzt_pocketpie_chip( $pzt_layer, 'crust',  $pp_var, 100 ); }
 if ( ! $crusts_html )  { $crusts_html  = '<p class="pp-empty">' . esc_html__( 'No crusts found.', 'pizzatier' ) . '</p>'; }
 
 $sauces_html = '';
-foreach ( $sauces as $post )  { $sauces_html  .= pzt_pocketpie_chip( $post, 'sauce',  $pp_var, 150 ); }
+foreach ( $sauces as $pzt_layer )  { $sauces_html  .= pzt_pocketpie_chip( $pzt_layer, 'sauce',  $pp_var, 150 ); }
 if ( ! $sauces_html )  { $sauces_html  = '<p class="pp-empty">' . esc_html__( 'No sauces found.', 'pizzatier' ) . '</p>'; }
 
 $cheeses_html = '';
-foreach ( $cheeses as $post ) { $cheeses_html .= pzt_pocketpie_chip( $post, 'cheese', $pp_var, 200 ); }
+foreach ( $cheeses as $pzt_layer ) { $cheeses_html .= pzt_pocketpie_chip( $pzt_layer, 'cheese', $pp_var, 200 ); }
 if ( ! $cheeses_html ) { $cheeses_html = '<p class="pp-empty">' . esc_html__( 'No cheeses found.', 'pizzatier' ) . '</p>'; }
 
 $drizzles_html = '';
-foreach ( $drizzles as $post ){ $drizzles_html.= pzt_pocketpie_chip( $post, 'drizzle',$pp_var, 900 ); }
+foreach ( $drizzles as $pzt_layer ){ $drizzles_html.= pzt_pocketpie_chip( $pzt_layer, 'drizzle',$pp_var, 900 ); }
 if ( ! $drizzles_html ){ $drizzles_html = '<p class="pp-empty">' . esc_html__( 'No drizzles found.', 'pizzatier' ) . '</p>'; }
 
 $toppings_html = '';
 $t_z = 400;
-foreach ( $toppings as $post ){ $toppings_html .= pzt_pocketpie_topping_chip( $post, $pp_var, $t_z ); $t_z += 10; }
+foreach ( $toppings as $pzt_layer ){ $toppings_html .= pzt_pocketpie_topping_chip( $pzt_layer, $pp_var, $t_z ); $t_z += 10; }
 if ( ! $toppings_html ){ $toppings_html = '<p class="pp-empty">' . esc_html__( 'No toppings found.', 'pizzatier' ) . '</p>'; }
 
 $cuts_html = '';
-foreach ( $cuts as $post )    { $cuts_html    .= pzt_pocketpie_chip( $post, 'cut',    $pp_var, 950 ); }
+foreach ( $cuts as $pzt_layer )    { $cuts_html    .= pzt_pocketpie_chip( $pzt_layer, 'cut',    $pp_var, 950 ); }
 if ( ! $cuts_html )    { $cuts_html    = '<p class="pp-empty">' . esc_html__( 'No cut styles found.', 'pizzatier' ) . '</p>'; }
 
 // Initial pizza render
@@ -280,30 +296,30 @@ $initial_pizza = $builder->build_dynamic(
     $atts['default_cut']      ?? ''
 );
 
-// ── PizzaTierPro size chips — rendered inside the shared "Size" modal ──
+// ── PizzaTier size chips — rendered inside the shared "Size" modal ──
 // (Previously these lived in a standalone "Choose Pizza Size" row above the
 //  builder; they now open from the Size button in the actions row.)
 $size_html  = '';
 $pp_size_label = __( 'Size', 'pizzatier' );
 if ( $_has_pro ) {
-    $_pp_size_setting = function_exists( 'pztpro_get_setting' ) ? (string) pztpro_get_setting( 'size_selector_label', '' ) : '';
+    $_pp_size_setting = (string) pzt_addon_setting( 'size_selector_label', '' );
     if ( '' !== $_pp_size_setting ) { $pp_size_label = sanitize_text_field( $_pp_size_setting ); }
 
     preg_match( '/-(\d+)$/', $instance_id, $_pp_m );
     $_pp_radio_sfx  = ! empty( $_pp_m[1] ) ? $_pp_m[1] : preg_replace( '/[^a-zA-Z0-9_]/', '_', $instance_id );
-    $_pp_radio_name = 'pztpro_size_' . $_pp_radio_sfx;
+    $_pp_radio_name = 'pizzatier_commerce_size_' . $_pp_radio_sfx;
 
     ob_start();
     foreach ( $_pro_sizes as $i => $size ) :
         $_pp_sz_id = esc_attr( $instance_id ) . '-sz-' . sanitize_html_class( strtolower( $size ) );
         ?>
-        <label class="pp-size-chip pztpro-size-option<?php echo 0 === $i ? ' pp-size-chip--active pztpro-size-option--active' : ''; ?>"
+        <label class="pp-size-chip pztc-size-option<?php echo 0 === $i ? ' pp-size-chip--active pztc-size-option--active' : ''; ?>"
                for="<?php echo esc_attr( $_pp_sz_id ); ?>">
             <input type="radio"
                    id="<?php echo esc_attr( $_pp_sz_id ); ?>"
                    name="<?php echo esc_attr( $_pp_radio_name ); ?>"
                    value="<?php echo esc_attr( $size ); ?>"
-                   class="pztpro-size-radio"
+                   class="pztc-size-radio"
                    <?php checked( 0, $i ); ?> />
             <span class="pp-size-chip__name"><?php echo esc_html( $size ); ?></span>
         </label>
@@ -384,7 +400,7 @@ $summary_rows = [
      data-pizza-aspect="<?php echo esc_attr( $pizza_aspect ); ?>"
      data-pizza-radius="<?php echo esc_attr( $pizza_radius ); ?>">
 
-    <?php /* The PizzaTierPro size selector is now presented inside the shared
+    <?php /* The PizzaTier size selector is now presented inside the shared
              "Size" modal, opened from the Size button in the actions row.
              See $size_html / $tab_meta['size'] above. */ ?>
 
@@ -417,7 +433,7 @@ $summary_rows = [
              data-tab="<?php echo esc_attr( $ctab ); ?>">
             <button type="button" class="pp-cq-trigger"
                     onclick="window['<?php echo esc_js( $pv ); ?>']&&window['<?php echo esc_js( $pv ); ?>'].openModal('<?php echo esc_js( $ii ); ?>','<?php echo esc_js( $ctab ); ?>')">
-                <span class="pp-cq-trigger__icon"><?php echo $icon; // phpcs:ignore ?></span>
+                <span class="pp-cq-trigger__icon"><?php echo wp_kses( $icon, pzt_card_allowed_html() );?></span>
                 <span class="pp-cq-trigger__label"><?php echo esc_html( $label ); ?></span>
                 <span class="pp-cq-trigger__badge" id="<?php echo esc_attr( $ii ); ?>-cq-badge-<?php echo esc_attr( $corner ); ?>"></span>
             </button>
@@ -434,7 +450,7 @@ $summary_rows = [
                 ?>
                 <button type="button" class="pp-cq-overflow-btn"
                         onclick="window['<?php echo esc_js( $pv ); ?>']&&window['<?php echo esc_js( $pv ); ?>'].openModal('<?php echo esc_attr( $ii ); ?>','<?php echo esc_js( $otab ); ?>')">
-                    <span><?php echo $oicon; // phpcs:ignore ?></span>
+                    <span><?php echo wp_kses( $oicon, pzt_card_allowed_html() );?></span>
                     <span><?php echo esc_html( $olabel ); ?></span>
                 </button>
                 <?php endforeach; ?>
@@ -452,7 +468,7 @@ $summary_rows = [
         <!-- Centre pizza -->
         <div class="pp-cq-pizza" id="<?php echo esc_attr( $ii ); ?>-cq-pizza">
             <div class="pp-pizza-stage-wrap" id="<?php echo esc_attr( $ii ); ?>-canvas">
-                <?php echo $initial_pizza; // phpcs:ignore ?>
+                <?php echo wp_kses( $initial_pizza, pzt_card_allowed_html() );?>
             </div>
             <div class="pp-cq-pizza__controls">
                 <?php if ( $pp_show_reset ) : ?>
@@ -477,7 +493,7 @@ $summary_rows = [
         <!-- Pizza stage -->
         <div class="pp-ld-pizza-zone">
             <div class="pp-pizza-stage-wrap" id="<?php echo esc_attr( $ii ); ?>-canvas">
-                <?php echo $initial_pizza; // phpcs:ignore ?>
+                <?php echo wp_kses( $initial_pizza, pzt_card_allowed_html() );?>
             </div>
             <div class="pp-ld-topping-badge" id="<?php echo esc_attr( $ii ); ?>-ld-count-wrap">
                 <span id="<?php echo esc_attr( $ii ); ?>-ld-count">0</span> / <?php echo esc_html( (string) $max_toppings ); ?>
@@ -486,19 +502,19 @@ $summary_rows = [
 
         <!-- Deck strip -->
         <div class="pp-ld-deck" id="<?php echo esc_attr( $ii ); ?>-ld-deck">
-            <?php foreach ( $visible_tabs as $tab ) :
-                if ( $tab === 'yourpizza' ) { continue; }
-                if ( ! isset( $tab_meta[ $tab ] ) ) { continue; }
-                [ $icon, $label, $html ] = $tab_meta[ $tab ];
+            <?php foreach ( $visible_tabs as $pzt_tab ) :
+                if ( $pzt_tab === 'yourpizza' ) { continue; }
+                if ( ! isset( $tab_meta[ $pzt_tab ] ) ) { continue; }
+                [ $icon, $label, $html ] = $tab_meta[ $pzt_tab ];
             ?>
             <button type="button"
                     class="pp-ld-deck-thumb"
-                    data-tab="<?php echo esc_attr( $tab ); ?>"
-                    id="<?php echo esc_attr( $ii ); ?>-ld-thumb-<?php echo esc_attr( $tab ); ?>"
-                    onclick="window['<?php echo esc_js( $pv ); ?>']&&window['<?php echo esc_js( $pv ); ?>'].ldSelect('<?php echo esc_attr( $ii ); ?>','<?php echo esc_js( $tab ); ?>')">
-                <span class="pp-ld-deck-thumb__icon"><?php echo $icon; // phpcs:ignore ?></span>
+                    data-tab="<?php echo esc_attr( $pzt_tab ); ?>"
+                    id="<?php echo esc_attr( $ii ); ?>-ld-thumb-<?php echo esc_attr( $pzt_tab ); ?>"
+                    onclick="window['<?php echo esc_js( $pv ); ?>']&&window['<?php echo esc_js( $pv ); ?>'].ldSelect('<?php echo esc_attr( $ii ); ?>','<?php echo esc_js( $pzt_tab ); ?>')">
+                <span class="pp-ld-deck-thumb__icon"><?php echo wp_kses( $icon, pzt_card_allowed_html() );?></span>
                 <span class="pp-ld-deck-thumb__label"><?php echo esc_html( $label ); ?></span>
-                <span class="pp-ld-deck-thumb__sel" id="<?php echo esc_attr( $ii ); ?>-ld-sel-<?php echo esc_attr( $tab ); ?>"></span>
+                <span class="pp-ld-deck-thumb__sel" id="<?php echo esc_attr( $ii ); ?>-ld-sel-<?php echo esc_attr( $pzt_tab ); ?>"></span>
             </button>
             <?php endforeach; ?>
             <?php if ( $pp_show_review ) : ?>
@@ -523,17 +539,17 @@ $summary_rows = [
                 <div class="pp-ld-expand__preview-img-empty" id="<?php echo esc_attr( $ii ); ?>-ld-preview-img-empty"><?php esc_html_e( 'Tap a choice below', 'pizzatier' ); ?></div>
             </div>
             <!-- Chips for active tab -->
-            <?php foreach ( $visible_tabs as $tab ) :
-                if ( $tab === 'yourpizza' ) { continue; }
-                if ( ! isset( $tab_meta[ $tab ] ) ) { continue; }
-                [ , , $html ] = $tab_meta[ $tab ];
-                $is_top = ( $tab === 'toppings' );
+            <?php foreach ( $visible_tabs as $pzt_tab ) :
+                if ( $pzt_tab === 'yourpizza' ) { continue; }
+                if ( ! isset( $tab_meta[ $pzt_tab ] ) ) { continue; }
+                [ , , $html ] = $tab_meta[ $pzt_tab ];
+                $is_top = ( $pzt_tab === 'toppings' );
             ?>
             <div class="pp-ld-expand__chips <?php echo $is_top ? 'pp-chips-grid--toppings' : ''; ?>"
-                 id="<?php echo esc_attr( $ii ); ?>-ld-chips-<?php echo esc_attr( $tab ); ?>"
+                 id="<?php echo esc_attr( $ii ); ?>-ld-chips-<?php echo esc_attr( $pzt_tab ); ?>"
                  style="display:none;">
                 <div class="pp-chips-grid">
-                    <?php echo $html; // phpcs:ignore ?>
+                    <?php echo wp_kses( $html, pzt_card_allowed_html() );?>
                 </div>
             </div>
             <?php endforeach; ?>
@@ -564,23 +580,23 @@ $summary_rows = [
         <!-- Pizza zone with category pills overlaid at bottom -->
         <div class="pp-sd-pizza-zone">
             <div class="pp-pizza-stage-wrap" id="<?php echo esc_attr( $ii ); ?>-canvas">
-                <?php echo $initial_pizza; // phpcs:ignore ?>
+                <?php echo wp_kses( $initial_pizza, pzt_card_allowed_html() );?>
             </div>
             <!-- Category pills -->
             <div class="pp-sd-pills">
-                <?php foreach ( $visible_tabs as $tab ) :
-                    if ( $tab === 'yourpizza' ) { continue; }
-                    if ( ! isset( $tab_meta[ $tab ] ) ) { continue; }
-                    [ $icon, $label, ] = $tab_meta[ $tab ];
+                <?php foreach ( $visible_tabs as $pzt_tab ) :
+                    if ( $pzt_tab === 'yourpizza' ) { continue; }
+                    if ( ! isset( $tab_meta[ $pzt_tab ] ) ) { continue; }
+                    [ $icon, $label, ] = $tab_meta[ $pzt_tab ];
                 ?>
                 <button type="button"
                         class="pp-sd-pill"
-                        data-tab="<?php echo esc_attr( $tab ); ?>"
-                        id="<?php echo esc_attr( $ii ); ?>-sd-pill-<?php echo esc_attr( $tab ); ?>"
-                        onclick="window['<?php echo esc_js( $pv ); ?>']&&window['<?php echo esc_js( $pv ); ?>'].sdOpen('<?php echo esc_attr( $ii ); ?>','<?php echo esc_js( $tab ); ?>')">
-                    <span class="pp-sd-pill__icon"><?php echo $icon; // phpcs:ignore ?></span>
+                        data-tab="<?php echo esc_attr( $pzt_tab ); ?>"
+                        id="<?php echo esc_attr( $ii ); ?>-sd-pill-<?php echo esc_attr( $pzt_tab ); ?>"
+                        onclick="window['<?php echo esc_js( $pv ); ?>']&&window['<?php echo esc_js( $pv ); ?>'].sdOpen('<?php echo esc_attr( $ii ); ?>','<?php echo esc_js( $pzt_tab ); ?>')">
+                    <span class="pp-sd-pill__icon"><?php echo wp_kses( $icon, pzt_card_allowed_html() );?></span>
                     <span class="pp-sd-pill__text"><?php echo esc_html( $label ); ?></span>
-                    <span class="pp-sd-pill__dot" id="<?php echo esc_attr( $ii ); ?>-sd-dot-<?php echo esc_attr( $tab ); ?>"></span>
+                    <span class="pp-sd-pill__dot" id="<?php echo esc_attr( $ii ); ?>-sd-dot-<?php echo esc_attr( $pzt_tab ); ?>"></span>
                 </button>
                 <?php endforeach; ?>
                 <?php if ( $pp_show_review ) : ?>
@@ -609,16 +625,16 @@ $summary_rows = [
                 <button type="button" class="pp-sd-drawer__close"
                         onclick="window['<?php echo esc_js( $pv ); ?>']&&window['<?php echo esc_js( $pv ); ?>'].sdClose('<?php echo esc_attr( $ii ); ?>')">&#10005;</button>
             </div>
-            <?php foreach ( $visible_tabs as $tab ) :
-                if ( $tab === 'yourpizza' ) { continue; }
-                if ( ! isset( $tab_meta[ $tab ] ) ) { continue; }
-                [ , , $html ] = $tab_meta[ $tab ];
-                $is_top = ( $tab === 'toppings' );
+            <?php foreach ( $visible_tabs as $pzt_tab ) :
+                if ( $pzt_tab === 'yourpizza' ) { continue; }
+                if ( ! isset( $tab_meta[ $pzt_tab ] ) ) { continue; }
+                [ , , $html ] = $tab_meta[ $pzt_tab ];
+                $is_top = ( $pzt_tab === 'toppings' );
             ?>
             <div class="pp-sd-drawer__panel <?php echo $is_top ? 'pp-chips-grid--toppings' : ''; ?>"
-                 id="<?php echo esc_attr( $ii ); ?>-sd-panel-<?php echo esc_attr( $tab ); ?>"
+                 id="<?php echo esc_attr( $ii ); ?>-sd-panel-<?php echo esc_attr( $pzt_tab ); ?>"
                  style="display:none;">
-                <div class="pp-chips-grid"><?php echo $html; // phpcs:ignore ?></div>
+                <div class="pp-chips-grid"><?php echo wp_kses( $html, pzt_card_allowed_html() );?></div>
             </div>
             <?php endforeach; ?>
                 <!-- Action bar moved to root level below -->
@@ -637,7 +653,7 @@ $summary_rows = [
         <!-- Compact pizza + step indicator -->
         <div class="pp-sp-top">
             <div class="pp-sp-pizza-mini" id="<?php echo esc_attr( $ii ); ?>-canvas">
-                <?php echo $initial_pizza; // phpcs:ignore ?>
+                <?php echo wp_kses( $initial_pizza, pzt_card_allowed_html() );?>
             </div>
             <div class="pp-sp-step-info">
                 <div class="pp-sp-step-dots" id="<?php echo esc_attr( $ii ); ?>-sp-dots">
@@ -653,20 +669,20 @@ $summary_rows = [
 
         <!-- Step nav bar -->
         <div class="pp-sp-stepbar" id="<?php echo esc_attr( $ii ); ?>-sp-stepbar">
-            <?php $first_sp = true; foreach ( $visible_tabs as $tab ) :
-                if ( $tab === 'yourpizza' ) { continue; }
-                if ( ! isset( $tab_meta[ $tab ] ) ) { continue; }
-                [ $icon, $label, ] = $tab_meta[ $tab ];
+            <?php $first_sp = true; foreach ( $visible_tabs as $pzt_tab ) :
+                if ( $pzt_tab === 'yourpizza' ) { continue; }
+                if ( ! isset( $tab_meta[ $pzt_tab ] ) ) { continue; }
+                [ $icon, $label, ] = $tab_meta[ $pzt_tab ];
                 $active_class = $first_sp ? 'active' : '';
                 $first_sp = false;
             ?>
             <button type="button"
                     class="pp-sp-step <?php echo esc_attr( $active_class ); ?>"
-                    data-tab="<?php echo esc_attr( $tab ); ?>"
-                    onclick="window['<?php echo esc_js( $pv ); ?>']&&window['<?php echo esc_js( $pv ); ?>'].spOpen('<?php echo esc_attr( $ii ); ?>','<?php echo esc_js( $tab ); ?>')">
-                <span class="pp-sp-step__icon"><?php echo $icon; // phpcs:ignore ?></span>
+                    data-tab="<?php echo esc_attr( $pzt_tab ); ?>"
+                    onclick="window['<?php echo esc_js( $pv ); ?>']&&window['<?php echo esc_js( $pv ); ?>'].spOpen('<?php echo esc_attr( $ii ); ?>','<?php echo esc_js( $pzt_tab ); ?>')">
+                <span class="pp-sp-step__icon"><?php echo wp_kses( $icon, pzt_card_allowed_html() );?></span>
                 <span class="pp-sp-step__label"><?php echo esc_html( $label ); ?></span>
-                <span class="pp-sp-step__dot" id="<?php echo esc_attr( $ii ); ?>-sp-step-dot-<?php echo esc_attr( $tab ); ?>"></span>
+                <span class="pp-sp-step__dot" id="<?php echo esc_attr( $ii ); ?>-sp-step-dot-<?php echo esc_attr( $pzt_tab ); ?>"></span>
             </button>
             <?php endforeach; ?>
             <?php if ( $pp_show_review ) : ?>
@@ -686,16 +702,16 @@ $summary_rows = [
                 <button type="button" class="pp-sp-sheet__close"
                         onclick="window['<?php echo esc_js( $pv ); ?>']&&window['<?php echo esc_js( $pv ); ?>'].spClose('<?php echo esc_attr( $ii ); ?>')">&#10005;</button>
             </div>
-            <?php foreach ( $visible_tabs as $tab ) :
-                if ( $tab === 'yourpizza' ) { continue; }
-                if ( ! isset( $tab_meta[ $tab ] ) ) { continue; }
-                [ , , $html ] = $tab_meta[ $tab ];
-                $is_top = ( $tab === 'toppings' );
+            <?php foreach ( $visible_tabs as $pzt_tab ) :
+                if ( $pzt_tab === 'yourpizza' ) { continue; }
+                if ( ! isset( $tab_meta[ $pzt_tab ] ) ) { continue; }
+                [ , , $html ] = $tab_meta[ $pzt_tab ];
+                $is_top = ( $pzt_tab === 'toppings' );
             ?>
             <div class="pp-sp-sheet__panel <?php echo $is_top ? 'pp-chips-grid--toppings' : ''; ?>"
-                 id="<?php echo esc_attr( $ii ); ?>-sp-panel-<?php echo esc_attr( $tab ); ?>"
+                 id="<?php echo esc_attr( $ii ); ?>-sp-panel-<?php echo esc_attr( $pzt_tab ); ?>"
                  style="display:none;">
-                <div class="pp-chips-grid"><?php echo $html; // phpcs:ignore ?></div>
+                <div class="pp-chips-grid"><?php echo wp_kses( $html, pzt_card_allowed_html() );?></div>
                 <?php if ( $is_top ) : ?>
                 <div class="pp-sp-topping-count">
                     <span id="<?php echo esc_attr( $ii ); ?>-sp-count">0</span>/<?php echo esc_html( (string) $max_toppings ); ?> <?php esc_html_e( 'toppings', 'pizzatier' ); ?>
@@ -738,17 +754,17 @@ $summary_rows = [
              layouts render their categories in their own drawers/sheets/expands,
              so we skip them to avoid duplicate IDs (e.g. size radios). -->
         <?php if ( $layout === 'corner-quad' ) : ?>
-        <?php foreach ( $visible_tabs as $tab ) :
-            if ( $tab === 'yourpizza' ) { continue; }
-            if ( ! isset( $tab_meta[ $tab ] ) ) { continue; }
-            [ , , $html ] = $tab_meta[ $tab ];
-            $is_top  = ( $tab === 'toppings' );
-            $is_size = ( $tab === 'size' );
+        <?php foreach ( $visible_tabs as $pzt_tab ) :
+            if ( $pzt_tab === 'yourpizza' ) { continue; }
+            if ( ! isset( $tab_meta[ $pzt_tab ] ) ) { continue; }
+            [ , , $html ] = $tab_meta[ $pzt_tab ];
+            $is_top  = ( $pzt_tab === 'toppings' );
+            $is_size = ( $pzt_tab === 'size' );
         ?>
         <div class="pp-modal__tab-panel <?php echo $is_top ? 'pp-chips-grid--toppings' : ''; ?> <?php echo $is_size ? 'pp-modal__tab-panel--size' : ''; ?>"
-             id="<?php echo esc_attr( $ii ); ?>-modal-panel-<?php echo esc_attr( $tab ); ?>"
+             id="<?php echo esc_attr( $ii ); ?>-modal-panel-<?php echo esc_attr( $pzt_tab ); ?>"
              style="display:none;">
-            <div class="pp-chips-grid"><?php echo $html; // phpcs:ignore ?></div>
+            <div class="pp-chips-grid"><?php echo wp_kses( $html, pzt_card_allowed_html() );?></div>
             <?php if ( $is_top ) : ?>
             <div class="pp-modal__topping-count">
                 <span id="<?php echo esc_attr( $ii ); ?>-modal-count">0</span>/<?php echo esc_html( (string) $max_toppings ); ?> <?php esc_html_e( 'toppings', 'pizzatier' ); ?>
@@ -761,7 +777,7 @@ $summary_rows = [
         <div class="pp-modal__summary" id="<?php echo esc_attr( $ii ); ?>-modal-summary" style="display:none;">
             <?php foreach ( $summary_rows as $key => [ $ico, $slabel ] ) : ?>
             <div class="pp-summary-row" id="<?php echo esc_attr( $ii ); ?>-modal-yp-<?php echo esc_attr( $key ); ?>">
-                <span class="pp-summary-row__icon"><?php echo $ico; // phpcs:ignore ?></span>
+                <span class="pp-summary-row__icon"><?php echo wp_kses( $ico, pzt_card_allowed_html() );?></span>
                 <span class="pp-summary-row__label"><?php echo esc_html( $slabel ); ?></span>
                 <span class="pp-summary-row__val pp-summary-row__val--empty"
                       id="<?php echo esc_attr( $ii ); ?>-modal-yp-<?php echo esc_attr( $key ); ?>-val">

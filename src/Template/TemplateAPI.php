@@ -30,7 +30,7 @@ class TemplateAPI {
 
 		// Optionally drop layers whose custom data is too incomplete to render or
 		// price safely, so a half-configured item can't break the builder. The
-		// same filtered list feeds calculations (PizzaTierPro reads it too).
+		// same filtered list feeds calculations (PizzaTier reads it too).
 		if ( get_option( 'pizzatier_setting_require_complete_data', 'no' ) === 'yes' ) {
 			$posts = array_values( array_filter( $posts, function ( $post ) use ( $type ) {
 				return self::layer_has_sufficient_data( $post, $type );

@@ -603,7 +603,7 @@
     });
 
     /* ════════════════════════════════════════════════════════════════
-       EXPOSE GLOBAL API (PizzaTierPro compatibility)
+       EXPOSE GLOBAL API (PizzaTier compatibility)
        ════════════════════════════════════════════════════════════════ */
     window.PizzaTierPP  = PP;
     window.PizzaTierAPI = window.PizzaTierAPI || {

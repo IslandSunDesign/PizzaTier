@@ -98,7 +98,9 @@ function pzt_colorbox_exclusive_card( $post, string $layer_type, string $cb_var,
 	$js_add    = "window['{$cb_var}']&&window['{$cb_var}'].swapBase('{$layer_type}','{$slug}','{$js_title}','{$js_layer}',this)";
 	$js_remove = "window['{$cb_var}']&&window['{$cb_var}'].removeBase('{$layer_type}','{$slug}',this)";
 
+	$card_html = '';
 	ob_start();
+	try {
 	do_action( 'pizzatier_before_layer_card', $post, $layer_type );
 	?>
 	<div class="cb-card cb-card--exclusive"
@@ -129,7 +131,11 @@ function pzt_colorbox_exclusive_card( $post, string $layer_type, string $cb_var,
 	</div>
 	<?php
 	do_action( 'pizzatier_after_layer_card', $post, $layer_type );
-	return apply_filters( 'pizzatier_card_html', ob_get_clean(), $post, $layer_type );
+	$card_html = ob_get_contents();
+	} finally {
+		ob_end_clean();
+	}
+	return apply_filters( 'pizzatier_card_html', $card_html, $post, $layer_type  );
 }
 endif;
 
@@ -201,7 +207,9 @@ function pzt_colorbox_topping_card( $post, string $cb_var, int $zindex ): string
 	$js_add    = "window['{$cb_var}']&&window['{$cb_var}'].addTopping({$zindex},'{$js_slug}','{$js_layer}','{$js_title}','{$layer_id}','{$layer_id}',this)";
 	$js_remove = "window['{$cb_var}']&&window['{$cb_var}'].removeTopping('pizzatier-topping-{$js_slug}','{$js_slug}',this)";
 
+	$card_html = '';
 	ob_start();
+	try {
 	do_action( 'pizzatier_before_layer_card', $post, 'toppings' );
 	?>
 	<div class="cb-card cb-card--topping"
@@ -251,34 +259,38 @@ function pzt_colorbox_topping_card( $post, string $cb_var, int $zindex ): string
 	</div>
 	<?php
 	do_action( 'pizzatier_after_layer_card', $post, 'toppings' );
-	return apply_filters( 'pizzatier_card_html', ob_get_clean(), $post, 'toppings' );
+	$card_html = ob_get_contents();
+	} finally {
+		ob_end_clean();
+	}
+	return apply_filters( 'pizzatier_card_html', $card_html, $post, 'toppings'  );
 }
 endif;
 
 // Render card HTML for each tab
 $crusts_html = '';
-foreach ( $crusts as $post ) { $crusts_html .= pzt_colorbox_exclusive_card( $post, 'crust', $cb_var, 100 ); }
+foreach ( $crusts as $pzt_layer ) { $crusts_html .= pzt_colorbox_exclusive_card( $pzt_layer, 'crust', $cb_var, 100 ); }
 if ( ! $crusts_html ) { $crusts_html = '<p class="cb-empty"><i class="fa fa-circle-exclamation"></i> ' . esc_html__( 'No crusts found.', 'pizzatier' ) . '</p>'; }
 
 $sauces_html = '';
-foreach ( $sauces as $post ) { $sauces_html .= pzt_colorbox_exclusive_card( $post, 'sauce', $cb_var, 150 ); }
+foreach ( $sauces as $pzt_layer ) { $sauces_html .= pzt_colorbox_exclusive_card( $pzt_layer, 'sauce', $cb_var, 150 ); }
 if ( ! $sauces_html ) { $sauces_html = '<p class="cb-empty">' . esc_html__( 'No sauces found.', 'pizzatier' ) . '</p>'; }
 
 $cheeses_html = '';
-foreach ( $cheeses as $post ) { $cheeses_html .= pzt_colorbox_exclusive_card( $post, 'cheese', $cb_var, 200 ); }
+foreach ( $cheeses as $pzt_layer ) { $cheeses_html .= pzt_colorbox_exclusive_card( $pzt_layer, 'cheese', $cb_var, 200 ); }
 if ( ! $cheeses_html ) { $cheeses_html = '<p class="cb-empty">' . esc_html__( 'No cheeses found.', 'pizzatier' ) . '</p>'; }
 
 $drizzles_html = '';
-foreach ( $drizzles as $post ) { $drizzles_html .= pzt_colorbox_exclusive_card( $post, 'drizzle', $cb_var, 900 ); }
+foreach ( $drizzles as $pzt_layer ) { $drizzles_html .= pzt_colorbox_exclusive_card( $pzt_layer, 'drizzle', $cb_var, 900 ); }
 if ( ! $drizzles_html ) { $drizzles_html = '<p class="cb-empty">' . esc_html__( 'No drizzles found.', 'pizzatier' ) . '</p>'; }
 
 $toppings_html = '';
 $t_z = 400;
-foreach ( $toppings as $post ) { $toppings_html .= pzt_colorbox_topping_card( $post, $cb_var, $t_z ); $t_z += 10; }
+foreach ( $toppings as $pzt_layer ) { $toppings_html .= pzt_colorbox_topping_card( $pzt_layer, $cb_var, $t_z ); $t_z += 10; }
 if ( ! $toppings_html ) { $toppings_html = '<p class="cb-empty">' . esc_html__( 'No toppings found.', 'pizzatier' ) . '</p>'; }
 
 $cuts_html = '';
-foreach ( $cuts as $post ) { $cuts_html .= pzt_colorbox_exclusive_card( $post, 'cut', $cb_var, 950 ); }
+foreach ( $cuts as $pzt_layer ) { $cuts_html .= pzt_colorbox_exclusive_card( $pzt_layer, 'cut', $cb_var, 950 ); }
 if ( ! $cuts_html ) { $cuts_html = '<p class="cb-empty">' . esc_html__( 'No cut styles found.', 'pizzatier' ) . '</p>'; }
 
 // Use PizzaBuilder for the initial pizza display
@@ -339,7 +351,7 @@ $spec_max        = max( 1, (int) get_option( 'pizzatier_setting_cx_special_instr
 						<span><?php esc_html_e( 'Your Pizza', 'pizzatier' ); ?></span>
 					</div>
 					<div class="cb-pizza-sticky__canvas" id="<?php echo esc_attr( $instance_id ); ?>-canvas">
-						<?php echo $initial_pizza; // phpcs:ignore WordPress.Security.EscapeOutput -- built by PizzaBuilder with proper escaping ?>
+						<?php echo wp_kses( $initial_pizza, pzt_card_allowed_html() );?>
 					</div>
 					<div class="cb-pizza-sticky__footer">
 						<button type="button" class="cb-btn cb-btn--ghost cb-btn--sm"
@@ -378,18 +390,18 @@ $spec_max        = max( 1, (int) get_option( 'pizzatier_setting_cx_special_instr
 							'yourpizza' => [ 'fa-receipt',     __( 'Your Pizza','pizzatier' ) ],
 						];
 						$first_tab = true;
-						foreach ( $visible_tabs as $tab ) :
-							if ( ! isset( $tab_meta[ $tab ] ) ) { continue; }
-							[ $icon, $label ] = $tab_meta[ $tab ];
+						foreach ( $visible_tabs as $pzt_tab ) :
+							if ( ! isset( $tab_meta[ $pzt_tab ] ) ) { continue; }
+							[ $icon, $label ] = $tab_meta[ $pzt_tab ];
 							$active = $first_tab ? 'active' : '';
 							$selected = $first_tab ? 'true' : 'false';
 							$first_tab = false;
 						?>
 						<button class="cb-tab <?php echo esc_attr( $active ); ?>"
-						        data-tab="<?php echo esc_attr( $tab ); ?>"
+						        data-tab="<?php echo esc_attr( $pzt_tab ); ?>"
 						        data-instance="<?php echo esc_attr( $instance_id ); ?>"
 						        role="tab" aria-selected="<?php echo esc_attr( $selected ); ?>"
-						        aria-controls="<?php echo esc_attr( $instance_id . '-panel-' . $tab ); ?>">
+						        aria-controls="<?php echo esc_attr( $instance_id . '-panel-' . $pzt_tab ); ?>">
 							<span class="cb-tab__icon"><i class="fa <?php echo esc_attr( $icon ); ?>"></i></span>
 							<span class="cb-tab__label"><?php echo esc_html( $label ); ?></span>
 						</button>
@@ -399,8 +411,8 @@ $spec_max        = max( 1, (int) get_option( 'pizzatier_setting_cx_special_instr
 					
 <!-- Progress dots -->
 					<div class="cb-progress" aria-hidden="true">
-						<?php foreach ( $visible_tabs as $s ) : ?>
-						<span class="cb-progress__dot" data-step="<?php echo esc_attr( $s ); ?>"></span>
+						<?php foreach ( $visible_tabs as $pzt_s ) : ?>
+						<span class="cb-progress__dot" data-step="<?php echo esc_attr( $pzt_s ); ?>"></span>
 						<?php endforeach; ?>
 					</div>
 
@@ -418,7 +430,7 @@ $spec_max        = max( 1, (int) get_option( 'pizzatier_setting_cx_special_instr
 								<h2 class="cb-panel__title"><i class="fa fa-circle"></i> <?php esc_html_e( 'Choose Your Crust', 'pizzatier' ); ?></h2>
 								<p class="cb-panel__hint"><?php esc_html_e( 'Select one crust — it forms the base of your pizza.', 'pizzatier' ); ?></p>
 							</div>
-							<div class="cb-cards-grid cb-cards-grid--exclusive"><?php echo $crusts_html; // phpcs:ignore ?></div>
+							<div class="cb-cards-grid cb-cards-grid--exclusive"><?php echo wp_kses( $crusts_html, pzt_card_allowed_html() );?></div>
 							<div class="cb-panel__nav">
 								<span></span>
 								<button class="cb-btn cb-btn--next" onclick="<?php echo esc_js( $cb_var ); ?>.goTab('sauce')"><?php esc_html_e( 'Sauce', 'pizzatier' ); ?> <i class="fa fa-arrow-right"></i></button>
@@ -434,7 +446,7 @@ $spec_max        = max( 1, (int) get_option( 'pizzatier_setting_cx_special_instr
 								<h2 class="cb-panel__title"><i class="fa fa-droplet"></i> <?php esc_html_e( 'Choose Your Sauce', 'pizzatier' ); ?></h2>
 								<p class="cb-panel__hint"><?php esc_html_e( 'Select one sauce.', 'pizzatier' ); ?></p>
 							</div>
-							<div class="cb-cards-grid cb-cards-grid--exclusive"><?php echo $sauces_html; // phpcs:ignore ?></div>
+							<div class="cb-cards-grid cb-cards-grid--exclusive"><?php echo wp_kses( $sauces_html, pzt_card_allowed_html() );?></div>
 							<div class="cb-panel__nav">
 								<button class="cb-btn cb-btn--prev" onclick="<?php echo esc_js( $cb_var ); ?>.goTab('crust')"><i class="fa fa-arrow-left"></i> <?php esc_html_e( 'Crust', 'pizzatier' ); ?></button>
 								<button class="cb-btn cb-btn--next" onclick="<?php echo esc_js( $cb_var ); ?>.goTab('cheese')"><?php esc_html_e( 'Cheese', 'pizzatier' ); ?> <i class="fa fa-arrow-right"></i></button>
@@ -450,7 +462,7 @@ $spec_max        = max( 1, (int) get_option( 'pizzatier_setting_cx_special_instr
 								<h2 class="cb-panel__title"><i class="fa fa-cheese"></i> <?php esc_html_e( 'Choose Your Cheese', 'pizzatier' ); ?></h2>
 								<p class="cb-panel__hint"><?php esc_html_e( 'Select one cheese.', 'pizzatier' ); ?></p>
 							</div>
-							<div class="cb-cards-grid cb-cards-grid--exclusive"><?php echo $cheeses_html; // phpcs:ignore ?></div>
+							<div class="cb-cards-grid cb-cards-grid--exclusive"><?php echo wp_kses( $cheeses_html, pzt_card_allowed_html() );?></div>
 							<div class="cb-panel__nav">
 								<button class="cb-btn cb-btn--prev" onclick="<?php echo esc_js( $cb_var ); ?>.goTab('sauce')"><i class="fa fa-arrow-left"></i> <?php esc_html_e( 'Sauce', 'pizzatier' ); ?></button>
 								<button class="cb-btn cb-btn--next" onclick="<?php echo esc_js( $cb_var ); ?>.goTab('toppings')"><?php esc_html_e( 'Toppings', 'pizzatier' ); ?> <i class="fa fa-arrow-right"></i></button>
@@ -468,7 +480,7 @@ $spec_max        = max( 1, (int) get_option( 'pizzatier_setting_cx_special_instr
 									<?php printf( /* translators: %s = maximum number of toppings. */ esc_html__( 'Add up to %s toppings.', 'pizzatier' ), '<strong>' . esc_html( (string) $max_toppings ) . '</strong>' ); ?>
 								</p>
 							</div>
-							<div class="cb-cards-grid cb-cards-grid--toppings"><?php echo $toppings_html; // phpcs:ignore ?></div>
+							<div class="cb-cards-grid cb-cards-grid--toppings"><?php echo wp_kses( $toppings_html, pzt_card_allowed_html() );?></div>
 							<div class="cb-panel__nav">
 								<button class="cb-btn cb-btn--prev" onclick="<?php echo esc_js( $cb_var ); ?>.goTab('cheese')"><i class="fa fa-arrow-left"></i> <?php esc_html_e( 'Cheese', 'pizzatier' ); ?></button>
 								<button class="cb-btn cb-btn--next" onclick="<?php echo esc_js( $cb_var ); ?>.goTab('drizzle')"><?php esc_html_e( 'Drizzle', 'pizzatier' ); ?> <i class="fa fa-arrow-right"></i></button>
@@ -484,7 +496,7 @@ $spec_max        = max( 1, (int) get_option( 'pizzatier_setting_cx_special_instr
 								<h2 class="cb-panel__title"><i class="fa fa-wine-glass"></i> <?php esc_html_e( 'Choose a Drizzle', 'pizzatier' ); ?></h2>
 								<p class="cb-panel__hint"><?php esc_html_e( 'Optional finishing drizzle.', 'pizzatier' ); ?></p>
 							</div>
-							<div class="cb-cards-grid cb-cards-grid--exclusive"><?php echo $drizzles_html; // phpcs:ignore ?></div>
+							<div class="cb-cards-grid cb-cards-grid--exclusive"><?php echo wp_kses( $drizzles_html, pzt_card_allowed_html() );?></div>
 							<div class="cb-panel__nav">
 								<button class="cb-btn cb-btn--prev" onclick="<?php echo esc_js( $cb_var ); ?>.goTab('toppings')"><i class="fa fa-arrow-left"></i> <?php esc_html_e( 'Toppings', 'pizzatier' ); ?></button>
 								<button class="cb-btn cb-btn--next" onclick="<?php echo esc_js( $cb_var ); ?>.goTab('slicing')"><?php esc_html_e( 'Slicing', 'pizzatier' ); ?> <i class="fa fa-arrow-right"></i></button>
@@ -500,7 +512,7 @@ $spec_max        = max( 1, (int) get_option( 'pizzatier_setting_cx_special_instr
 								<h2 class="cb-panel__title"><i class="fa fa-pizza-slice"></i> <?php esc_html_e( 'How Should We Slice It?', 'pizzatier' ); ?></h2>
 								<p class="cb-panel__hint"><?php esc_html_e( 'Choose a cut style.', 'pizzatier' ); ?></p>
 							</div>
-							<div class="cb-cards-grid cb-cards-grid--exclusive"><?php echo $cuts_html; // phpcs:ignore ?></div>
+							<div class="cb-cards-grid cb-cards-grid--exclusive"><?php echo wp_kses( $cuts_html, pzt_card_allowed_html() );?></div>
 							<div class="cb-panel__nav">
 								<button class="cb-btn cb-btn--prev" onclick="<?php echo esc_js( $cb_var ); ?>.goTab('drizzle')"><i class="fa fa-arrow-left"></i> <?php esc_html_e( 'Drizzle', 'pizzatier' ); ?></button>
 								<button class="cb-btn cb-btn--next cb-btn--cta" onclick="<?php echo esc_js( $cb_var ); ?>.goTab('yourpizza')"><i class="fa fa-receipt"></i> <?php esc_html_e( 'See Your Pizza', 'pizzatier' ); ?></button>
@@ -577,7 +589,7 @@ $spec_max        = max( 1, (int) get_option( 'pizzatier_setting_cx_special_instr
 		</div><!-- /.cb-layout__row -->
 	</div><!-- /.cb-layout -->
 
-	<!-- Action bar: PizzaTierPro renders its checkout / Add to Cart bar here when
+	<!-- Action bar: PizzaTier renders its checkout / Add to Cart bar here when
 	     active. Placed full-width below the builder (rather than inside the
 	     overflow-constrained sticky pizza column, where it could be clipped off
 	     screen) so the Add to Cart CTA is always visible. -->

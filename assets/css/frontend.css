@@ -1,0 +1,957 @@
+/**
+ * PizzaTier — Frontend Product Page Styles
+ *
+ * Scoped entirely to .pztc-* classes to avoid interfering with theme styles.
+ * Uses CSS custom properties so themes can override brand colours if needed.
+ */
+
+/* ============================================================
+   Tokens
+   ============================================================ */
+:root {
+	--pztc-fe-accent:       #e8692a;
+	--pztc-fe-accent-dark:  #cf5519;
+	--pztc-fe-dark:         #1a1a2e;
+	--pztc-fe-text:         #333333;
+	--pztc-fe-muted:        #666666;
+	--pztc-fe-border:       #dddddd;
+	--pztc-fe-bg:           #f9f9f9;
+	--pztc-fe-white:        #ffffff;
+	--pztc-fe-radius:       8px;
+	--pztc-fe-shadow:       0 2px 12px rgba(0, 0, 0, 0.08);
+	--pztc-fe-font:         inherit;
+	--pztc-fe-transition:   0.2s ease;
+}
+
+/* ============================================================
+   Builder section wrapper
+   ============================================================ */
+.pztc-builder-section {
+	margin: 24px 0;
+	padding: 0;
+	font-family: var(--pztc-fe-font);
+}
+
+/* ============================================================
+   Size selector — Step 1 header
+   ============================================================ */
+
+/* Visible variant: shown as a full-width step bar */
+.pztc-size-selector--visible {
+	margin-bottom: 0;
+	background: var(--pztc-fe-bg);
+	border: 1px solid var(--pztc-fe-border);
+	border-radius: var(--pztc-fe-radius) var(--pztc-fe-radius) 0 0;
+	padding: 14px 20px 16px;
+	border-bottom: none;
+}
+
+/* Hidden variant: visually invisible but still in DOM so radios stay checked */
+.pztc-size-selector--hidden {
+	position: absolute;
+	width: 1px;
+	height: 1px;
+	overflow: hidden;
+	clip: rect(0,0,0,0);
+	pointer-events: none;
+}
+
+/* Step label row */
+.pztc-size-selector__step-label {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	margin-bottom: 12px;
+}
+
+.pztc-size-selector__step-num {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 24px;
+	height: 24px;
+	border-radius: 50%;
+	background: var(--pztc-fe-accent);
+	color: #fff;
+	font-size: 12px;
+	font-weight: 700;
+	line-height: 1;
+	flex-shrink: 0;
+}
+
+.pztc-size-selector__step-text {
+	font-size: 13px;
+	font-weight: 700;
+	color: var(--pztc-fe-text);
+	text-transform: uppercase;
+	letter-spacing: 0.06em;
+}
+
+/* Options row */
+.pztc-size-selector__options {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 10px;
+}
+
+/* Hide the native radio — we style the label as the button */
+.pztc-size-radio {
+	position: absolute;
+	opacity: 0;
+	width: 0;
+	height: 0;
+	pointer-events: none;
+}
+
+/* Truly-hidden radios used with dropdown style */
+.pztc-size-radio--hidden {
+	display: none;
+}
+
+/* ── Pill style (default) ── */
+.pztc-size-option {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	padding: 10px 22px;
+	border: 2px solid var(--pztc-fe-border);
+	border-radius: 50px;
+	cursor: pointer;
+	background: var(--pztc-fe-white);
+	transition:
+		border-color var(--pztc-fe-transition),
+		background    var(--pztc-fe-transition),
+		color         var(--pztc-fe-transition),
+		box-shadow    var(--pztc-fe-transition);
+	user-select: none;
+}
+
+.pztc-size-option:hover {
+	border-color: var(--pztc-fe-accent);
+	background: #fff3ec;
+}
+
+.pztc-size-option--active,
+.pztc-size-option:has(.pztc-size-radio:checked) {
+	border-color: var(--pztc-fe-accent);
+	background: var(--pztc-fe-accent);
+	box-shadow: 0 2px 8px rgba(232, 105, 42, 0.35);
+}
+
+.pztc-size-option--active .pztc-size-option__name,
+.pztc-size-option:has(.pztc-size-radio:checked) .pztc-size-option__name {
+	color: var(--pztc-fe-white);
+}
+
+.pztc-size-option__name {
+	font-size: 14px;
+	font-weight: 600;
+	color: var(--pztc-fe-text);
+	transition: color var(--pztc-fe-transition);
+	pointer-events: none;
+}
+
+/* ── Card style ── */
+.pztc-size-option--cards {
+	flex-direction: column;
+	gap: 4px;
+	padding: 14px 18px;
+	border-radius: 10px;
+	min-width: 72px;
+	text-align: center;
+}
+
+/* ── Dropdown / native select style ── */
+.pztc-size-selector__options--dropdown {
+	display: block;
+}
+
+.pztc-size-select-native {
+	width: 100%;
+	max-width: 260px;
+	padding: 9px 14px;
+	border: 2px solid var(--pztc-fe-border);
+	border-radius: var(--pztc-fe-radius);
+	font-size: 14px;
+	font-weight: 600;
+	color: var(--pztc-fe-text);
+	background: var(--pztc-fe-white);
+	cursor: pointer;
+	appearance: auto;
+	transition: border-color var(--pztc-fe-transition);
+}
+
+.pztc-size-select-native:focus {
+	border-color: var(--pztc-fe-accent);
+	outline: none;
+	box-shadow: 0 0 0 2px rgba(232, 105, 42, 0.15);
+}
+
+/* Connect size selector to builder visually when both are visible */
+.pztc-size-selector--visible + .pztc-builder-embed {
+	border-top-left-radius: 0;
+	border-top-right-radius: 0;
+	border-top: 1px solid var(--pztc-fe-border);
+}
+
+/* ============================================================
+   Builder embed wrapper
+   ============================================================ */
+.pztc-builder-embed {
+	margin-bottom: 20px;
+	border-radius: var(--pztc-fe-radius);
+	overflow: hidden;
+}
+
+.pztc-builder-embed--no-template {
+	padding: 24px;
+	background: var(--pztc-fe-bg);
+	border: 1px dashed var(--pztc-fe-border);
+	text-align: center;
+	color: var(--pztc-fe-muted);
+}
+
+/* ============================================================
+   Price bar
+   ============================================================ */
+.pztc-price-bar {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 16px;
+	padding: 16px 22px;
+	background: var(--pztc-fe-dark);
+	border-radius: var(--pztc-fe-radius);
+	margin-top: 8px;
+	box-shadow: var(--pztc-fe-shadow);
+}
+
+.pztc-price-bar__label {
+	font-size: 14px;
+	font-weight: 500;
+	color: rgba(255, 255, 255, 0.7);
+	text-transform: uppercase;
+	letter-spacing: 0.06em;
+}
+
+.pztc-price-bar__amount {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+}
+
+/* Live price element */
+.pztc-live-price {
+	display: inline-flex;
+	align-items: baseline;
+	gap: 3px;
+}
+
+.pztc-live-price__currency {
+	font-size: 18px;
+	font-weight: 600;
+	color: rgba(255, 255, 255, 0.7);
+	line-height: 1;
+}
+
+.pztc-live-price__value {
+	font-size: 32px;
+	font-weight: 700;
+	color: var(--pztc-fe-white);
+	line-height: 1;
+	font-variant-numeric: tabular-nums;
+	transition: color 0.15s;
+}
+
+/* Flash animation on price update */
+@keyframes pztc-price-flash {
+	0%   { color: var(--pztc-fe-accent); transform: scale(1.06); }
+	100% { color: var(--pztc-fe-white);  transform: scale(1); }
+}
+
+.pztc-price--updated .pztc-live-price__value {
+	animation: pztc-price-flash 0.4s ease forwards;
+}
+
+/* Fallback label (shown when grid cell is missing) */
+.pztc-price-bar__fallback {
+	font-size: 15px;
+	color: rgba(255, 255, 255, 0.6);
+	font-style: italic;
+}
+
+/* ============================================================
+   WooCommerce price override (in product summary)
+   ============================================================ */
+.pztc-price-html-wrapper {
+	display: inline-flex;
+	align-items: baseline;
+	gap: 2px;
+}
+
+/* ============================================================
+   Notice (no template configured)
+   ============================================================ */
+.pztc-builder-section .pztc-notice {
+	margin: 0;
+	padding: 12px 16px;
+	background: #fff8e5;
+	border-left: 4px solid #f0b429;
+	border-radius: 4px;
+	font-size: 14px;
+	color: #5a4200;
+}
+
+/* ============================================================
+   Responsive
+   ============================================================ */
+@media ( max-width: 600px ) {
+	.pztc-price-bar {
+		flex-direction: column;
+		align-items: flex-start;
+		padding: 14px 16px;
+	}
+
+	.pztc-live-price__value {
+		font-size: 26px;
+	}
+
+	.pztc-size-option {
+		padding: 8px 16px;
+	}
+
+	.pztc-size-option__name {
+		font-size: 13px;
+	}
+}
+
+/* ============================================================
+   Focus / accessibility
+   ============================================================ */
+.pztc-size-option:focus-within {
+	outline: 2px solid var(--pztc-fe-accent);
+	outline-offset: 2px;
+}
+
+/* ============================================================
+   Cart notices
+   ============================================================ */
+.pztc-cart-notice {
+	margin-top: 12px;
+	padding: 12px 16px;
+	border-radius: var(--pztc-fe-radius);
+	font-size: 14px;
+	font-family: var(--pztc-fe-font);
+	line-height: 1.5;
+}
+
+.pztc-cart-notice--error {
+	background: #fdecea;
+	border-left: 4px solid #f44336;
+	color: #b71c1c;
+}
+
+.pztc-cart-notice--success {
+	background: #edf7ed;
+	border-left: 4px solid #4caf50;
+	color: #1b5e20;
+}
+
+/* Loading state on the button */
+.pztc-add-to-cart-btn.pztc-btn--loading {
+	opacity: 0.7;
+	cursor: wait;
+}
+
+/* ============================================================
+   Checkout bar (inside PizzaTier builder canvas)
+   ============================================================ */
+.pztc-checkout-bar {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 16px;
+	padding: 14px 20px;
+	background: var(--pztc-fe-dark);
+	border-top: 3px solid var(--pztc-fe-accent);
+	border-radius: 0 0 var(--pztc-fe-radius) var(--pztc-fe-radius);
+	margin-top: 0;
+	box-shadow: var(--pztc-fe-shadow);
+	font-family: var(--pztc-fe-font);
+}
+
+.pztc-checkout-bar__summary {
+	display: flex;
+	align-items: center;
+	gap: 14px;
+	flex-wrap: wrap;
+}
+
+.pztc-checkout-bar__size-label {
+	font-size: 13px;
+	font-weight: 500;
+	color: rgba(255, 255, 255, 0.6);
+	text-transform: uppercase;
+	letter-spacing: 0.05em;
+}
+
+.pztc-checkout-bar__price {
+	display: inline-flex;
+	align-items: baseline;
+	gap: 2px;
+}
+
+.pztc-checkout-bar__currency {
+	font-size: 16px;
+	font-weight: 600;
+	color: rgba(255, 255, 255, 0.7);
+}
+
+.pztc-checkout-bar__amount {
+	font-size: 26px;
+	font-weight: 700;
+	color: var(--pztc-fe-white);
+	font-variant-numeric: tabular-nums;
+	transition: color 0.15s;
+}
+
+.pztc-checkout-bar__btn {
+	display: inline-flex;
+	align-items: center;
+	gap: 8px;
+	padding: 12px 24px;
+	background: var(--pztc-fe-accent);
+	color: var(--pztc-fe-white);
+	border: none;
+	border-radius: 50px;
+	font-size: 14px;
+	font-weight: 700;
+	cursor: pointer;
+	text-transform: uppercase;
+	letter-spacing: 0.06em;
+	white-space: nowrap;
+	transition:
+		background var(--pztc-fe-transition),
+		transform  var(--pztc-fe-transition),
+		box-shadow var(--pztc-fe-transition);
+	box-shadow: 0 2px 8px rgba(232, 105, 42, 0.35);
+	flex-shrink: 0;
+}
+
+.pztc-checkout-bar__btn:hover {
+	background: var(--pztc-fe-accent-dark);
+	transform: translateY(-1px);
+	box-shadow: 0 4px 14px rgba(232, 105, 42, 0.45);
+}
+
+.pztc-checkout-bar__btn:active { transform: translateY(0); }
+
+.pztc-checkout-bar__btn:disabled,
+.pztc-checkout-bar__btn.pztc-btn--loading {
+	opacity: 0.55;
+	cursor: not-allowed;
+	transform: none;
+}
+
+.pztc-checkout-bar__icon {
+	width: 18px;
+	height: 18px;
+	flex-shrink: 0;
+}
+
+.pztc-checkout-bar__btn-text { pointer-events: none; }
+
+/* ============================================================
+   Product page add-to-cart wrap (WC template override)
+   ============================================================ */
+.pztc-add-to-cart-wrap { margin-top: 20px; }
+
+.pztc-atc-notice {
+	padding: 10px 14px;
+	border-radius: 6px;
+	font-size: 13px;
+	margin-bottom: 10px;
+	background: #fdecea;
+	border-left: 4px solid #f44336;
+	color: #b71c1c;
+}
+
+.pztc-atc-notice--hidden { display: none; }
+
+.pztc-atc-notice--success {
+	background: #edf7ed;
+	border-left-color: #4caf50;
+	color: #1b5e20;
+}
+
+.pztc-btn--atc {
+	display: inline-flex;
+	align-items: center;
+	gap: 10px;
+	padding: 14px 32px;
+	background: var(--pztc-fe-accent);
+	color: var(--pztc-fe-white);
+	border: none;
+	border-radius: 50px;
+	font-size: 15px;
+	font-weight: 700;
+	cursor: pointer;
+	text-transform: uppercase;
+	letter-spacing: 0.06em;
+	transition:
+		background var(--pztc-fe-transition),
+		transform  var(--pztc-fe-transition),
+		box-shadow var(--pztc-fe-transition);
+	box-shadow: 0 3px 12px rgba(232, 105, 42, 0.35);
+	width: 100%;
+	justify-content: center;
+}
+
+.pztc-btn--atc:hover {
+	background: var(--pztc-fe-accent-dark);
+	transform: translateY(-1px);
+	box-shadow: 0 5px 18px rgba(232, 105, 42, 0.45);
+}
+
+.pztc-btn--atc:active { transform: translateY(0); }
+
+.pztc-btn--atc:disabled,
+.pztc-btn--atc.pztc-btn--loading {
+	opacity: 0.55;
+	cursor: not-allowed;
+	transform: none;
+}
+
+.pztc-btn__icon { width: 20px; height: 20px; flex-shrink: 0; }
+.pztc-btn__label { pointer-events: none; }
+
+@media ( max-width: 600px ) {
+	.pztc-checkout-bar {
+		flex-direction: column;
+		align-items: stretch;
+		gap: 12px;
+		padding: 14px 16px;
+	}
+	.pztc-checkout-bar__btn { width: 100%; justify-content: center; }
+	.pztc-checkout-bar__amount { font-size: 22px; }
+}
+
+/* ============================================================
+   Per-layer price breakdown list
+   Populated live by frontend-builder.js inside #pztc-price-bar
+   ============================================================ */
+
+/* Restructure price bar to stack breakdown above total row */
+.pztc-price-bar {
+	display: flex;
+	flex-direction: column;
+	gap: 0;
+}
+
+.pztc-price-bar__total {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	padding: 14px 18px;
+}
+
+/* Breakdown list */
+.pztc-layer-breakdown {
+	list-style: none;
+	margin: 0;
+	padding: 12px 18px 0;
+	border-bottom: 1px solid var(--pztc-fe-border);
+}
+
+.pztc-layer-breakdown__item {
+	display: flex;
+	align-items: baseline;
+	gap: 8px;
+	padding: 5px 0;
+	font-size: 13px;
+	color: var(--pztc-fe-text);
+	border-bottom: 1px dashed var(--pztc-fe-border);
+	animation: pztc-layer-in 0.2s ease;
+}
+
+.pztc-layer-breakdown__item:last-child {
+	border-bottom: none;
+	padding-bottom: 10px;
+}
+
+@keyframes pztc-layer-in {
+	from { opacity: 0; transform: translateY(-4px); }
+	to   { opacity: 1; transform: translateY(0); }
+}
+
+/* Layer name — takes up remaining space */
+.pztc-layer-breakdown__name {
+	flex: 1;
+	font-weight: 500;
+	color: var(--pztc-fe-dark);
+}
+
+/* Coverage fraction — muted secondary info */
+.pztc-layer-breakdown__meta {
+	font-size: 11px;
+	color: var(--pztc-fe-muted);
+	background: var(--pztc-fe-bg);
+	border: 1px solid var(--pztc-fe-border);
+	border-radius: 20px;
+	padding: 1px 8px;
+	white-space: nowrap;
+	flex-shrink: 0;
+}
+
+/* Per-layer price — right-aligned, accented */
+.pztc-layer-breakdown__price {
+	font-weight: 600;
+	color: var(--pztc-fe-accent);
+	min-width: 52px;
+	text-align: right;
+	flex-shrink: 0;
+}
+
+/* Responsive */
+@media ( max-width: 480px ) {
+	.pztc-layer-breakdown {
+		padding: 10px 14px 0;
+	}
+	.pztc-price-bar__total {
+		padding: 12px 14px;
+	}
+	.pztc-layer-breakdown__meta {
+		display: none; /* hide fraction badge on very small screens */
+	}
+}
+
+/* ==========================================================================
+   Order Note Field
+   ========================================================================== */
+
+.pztc-order-note {
+	margin: 14px 0 0;
+	padding: 14px 16px;
+	background: var(--pztc-fe-bg, #f9f9f9);
+	border: 1px solid var(--pztc-fe-border, #e0e0e0);
+	border-radius: 8px;
+}
+
+.pztc-order-note__label {
+	display: block;
+	font-size: 12px;
+	font-weight: 600;
+	text-transform: uppercase;
+	letter-spacing: 0.04em;
+	color: var(--pztc-fe-muted, #888);
+	margin-bottom: 6px;
+}
+
+.pztc-order-note__input {
+	width: 100%;
+	box-sizing: border-box;
+	padding: 8px 10px;
+	font-size: 13px;
+	line-height: 1.5;
+	border: 1px solid var(--pztc-fe-border, #e0e0e0);
+	border-radius: 6px;
+	background: #fff;
+	color: var(--pztc-fe-dark, #1a1a2e);
+	resize: vertical;
+	transition: border-color 0.15s;
+	font-family: inherit;
+}
+
+.pztc-order-note__input:focus {
+	outline: none;
+	border-color: var(--pztc-fe-accent, #e8692a);
+	box-shadow: 0 0 0 2px rgba(232, 105, 42, 0.12);
+}
+
+/* ==========================================================================
+   Nutrition — Inline Badge (breakdown list)
+   ========================================================================== */
+
+.pztc-nutrition-badge {
+	display: inline-block;
+	margin-left: 6px;
+	padding: 1px 6px;
+	font-size: 10px;
+	font-weight: 600;
+	color: #2d7a3a;
+	background: #e8f5ea;
+	border: 1px solid #b6debb;
+	border-radius: 10px;
+	vertical-align: middle;
+	letter-spacing: 0.02em;
+	white-space: nowrap;
+}
+
+/* ==========================================================================
+   Nutrition — Tooltip
+   ========================================================================== */
+
+.pztc-has-nutrition {
+	position: relative;
+	cursor: help;
+}
+
+.pztc-has-nutrition[data-pztc-tooltip]::after {
+	content: attr(data-pztc-tooltip);
+	position: absolute;
+	bottom: calc(100% + 6px);
+	left: 50%;
+	transform: translateX(-50%);
+	background: rgba(26, 26, 46, 0.94);
+	color: #fff;
+	font-size: 11px;
+	font-weight: 400;
+	line-height: 1.4;
+	white-space: nowrap;
+	padding: 5px 9px;
+	border-radius: 5px;
+	pointer-events: none;
+	opacity: 0;
+	transition: opacity 0.15s;
+	z-index: 9999;
+	max-width: 260px;
+	white-space: normal;
+	text-align: center;
+}
+
+.pztc-has-nutrition[data-pztc-tooltip]::before {
+	content: '';
+	position: absolute;
+	bottom: calc(100% + 1px);
+	left: 50%;
+	transform: translateX(-50%);
+	border: 5px solid transparent;
+	border-top-color: rgba(26, 26, 46, 0.94);
+	pointer-events: none;
+	opacity: 0;
+	transition: opacity 0.15s;
+	z-index: 9999;
+}
+
+.pztc-has-nutrition[data-pztc-tooltip]:hover::after,
+.pztc-has-nutrition[data-pztc-tooltip]:focus::after,
+.pztc-has-nutrition[data-pztc-tooltip]:hover::before,
+.pztc-has-nutrition[data-pztc-tooltip]:focus::before {
+	opacity: 1;
+}
+
+/* ==========================================================================
+   Nutrition — Summary Panel (panel display mode)
+   ========================================================================== */
+
+.pztc-nutrition-panel {
+	margin: 10px 0 0;
+	padding: 10px 16px 12px;
+	background: #f0f9f1;
+	border: 1px solid #b6debb;
+	border-radius: 8px;
+	font-size: 13px;
+}
+
+.pztc-nutrition-panel__heading {
+	font-size: 10px;
+	font-weight: 700;
+	text-transform: uppercase;
+	letter-spacing: 0.06em;
+	color: #2d7a3a;
+	margin-bottom: 6px;
+}
+
+.pztc-nutrition-panel__row {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 4px 12px;
+	align-items: baseline;
+}
+
+.pztc-nutrition-panel__item {
+	font-size: 13px;
+	color: var(--pztc-fe-dark, #1a1a2e);
+	white-space: nowrap;
+}
+
+.pztc-nutrition-panel__item strong {
+	font-weight: 700;
+	color: #2d7a3a;
+}
+
+.pztc-nutrition-panel__allergens {
+	margin-top: 6px;
+	font-size: 11px;
+	color: #7a4a2d;
+	background: #fff8f0;
+	border: 1px solid #f0c89a;
+	border-radius: 4px;
+	padding: 3px 8px;
+}
+
+/* ==========================================================================
+   Multiple builder instances — scoped wrappers
+   ========================================================================== */
+
+/* Each .pztc-builder-section is fully self-contained.
+   No cross-instance element ID queries in JS — all scoped by data-pztc-instance. */
+.pztc-builder-section + .pztc-builder-section {
+	margin-top: 32px;
+	padding-top: 24px;
+	border-top: 1px solid var(--pztc-fe-border, #e0e0e0);
+}
+
+/* ==========================================================================
+   Cart Edit link
+   ========================================================================== */
+
+.pztc-cart-edit-link {
+	display: inline-block;
+	margin-left: 8px;
+	font-size: 12px;
+	font-weight: 500;
+	color: var(--pztc-fe-accent, #ff6b35);
+	text-decoration: none;
+	opacity: 0.85;
+	transition: opacity 0.15s;
+}
+
+.pztc-cart-edit-link:hover {
+	opacity: 1;
+	text-decoration: underline;
+	color: var(--pztc-fe-accent-hover, #e05a28);
+}
+
+/* ============================================================
+   Price bar — inline size chips (pztc-price-bar--has-sizes)
+   ============================================================ */
+
+.pztc-price-bar--has-sizes {
+	flex-direction: column;
+	gap: 10px;
+	align-items: stretch;
+}
+
+.pztc-price-bar__sizes {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	border-bottom: 1px solid rgba(255,255,255,0.08);
+	padding-bottom: 10px;
+}
+
+.pztc-price-bar__sizes-label {
+	font-size: 11px;
+	font-weight: 700;
+	text-transform: uppercase;
+	letter-spacing: 0.08em;
+	color: rgba(255,255,255,0.45);
+	flex-shrink: 0;
+}
+
+.pztc-price-bar__sizes-chips {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 6px;
+	flex: 1;
+}
+
+/* Bar size chip — compact pill */
+.pztc-bar-chip {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	padding: 5px 14px;
+	border: 1px solid rgba(255,255,255,0.18);
+	border-radius: 999px;
+	cursor: pointer;
+	font-size: 12px;
+	font-weight: 600;
+	color: rgba(255,255,255,0.7);
+	background: rgba(255,255,255,0.05);
+	transition:
+		border-color var(--pztc-fe-transition),
+		background   var(--pztc-fe-transition),
+		color        var(--pztc-fe-transition);
+	user-select: none;
+}
+
+.pztc-bar-chip:hover {
+	border-color: var(--pztc-fe-accent);
+	color: #fff;
+	background: rgba(232,105,42,0.12);
+}
+
+.pztc-bar-chip--active,
+.pztc-bar-chip:has(.pztc-size-radio:checked) {
+	border-color: var(--pztc-fe-accent);
+	background: var(--pztc-fe-accent);
+	color: #fff;
+	box-shadow: 0 2px 8px rgba(232,105,42,0.4);
+}
+
+/* When bar has inline sizes: reflow the total row inline */
+.pztc-price-bar--has-sizes .pztc-price-bar__total {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+}
+
+
+/* ── Inline size selector (embedded in builder templates) ── */
+/* Renders when Pro is active and the builder is used without FrontendEmbed's
+   standalone size selector above it (e.g., standalone [pizza_builder] shortcode).
+   All template prefixes (cb-, np-, rp-, mt-, pl-, pp-, sc-) share these styles
+   because the elements carry the shared pztc-* classes. */
+
+.pztc-inline-size-selector {
+	margin-bottom: 18px;
+}
+
+.pztc-inline-size-selector .cb-size-selector__heading,
+.pztc-inline-size-selector .np-size-selector__heading,
+.pztc-inline-size-selector .rp-size-selector__heading,
+.pztc-inline-size-selector .mt-size-selector__heading,
+.pztc-inline-size-selector .pl-size-selector__heading,
+.pztc-inline-size-selector .pp-size-selector__heading,
+.pztc-inline-size-selector .sc-size-selector__heading {
+	font-size: 14px;
+	font-weight: 600;
+	color: var(--pztc-fe-text, #1a1a1a);
+	margin: 0 0 10px;
+}
+
+.pztc-inline-size-selector .cb-size-selector__options,
+.pztc-inline-size-selector .np-size-selector__options,
+.pztc-inline-size-selector .rp-size-selector__options,
+.pztc-inline-size-selector .mt-size-selector__options,
+.pztc-inline-size-selector .pl-size-selector__options,
+.pztc-inline-size-selector .pp-size-selector__options,
+.pztc-inline-size-selector .sc-size-selector__options {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 10px;
+}
+
+/* Note: both FrontendEmbed's size selector and the inline template selector
+   are kept visible; they stay in sync via JS (shared radio name). */
+
+/* ============================================================
+   CART / ORDER ITEM — pizza layer description subtitle
+   ============================================================ */
+
+.pztc-cart-item-layers {
+	display: block;
+	font-size: 0.8em;
+	font-weight: 400;
+	color: #666;
+	margin-top: 3px;
+	line-height: 1.4;
+}
+
+/* Dark-background themes */
+.wc-dark .pztc-cart-item-layers,
+.woocommerce-cart .dark .pztc-cart-item-layers {
+	color: #aaa;
+}

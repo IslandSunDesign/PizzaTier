@@ -49,7 +49,7 @@ function pzt_plainlist_inject_css(): void {
 	$row_padding     = max( 0, min( 20, (int) $g( 'plainlist_setting_row_padding',     '4' ) ) );
 	$label_weight    = (int) $g( 'plainlist_setting_label_weight',   '400' );
 
-	// Add-to-Cart button (PizzaTierPro checkout bar)
+	// Add-to-Cart button (PizzaTier checkout bar)
 	$cart_bg         = $g( 'plainlist_setting_cart_btn_bg',          '#1a1a1a' );
 	$cart_fg         = $g( 'plainlist_setting_cart_btn_text_color',  '#ffffff' );
 	$cart_radius     = max( 0, min( 32, (int) $g( 'plainlist_setting_cart_btn_radius', '4' ) ) );
