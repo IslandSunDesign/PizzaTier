@@ -3,7 +3,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PizzaTier 2.0.0\n"
 "Report-Msgid-Bugs-To: https://pizzatier.com\n"
-"POT-Creation-Date: 2026-07-24 05:32+0000\n"
+"POT-Creation-Date: 2026-07-31T08:23:39+00:00\n"
 "PO-Revision-Date: 2026-03-30 00:00+0000\n"
 "Last-Translator: Island Sun Design <ryan@islandsundesign.com>\n"
 "Language-Team: German\n"
@@ -14,7 +14,34 @@ msgstr ""
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Domain: pizzatier\n"
 
-#: partials/order-bar.php:33 src/Orders/OrderSettings.php:152
+#. Plugin Name of the plugin
+#: pizzatier.php src/Admin/AdminMenu.php:66 src/Admin/AdminMenu.php:67
+#: src/Commerce/Admin/Dashboard.php:91 src/Commerce/Admin/Dashboard.php:149
+#: blocks/pizza-layer/block.js:90
+msgid "PizzaTier"
+msgstr "PizzaTier"
+
+#. Plugin URI of the plugin
+#: pizzatier.php
+msgid "https://pizzatier.com"
+msgstr ""
+
+#. Description of the plugin
+#: pizzatier.php
+msgid "Pizza toppings customizer and visualizer."
+msgstr ""
+
+#. Author of the plugin
+#: pizzatier.php
+msgid "Island Sun Design"
+msgstr ""
+
+#. Author URI of the plugin
+#: pizzatier.php
+msgid "https://islandsundesign.com"
+msgstr ""
+
+#: partials/order-bar.php:33 src/Orders/OrderSettings.php:173
 #: templates/rustic/checkout-bar.php:43
 msgid "Order Now"
 msgstr ""
@@ -26,12 +53,12 @@ msgid "Pizza order summary"
 msgstr ""
 
 #: partials/order-bar.php:46 partials/order-panel.php:73
-#: src/Orders/OrderCheckout.php:318
+#: src/Orders/OrderCheckout.php:328
 #: templates/metro/pztp-containers-menu.php:414
 msgid "Your pizza"
 msgstr ""
 
-#: partials/order-bar.php:50 src/Orders/OrderCheckout.php:319
+#: partials/order-bar.php:50 src/Orders/OrderCheckout.php:329
 msgid "Nothing selected yet"
 msgstr ""
 
@@ -55,17 +82,17 @@ msgstr ""
 msgid "Increase quantity"
 msgstr ""
 
-#: partials/order-bar.php:88 src/Orders/OrderCheckout.php:309
-#: src/Orders/OrderSubmission.php:98
+#: partials/order-bar.php:88 src/Orders/OrderCheckout.php:319
+#: src/Orders/OrderSubmission.php:99
 msgid "Please log in to place an order."
 msgstr ""
 
-#: partials/order-panel.php:36 src/Orders/Order.php:382
+#: partials/order-panel.php:36 src/Orders/Order.php:391
 msgid "Pickup"
 msgstr ""
 
 #: partials/order-panel.php:40 src/Commerce/CheckoutBar/LayoutHelpers.php:37
-#: src/Orders/OrderSettings.php:158 templates/colorbox/checkout-bar.php:36
+#: src/Orders/OrderSettings.php:179 templates/colorbox/checkout-bar.php:36
 #: templates/commandcenter/checkout-bar.php:40
 #: templates/metro/checkout-bar.php:16 templates/nightpie/checkout-bar.php:16
 #: templates/plainlist/checkout-bar.php:16
@@ -78,8 +105,8 @@ msgstr ""
 msgid "Place your order"
 msgstr ""
 
-#: partials/order-panel.php:66 src/Admin/Settings.php:304
-#: src/Orders/OrderCheckout.php:320
+#: partials/order-panel.php:66 src/Admin/Settings.php:323
+#: src/Orders/OrderCheckout.php:330
 #: templates/colorbox/pztp-containers-menu.php:608
 #: templates/metro/pztp-containers-menu.php:564
 #: templates/plainlist/pztp-containers-menu.php:440
@@ -123,7 +150,7 @@ msgstr ""
 msgid "How would you like it?"
 msgstr ""
 
-#: partials/order-panel.php:110
+#: partials/order-panel.php:110 src/Orders/Privacy.php:247
 msgid "Fulfilment method"
 msgstr ""
 
@@ -147,11 +174,11 @@ msgstr ""
 msgid "ZIP"
 msgstr ""
 
-#: partials/order-panel.php:153
+#: partials/order-panel.php:153 src/Orders/Privacy.php:259
 msgid "Delivery instructions"
 msgstr ""
 
-#: partials/order-panel.php:161
+#: partials/order-panel.php:161 src/Orders/Privacy.php:258
 msgid "Table number"
 msgstr ""
 
@@ -168,15 +195,18 @@ msgid "Your details"
 msgstr ""
 
 #: partials/order-panel.php:183 src/Admin/LayerBuilderWizard.php:172
-#: src/Assets/AssetManager.php:294 src/Orders/Admin/OrdersPage.php:691
+#: src/Assets/AssetManager.php:294 src/Orders/Admin/OrdersPage.php:728
+#: src/Orders/Privacy.php:233
 msgid "Name"
 msgstr ""
 
-#: partials/order-panel.php:193 src/Orders/Admin/OrdersPage.php:695
+#: partials/order-panel.php:193 src/Orders/Admin/OrdersPage.php:732
+#: src/Orders/Privacy.php:235
 msgid "Phone"
 msgstr ""
 
-#: partials/order-panel.php:202 src/Orders/Admin/OrdersPage.php:699
+#: partials/order-panel.php:202 src/Orders/Admin/OrdersPage.php:736
+#: src/Orders/Privacy.php:234
 msgid "Email"
 msgstr ""
 
@@ -184,7 +214,7 @@ msgstr ""
 msgid "Notes for the kitchen"
 msgstr ""
 
-#: partials/order-panel.php:217
+#: partials/order-panel.php:217 src/Orders/Privacy.php:269
 msgid "Order notes"
 msgstr ""
 
@@ -196,7 +226,7 @@ msgstr ""
 msgid "Keep building"
 msgstr ""
 
-#: partials/order-panel.php:251 src/Orders/OrderCheckout.php:321
+#: partials/order-panel.php:251 src/Orders/OrderCheckout.php:331
 msgid "Place Order"
 msgstr ""
 
@@ -260,7 +290,7 @@ msgstr ""
 #: src/Admin/AdminBar.php:124 src/Admin/AdminHome.php:45
 #: src/Admin/AdminHome.php:117 src/Admin/AdminHome.php:225
 #: src/Admin/AdminMenu.php:192 src/Admin/Help.php:42
-#: src/Admin/SetupGuide.php:187 src/Commerce/Admin/Dashboard.php:97
+#: src/Admin/SetupGuide.php:187 src/Commerce/Admin/Dashboard.php:98
 msgid "Setup Guide"
 msgstr "Einrichtungsanleitung"
 
@@ -280,7 +310,7 @@ msgstr ""
 
 #: src/Admin/AdminBar.php:138 src/Admin/AdminHome.php:64
 #: src/Admin/AdminHome.php:114 src/Admin/AdminMenu.php:82
-#: src/Blocks/BlockRegistrar.php:263 src/Orders/Admin/OrdersPage.php:808
+#: src/Blocks/BlockRegistrar.php:263 src/Orders/Admin/OrdersPage.php:845
 msgid "Template"
 msgstr ""
 
@@ -289,7 +319,7 @@ msgid "Switch or preview templates"
 msgstr ""
 
 #: src/Admin/AdminBar.php:145 src/Admin/AdminMenu.php:83
-#: src/Admin/Settings.php:214 src/Admin/SetupGuide.php:195
+#: src/Admin/Settings.php:233 src/Admin/SetupGuide.php:195
 #: src/Admin/TemplateChoice.php:167 src/Commerce/Admin/SetupGuide.php:118
 msgid "Settings"
 msgstr "Einstellungen"
@@ -318,17 +348,19 @@ msgstr ""
 msgid "Layer image shortcode"
 msgstr ""
 
-#: src/Admin/AdminBar.php:185 src/Admin/Settings.php:246
-#: src/Admin/Settings.php:282 src/Commerce/Admin/NewPizzaWizard.php:704
+#: src/Admin/AdminBar.php:185 src/Admin/Settings.php:265
+#: src/Admin/Settings.php:301 src/Commerce/Admin/NewPizzaWizard.php:704
+#: blocks/pizza-builder/block.js:159
 msgid "Default Layers"
 msgstr "Standard-Schichten"
 
-#: src/Admin/AdminBar.php:186 src/Admin/Settings.php:248
-#: src/Admin/Settings.php:394 src/Admin/SettingsWizard.php:403
+#: src/Admin/AdminBar.php:186 src/Admin/Settings.php:267
+#: src/Admin/Settings.php:413 src/Admin/SettingsWizard.php:403
+#: blocks/pizza-builder/block.js:117
 msgid "Pizza Shape"
 msgstr ""
 
-#: src/Admin/AdminBar.php:187 src/Admin/Settings.php:249
+#: src/Admin/AdminBar.php:187 src/Admin/Settings.php:268
 #: src/Commerce/Admin/Presets.php:82 src/Commerce/Admin/Presets.php:458
 #: src/Commerce/Admin/Presets.php:489
 #: src/Commerce/WooCommerce/OrderEmailSummary.php:319
@@ -351,14 +383,15 @@ msgstr ""
 #: templates/rustic/pztp-containers-menu.php:402
 #: templates/rustic/pztp-containers-menu.php:493
 #: templates/rustic/pztp-containers-menu.php:602
+#: blocks/pizza-builder/block.js:46 blocks/pizza-layer/block.js:25
 msgid "Crust"
 msgstr "Boden"
 
-#: src/Admin/AdminBar.php:188 src/Admin/Settings.php:250
+#: src/Admin/AdminBar.php:188 src/Admin/Settings.php:269
 msgid "Sauce & Cheese"
 msgstr ""
 
-#: src/Admin/AdminBar.php:189 src/Admin/Settings.php:550
+#: src/Admin/AdminBar.php:189 src/Admin/Settings.php:569
 msgid "Plugin Settings"
 msgstr ""
 
@@ -417,8 +450,8 @@ msgid "Customizer"
 msgstr ""
 
 #: src/Admin/AdminHome.php:76 src/Admin/AdminHome.php:157
-#: src/Admin/AdminHome.php:253 src/Admin/Settings.php:247
-#: src/Admin/Settings.php:323 src/Commerce/Admin/BulkPricingPage.php:100
+#: src/Admin/AdminHome.php:253 src/Admin/Settings.php:266
+#: src/Admin/Settings.php:342 src/Commerce/Admin/BulkPricingPage.php:100
 #: src/Commerce/Admin/Presets.php:104 src/Commerce/Admin/Presets.php:463
 #: src/Commerce/Admin/Presets.php:516 src/Commerce/Admin/PricingPage.php:95
 #: src/Commerce/Admin/SettingsPage.php:33
@@ -443,6 +476,7 @@ msgstr ""
 #: templates/rustic/pztp-containers-menu.php:405
 #: templates/rustic/pztp-containers-menu.php:558
 #: templates/rustic/pztp-containers-menu.php:605
+#: blocks/pizza-builder/block.js:49 blocks/pizza-static/block.js:89
 msgid "Toppings"
 msgstr "Beläge"
 
@@ -451,7 +485,7 @@ msgid "Presets"
 msgstr ""
 
 #: src/Admin/AdminHome.php:88 src/Admin/AdminMenu.php:193 src/Admin/Help.php:83
-#: src/Admin/SiteMigration.php:791 src/Commerce/Admin/Help.php:95
+#: src/Admin/SiteMigration.php:1283 src/Commerce/Admin/Help.php:95
 #: src/Commerce/Admin/Help.php:251
 msgid "Site Migration"
 msgstr ""
@@ -619,29 +653,25 @@ msgstr ""
 msgid "PizzaTier v%1$s &mdash; crafted by <strong>%2$s</strong> / %3$s"
 msgstr ""
 
-#: src/Admin/AdminMenu.php:66 src/Admin/AdminMenu.php:67
-#: src/Commerce/Admin/Dashboard.php:90 src/Commerce/Admin/Dashboard.php:148
-msgid "PizzaTier"
-msgstr "PizzaTier"
-
 #: src/Admin/AdminMenu.php:79
 msgid "Basics"
 msgstr ""
 
 #: src/Admin/AdminMenu.php:92 src/Admin/AdminMenu.php:102
-#: src/Orders/Admin/OrdersPage.php:423 src/Orders/OrderPostType.php:41
-#: src/Orders/OrderPostType.php:43
+#: src/Orders/Admin/OrdersPage.php:460 src/Orders/OrderPostType.php:41
+#: src/Orders/OrderPostType.php:43 src/Orders/Privacy.php:82
+#: src/Orders/Privacy.php:97 src/Orders/Privacy.php:196
 msgid "Pizza Orders"
 msgstr ""
 
 #: src/Admin/AdminMenu.php:139 src/Admin/AdminMenu.php:180
-#: src/Commerce/Admin/Dashboard.php:242 src/Commerce/Admin/Help.php:54
+#: src/Commerce/Admin/Dashboard.php:243 src/Commerce/Admin/Help.php:54
 #: src/Commerce/Admin/Help.php:156 src/Commerce/Admin/SettingsPage.php:81
 msgid "Cart & Pricing"
 msgstr ""
 
 #: src/Admin/AdminMenu.php:143 src/Admin/AdminMenu.php:144
-#: src/Admin/Settings.php:253 src/Commerce/Admin/HomeCard.php:115
+#: src/Admin/Settings.php:272 src/Commerce/Admin/HomeCard.php:115
 #: src/Commerce/Admin/NewPizzaWizard.php:327
 #: src/Commerce/Admin/PricingPage.php:340
 msgid "Pricing"
@@ -654,7 +684,7 @@ msgid "Bulk Pricing"
 msgstr ""
 
 #: src/Admin/AdminMenu.php:161 src/Admin/AdminMenu.php:162
-#: src/Commerce/Admin/Dashboard.php:195
+#: src/Commerce/Admin/Dashboard.php:196
 msgid "Pizza Presets"
 msgstr "Pizza-Vorlagen"
 
@@ -689,7 +719,7 @@ msgstr ""
 msgid "Settings Wizard"
 msgstr ""
 
-#: src/Admin/AdminMenu.php:194 src/Admin/Settings.php:237
+#: src/Admin/AdminMenu.php:194 src/Admin/Settings.php:256
 #: src/Admin/SetupGuide.php:150
 msgid "✦ Settings Wizard"
 msgstr ""
@@ -929,6 +959,7 @@ msgid "The display name shown to customers."
 msgstr ""
 
 #: src/Admin/LayerBuilderWizard.php:180 src/Assets/AssetManager.php:295
+#: blocks/pizza-layer/block.js:62
 msgid "Slug"
 msgstr ""
 
@@ -992,6 +1023,7 @@ msgstr ""
 
 #: src/Admin/LayerBuilderWizard.php:221 src/Admin/NutritionMetaBox.php:201
 #: src/Admin/SettingsWizard.php:353 src/Admin/SettingsWizard.php:362
+#: src/Orders/Admin/OrdersPage.php:945
 msgid "— None —"
 msgstr ""
 
@@ -1028,8 +1060,8 @@ msgid "Lower numbers appear first in the builder (0 = default)."
 msgstr ""
 
 #: src/Admin/LayerBuilderWizard.php:260 src/Admin/LayerBuilderWizard.php:305
-#: src/Admin/LayerBuilderWizard.php:324 src/Admin/Settings.php:1020
-#: src/Admin/SiteMigration.php:129 src/Commerce/Admin/NewPizzaWizard.php:370
+#: src/Admin/LayerBuilderWizard.php:324 src/Admin/Settings.php:1039
+#: src/Admin/SiteMigration.php:165 src/Commerce/Admin/NewPizzaWizard.php:370
 #: templates/colorbox/pztp-containers-menu.php:554
 #: templates/commandcenter/pztp-containers-menu.php:675
 #: templates/nightpie/pztp-containers-menu.php:545
@@ -1188,7 +1220,7 @@ msgstr ""
 msgid "Invert selection (keep background)"
 msgstr ""
 
-#: src/Admin/LayerImageMaker.php:142 src/Admin/SiteMigration.php:803
+#: src/Admin/LayerImageMaker.php:142 src/Admin/SiteMigration.php:1295
 msgid "Export"
 msgstr ""
 
@@ -1423,224 +1455,224 @@ msgstr ""
 msgid "Dietary"
 msgstr ""
 
-#: src/Admin/Settings.php:169 src/Orders/Admin/OrdersPage.php:845
+#: src/Admin/Settings.php:188 src/Orders/Admin/OrdersPage.php:882
 msgid "Settings saved."
 msgstr ""
 
-#: src/Admin/Settings.php:215
+#: src/Admin/Settings.php:234
 msgid ""
 "All plugin settings in one place. New to PizzaTier? Try the Settings Wizard "
 "for a plain-English guided walk-through."
 msgstr ""
 
-#: src/Admin/Settings.php:225
+#: src/Admin/Settings.php:244
 msgid "Description style"
 msgstr ""
 
-#: src/Admin/Settings.php:228 src/Commerce/Admin/Settings.php:838
+#: src/Admin/Settings.php:247 src/Commerce/Admin/Settings.php:839
 msgid "Simple"
 msgstr "Einfach"
 
-#: src/Admin/Settings.php:232 src/Admin/Settings.php:256
+#: src/Admin/Settings.php:251 src/Admin/Settings.php:275
 #: src/Commerce/Admin/Settings.php:475 src/Commerce/Admin/SettingsPage.php:40
 msgid "Advanced"
 msgstr "Erweitert"
 
-#: src/Admin/Settings.php:251
+#: src/Admin/Settings.php:270
 msgid "Plugin"
 msgstr ""
 
-#: src/Admin/Settings.php:252
+#: src/Admin/Settings.php:271
 msgid "Content & Data"
 msgstr ""
 
-#: src/Admin/Settings.php:254
+#: src/Admin/Settings.php:273
 msgid "A11y & Perf"
 msgstr ""
 
-#: src/Admin/Settings.php:255
+#: src/Admin/Settings.php:274
 msgid "Customer UX"
 msgstr ""
 
-#: src/Admin/Settings.php:257
+#: src/Admin/Settings.php:276
 msgid "Import/Export"
 msgstr ""
 
-#: src/Admin/Settings.php:283
+#: src/Admin/Settings.php:302
 msgid ""
 "These layers are pre-selected when the builder loads, unless overridden by "
 "the shortcode attribute."
 msgstr ""
 
-#: src/Admin/Settings.php:289 src/Admin/SettingsWizard.php:325
+#: src/Admin/Settings.php:308 src/Admin/SettingsWizard.php:325
 msgid "Default Crust"
 msgstr ""
 
-#: src/Admin/Settings.php:290 src/Admin/SettingsWizard.php:333
+#: src/Admin/Settings.php:309 src/Admin/SettingsWizard.php:333
 msgid "Default Sauce"
 msgstr ""
 
-#: src/Admin/Settings.php:291 src/Admin/SettingsWizard.php:341
+#: src/Admin/Settings.php:310 src/Admin/SettingsWizard.php:341
 msgid "Default Cheese"
 msgstr ""
 
-#: src/Admin/Settings.php:292
+#: src/Admin/Settings.php:311
 msgid "Default Drizzle"
 msgstr ""
 
-#: src/Admin/Settings.php:293
+#: src/Admin/Settings.php:312
 msgid "Default Cut"
 msgstr ""
 
-#: src/Admin/Settings.php:303
+#: src/Admin/Settings.php:322
 msgid "Choose a layer"
 msgstr ""
 
-#: src/Admin/Settings.php:308
+#: src/Admin/Settings.php:327
 msgid "Searchâ¦"
 msgstr ""
 
-#: src/Admin/Settings.php:313
+#: src/Admin/Settings.php:332
 msgid "Clear selection"
 msgstr ""
 
-#: src/Admin/Settings.php:331
+#: src/Admin/Settings.php:350
 msgid "Max Toppings"
 msgstr ""
 
-#: src/Admin/Settings.php:332
+#: src/Admin/Settings.php:351
 msgid "Maximum number of toppings a customer can add. 0 = unlimited."
 msgstr ""
 
-#: src/Admin/Settings.php:337
+#: src/Admin/Settings.php:356
 msgid "Topping Portions"
 msgstr ""
 
-#: src/Admin/Settings.php:402
+#: src/Admin/Settings.php:421
 msgid "Shape Preset"
 msgstr ""
 
-#: src/Admin/Settings.php:403
+#: src/Admin/Settings.php:422
 msgid "Choose a shape for the pizza visualizer."
 msgstr ""
 
-#: src/Admin/Settings.php:446
+#: src/Admin/Settings.php:465
 msgid "Crust Options"
 msgstr ""
 
-#: src/Admin/Settings.php:461
+#: src/Admin/Settings.php:480
 msgid "Inset padding applied to the crust layer image."
 msgstr ""
 
-#: src/Admin/Settings.php:462
+#: src/Admin/Settings.php:481
 msgid ""
 "How much space to leave around the crust so it sits nicely inside the pizza "
 "circle. Bigger numbers mean the crust shows up smaller."
 msgstr ""
 
-#: src/Admin/Settings.php:483
+#: src/Admin/Settings.php:502
 msgid "Sauce &amp; Cheese Options"
 msgstr ""
 
-#: src/Admin/Settings.php:494
+#: src/Admin/Settings.php:513
 msgid "Padding between sauce and crust edge."
 msgstr ""
 
-#: src/Admin/Settings.php:511
+#: src/Admin/Settings.php:530
 msgid "How far inset the cheese layer is."
 msgstr ""
 
-#: src/Admin/Settings.php:512
+#: src/Admin/Settings.php:531
 msgid ""
 "How far in from the edge the cheese appears. Bigger numbers make the cheese "
 "cover less of the pizza."
 msgstr ""
 
-#: src/Admin/Settings.php:529
+#: src/Admin/Settings.php:548
 msgid "Padding between cheese and toppings."
 msgstr ""
 
-#: src/Admin/Settings.php:558
+#: src/Admin/Settings.php:577
 msgid "Demo / Announcement Bar"
 msgstr ""
 
-#: src/Admin/Settings.php:559
+#: src/Admin/Settings.php:578
 msgid ""
 "If set, this message appears as an announcement bar above all pages using "
 "PizzaTier. Leave empty to disable."
 msgstr ""
 
-#: src/Admin/Settings.php:563
+#: src/Admin/Settings.php:582
 msgid "Help Screen Content"
 msgstr ""
 
-#: src/Admin/Settings.php:564
+#: src/Admin/Settings.php:583
 msgid ""
 "Content shown in the builder's help modal/tab when customers click the help "
 "icon."
 msgstr ""
 
-#: src/Admin/Settings.php:583 src/Commerce/Admin/HomeCard.php:76
+#: src/Admin/Settings.php:602 src/Commerce/Admin/HomeCard.php:76
 msgid "Cart &amp; Pricing"
 msgstr ""
 
-#: src/Admin/Settings.php:584
+#: src/Admin/Settings.php:603
 msgid "Prices, cart behaviour and checkout are configured on their own screen."
 msgstr ""
 
-#: src/Admin/Settings.php:594 src/Admin/Settings.php:600
+#: src/Admin/Settings.php:613 src/Admin/Settings.php:619
 msgid "Cart &amp; Pricing settings"
 msgstr ""
 
-#: src/Admin/Settings.php:596
+#: src/Admin/Settings.php:615
 msgid ""
 "Per-layer price grids, base prices, currency display, cart buttons, checkout "
 "behaviour, nutrition panels and order emails all live here."
 msgstr ""
 
-#: src/Admin/Settings.php:603
+#: src/Admin/Settings.php:622
 msgid "Price grids"
 msgstr ""
 
-#: src/Admin/Settings.php:606
+#: src/Admin/Settings.php:625
 msgid "Ordering"
 msgstr ""
 
-#: src/Admin/Settings.php:610
+#: src/Admin/Settings.php:629
 msgid ""
 "These settings are included when you export below, and restored on import."
 msgstr ""
 
-#: src/Admin/Settings.php:623
+#: src/Admin/Settings.php:642
 msgid "Content &amp; Data"
 msgstr ""
 
-#: src/Admin/Settings.php:631
+#: src/Admin/Settings.php:650
 msgid "Disable the Content Layer Manager"
 msgstr ""
 
-#: src/Admin/Settings.php:632
+#: src/Admin/Settings.php:651
 msgid ""
 "Bypass the PizzaTier Content Hub and send the sidebar layer links (and the "
 "dashboard stat boxes) straight to the standard WordPress post lists. Any "
 "direct hit on the Content Hub redirects to the matching WP list."
 msgstr ""
 
-#: src/Admin/Settings.php:633
+#: src/Admin/Settings.php:652
 msgid ""
 "Skip the custom layer manager and use the normal WordPress edit screens for "
 "each layer type instead."
 msgstr ""
 
-#: src/Admin/Settings.php:638
+#: src/Admin/Settings.php:657
 msgid "Use WP lists instead of the Content Hub"
 msgstr ""
 
-#: src/Admin/Settings.php:642
+#: src/Admin/Settings.php:661
 msgid "Hide Incomplete Layers"
 msgstr ""
 
-#: src/Admin/Settings.php:643
+#: src/Admin/Settings.php:662
 msgid ""
 "Exclude any layer that lacks the custom data needed to render or price it — "
 "image-bearing layers without a usable image, and sizes without a diameter. "
@@ -1648,342 +1680,343 @@ msgid ""
 "preventing half-configured items from breaking the builder."
 msgstr ""
 
-#: src/Admin/Settings.php:644
+#: src/Admin/Settings.php:663
 msgid ""
 "Automatically hide layers that are missing key details (like a layer image) "
 "so an unfinished item can't break your pizza builder."
 msgstr ""
 
-#: src/Admin/Settings.php:649
+#: src/Admin/Settings.php:668
 msgid "Ignore layers with insufficient data"
 msgstr ""
 
-#: src/Admin/Settings.php:660
+#: src/Admin/Settings.php:679
 msgid "Accessibility &amp; Performance"
 msgstr ""
 
-#: src/Admin/Settings.php:668
+#: src/Admin/Settings.php:687
 msgid "Reduce Motion"
 msgstr ""
 
-#: src/Admin/Settings.php:669
+#: src/Admin/Settings.php:688
 msgid "Disable all animations for users who prefer reduced motion."
 msgstr ""
 
-#: src/Admin/Settings.php:678
+#: src/Admin/Settings.php:697
 msgid "High Contrast Mode"
 msgstr ""
 
-#: src/Admin/Settings.php:679
+#: src/Admin/Settings.php:698
 msgid "Force high-contrast colors for all builder UI elements."
 msgstr ""
 
-#: src/Admin/Settings.php:688
+#: src/Admin/Settings.php:707
 msgid "Lazy-Load Topping Images"
 msgstr ""
 
-#: src/Admin/Settings.php:689
+#: src/Admin/Settings.php:708
 msgid "Only load topping images when they scroll into view."
 msgstr ""
 
-#: src/Admin/Settings.php:698
+#: src/Admin/Settings.php:717
 msgid "Preload Builder Assets"
 msgstr ""
 
-#: src/Admin/Settings.php:716 src/Admin/SettingsWizard.php:517
+#: src/Admin/Settings.php:735 src/Admin/SettingsWizard.php:517
 msgid "Customer Experience"
 msgstr ""
 
-#: src/Admin/Settings.php:724
+#: src/Admin/Settings.php:743
 msgid "Show \"Pizza Summary\" Panel"
 msgstr ""
 
-#: src/Admin/Settings.php:725
+#: src/Admin/Settings.php:744
 msgid "Display a running summary of selected layers alongside the visualizer."
 msgstr ""
 
-#: src/Admin/Settings.php:734
+#: src/Admin/Settings.php:753
 msgid "Toast Notification Style"
 msgstr ""
 
-#: src/Admin/Settings.php:735
+#: src/Admin/Settings.php:754
 msgid "Style of the pop-up when a layer is added or removed."
 msgstr ""
 
-#: src/Admin/Settings.php:745
+#: src/Admin/Settings.php:764
 msgid "How long the toast notification stays visible."
 msgstr ""
 
-#: src/Admin/Settings.php:755
+#: src/Admin/Settings.php:774
 msgid "\"Added\" Confirmation Text"
 msgstr ""
 
-#: src/Admin/Settings.php:756
+#: src/Admin/Settings.php:775
 msgid "Message shown when an item is added to the pizza."
 msgstr ""
 
-#: src/Admin/Settings.php:762
+#: src/Admin/Settings.php:781
 msgid "\"Removed\" Confirmation Text"
 msgstr ""
 
-#: src/Admin/Settings.php:763
+#: src/Admin/Settings.php:782
 msgid "Message shown when an item is removed."
 msgstr ""
 
-#: src/Admin/Settings.php:769
+#: src/Admin/Settings.php:788
 msgid "Max Toppings Warning Text"
 msgstr ""
 
-#: src/Admin/Settings.php:770
+#: src/Admin/Settings.php:789
 msgid "Shown when the customer tries to exceed the topping limit."
 msgstr ""
 
-#: src/Admin/Settings.php:776 src/Admin/SettingsWizard.php:533
+#: src/Admin/Settings.php:795 src/Admin/SettingsWizard.php:533
 msgid "Show \"Start Over\" Button"
 msgstr ""
 
-#: src/Admin/Settings.php:777
+#: src/Admin/Settings.php:796
 msgid "Display a button that resets all selections to defaults."
 msgstr ""
 
-#: src/Admin/Settings.php:786
+#: src/Admin/Settings.php:805
 msgid "\"Start Over\" Button Label"
 msgstr ""
 
-#: src/Admin/Settings.php:787
+#: src/Admin/Settings.php:806
 msgid "Custom text for the reset button."
 msgstr ""
 
-#: src/Admin/Settings.php:793
+#: src/Admin/Settings.php:812
 msgid "Show Special Instructions Field"
 msgstr ""
 
-#: src/Admin/Settings.php:794
+#: src/Admin/Settings.php:813
 msgid "Allow customers to add free-text notes to their order."
 msgstr ""
 
-#: src/Admin/Settings.php:803
+#: src/Admin/Settings.php:822
 msgid "Special Instructions Placeholder"
 msgstr ""
 
-#: src/Admin/Settings.php:804
+#: src/Admin/Settings.php:823
 msgid "Hint text inside the special instructions text box."
 msgstr ""
 
-#: src/Admin/Settings.php:810
+#: src/Admin/Settings.php:829
 msgid "Special Instructions Max Length"
 msgstr ""
 
-#: src/Admin/Settings.php:811
+#: src/Admin/Settings.php:830
 msgid "Maximum characters allowed in the instructions field."
 msgstr ""
 
-#: src/Admin/Settings.php:817
+#: src/Admin/Settings.php:836
 msgid "Order Review Modal"
 msgstr ""
 
-#: src/Admin/Settings.php:818
+#: src/Admin/Settings.php:837
 msgid "Show a \"Review your order\" confirmation dialog before adding to cart."
 msgstr ""
 
-#: src/Admin/Settings.php:834
+#: src/Admin/Settings.php:853
 msgid "Advanced &amp; Developer"
 msgstr ""
 
-#: src/Admin/Settings.php:842
+#: src/Admin/Settings.php:861
 msgid "Debug Mode"
 msgstr ""
 
-#: src/Admin/Settings.php:843
+#: src/Admin/Settings.php:862
 msgid "Log builder events and state changes to the browser console."
 msgstr ""
 
-#: src/Admin/Settings.php:844
+#: src/Admin/Settings.php:863
 msgid ""
 "Show behind-the-scenes activity in the browser's developer console. For "
 "troubleshooting — leave off during normal use."
 msgstr ""
 
-#: src/Admin/Settings.php:853
+#: src/Admin/Settings.php:872
 msgid "Disable All Plugin CSS"
 msgstr ""
 
-#: src/Admin/Settings.php:854
+#: src/Admin/Settings.php:873
 msgid "Prevent PizzaTier from enqueueing any front-end stylesheets."
 msgstr ""
 
-#: src/Admin/Settings.php:863
+#: src/Admin/Settings.php:882
 msgid "Enable REST API"
 msgstr ""
 
-#: src/Admin/Settings.php:864
+#: src/Admin/Settings.php:883
 msgid ""
 "Enables the PizzaTier REST API endpoints (used by developers and headless "
 "setups). Not needed for normal shortcode/block usage — leave off unless you "
 "specifically need it."
 msgstr ""
 
-#: src/Admin/Settings.php:865
+#: src/Admin/Settings.php:884
 msgid ""
 "Advanced — for developers building custom apps that talk to PizzaTier from "
 "the outside. You almost certainly do not need this. Leave it off."
 msgstr ""
 
-#: src/Admin/Settings.php:870
+#: src/Admin/Settings.php:889
 msgid "Enable REST API endpoints"
 msgstr ""
 
-#: src/Admin/Settings.php:874
+#: src/Admin/Settings.php:893
 msgid "REST API Cache TTL (seconds)"
 msgstr ""
 
-#: src/Admin/Settings.php:875
+#: src/Admin/Settings.php:894
 msgid ""
 "How long to cache REST API responses server-side. 0 = no cache. Only applies "
 "when REST API is enabled above."
 msgstr ""
 
-#: src/Admin/Settings.php:876
+#: src/Admin/Settings.php:895
 msgid ""
 "How long (in seconds) to remember API answers so the server does not have to "
 "rebuild them every time. Only matters if the setting above is turned on. Set "
 "to 0 for no caching."
 msgstr ""
 
-#: src/Admin/Settings.php:882
+#: src/Admin/Settings.php:901
 msgid "Server Log Level"
 msgstr ""
 
-#: src/Admin/Settings.php:883
+#: src/Admin/Settings.php:902
 msgid "Verbosity of server-side logging to the WordPress debug log."
 msgstr ""
 
-#: src/Admin/Settings.php:884
+#: src/Admin/Settings.php:903
 msgid ""
 "How much detail to write into WordPress' behind-the-scenes log. For "
 "developers troubleshooting issues — most people can ignore this."
 msgstr ""
 
-#: src/Admin/Settings.php:903
+#: src/Admin/Settings.php:922
 msgid "Import / Export Settings"
 msgstr ""
 
-#: src/Admin/Settings.php:905
+#: src/Admin/Settings.php:924
 msgid "Back up your settings as a JSON file, or restore them on a new site."
 msgstr ""
 
-#: src/Admin/Settings.php:912
+#: src/Admin/Settings.php:931
 msgid "Export Settings"
 msgstr ""
 
-#: src/Admin/Settings.php:913
+#: src/Admin/Settings.php:932
 msgid ""
 "Download all current PizzaTier settings as a JSON file. Use this to back up "
 "your configuration or copy it to another site."
 msgstr ""
 
-#: src/Admin/Settings.php:917
+#: src/Admin/Settings.php:936
 msgid "Download Settings JSON"
 msgstr ""
 
-#: src/Admin/Settings.php:921
+#: src/Admin/Settings.php:940
 msgid "Import Settings"
 msgstr ""
 
-#: src/Admin/Settings.php:922
+#: src/Admin/Settings.php:941
 msgid ""
 "Restore settings from a previously exported JSON file. This will overwrite "
 "your current settings."
 msgstr ""
 
-#: src/Admin/Settings.php:926
+#: src/Admin/Settings.php:945
 msgid "This will overwrite your current settings. Continue?"
 msgstr ""
 
-#: src/Admin/Settings.php:928
+#: src/Admin/Settings.php:947
 msgid "Import JSON"
 msgstr ""
 
-#: src/Admin/Settings.php:931
+#: src/Admin/Settings.php:950
 msgid ""
 "Importing will replace all current settings immediately. Export a backup "
 "first."
 msgstr ""
 
 #. translators: %s = template name.
-#: src/Admin/Settings.php:952
+#: src/Admin/Settings.php:971
 #, php-format
 msgid "Open %s Template Settings"
 msgstr ""
 
-#: src/Admin/Settings.php:966 src/Commerce/Admin/SettingsPage.php:124
+#: src/Admin/Settings.php:985 src/Commerce/Admin/SettingsPage.php:124
 msgid "Save Settings"
 msgstr "Einstellungen speichern"
 
-#: src/Admin/Settings.php:1016
+#: src/Admin/Settings.php:1035
 msgid "PizzaTier Settings Export"
 msgstr ""
 
-#: src/Admin/Settings.php:1017
+#: src/Admin/Settings.php:1036
 msgid "Settings export"
 msgstr ""
 
-#: src/Admin/Settings.php:1018 src/Admin/SiteMigration.php:127
+#: src/Admin/Settings.php:1037 src/Admin/SiteMigration.php:163
 msgid ""
 "Automatic download was unavailable on this server. Copy the text below and "
 "save it with this file name:"
 msgstr ""
 
-#: src/Admin/Settings.php:1037 src/Admin/Settings.php:1044
-#: src/Admin/Settings.php:1051 src/Admin/Settings.php:1058
-#: src/Admin/Settings.php:1064 src/Admin/Settings.php:1069
-#: src/Admin/Settings.php:1074 src/Admin/SiteMigration.php:915
+#: src/Admin/Settings.php:1056 src/Admin/Settings.php:1063
+#: src/Admin/Settings.php:1070 src/Admin/Settings.php:1077
+#: src/Admin/Settings.php:1083 src/Admin/Settings.php:1088
+#: src/Admin/Settings.php:1093 src/Admin/SiteMigration.php:1430
 msgid "Import failed:"
 msgstr ""
 
-#: src/Admin/Settings.php:1037
+#: src/Admin/Settings.php:1056
 msgid "no file received."
 msgstr ""
 
-#: src/Admin/Settings.php:1044
+#: src/Admin/Settings.php:1063
 msgid "upload error."
 msgstr ""
 
-#: src/Admin/Settings.php:1051
+#: src/Admin/Settings.php:1070
 msgid "invalid upload."
 msgstr ""
 
-#: src/Admin/Settings.php:1058
+#: src/Admin/Settings.php:1077
 msgid "file too large."
 msgstr ""
 
-#: src/Admin/Settings.php:1064
+#: src/Admin/Settings.php:1083
 msgid "expected a .json file."
 msgstr ""
 
-#: src/Admin/Settings.php:1069
+#: src/Admin/Settings.php:1088
 msgid "could not read file."
 msgstr ""
 
-#: src/Admin/Settings.php:1074
+#: src/Admin/Settings.php:1093
 msgid "invalid JSON."
 msgstr ""
 
 #. translators: %d = number of settings restored
-#: src/Admin/Settings.php:1121
+#: src/Admin/Settings.php:1140
 msgid "Import successful:"
 msgstr ""
 
-#: src/Admin/Settings.php:1121
+#. translators: %d = number of settings restored
+#: src/Admin/Settings.php:1140
 #, php-format
 msgid "%d settings restored."
 msgstr ""
 
-#: src/Admin/Settings.php:1280
+#: src/Admin/Settings.php:1299
 msgid "— None / Plugin default —"
 msgstr ""
 
-#: src/Admin/Settings.php:1333
+#: src/Admin/Settings.php:1352
 #: templates/commandcenter/pztp-containers-menu.php:648
 msgid "None selected"
 msgstr ""
@@ -2141,7 +2174,7 @@ msgid ""
 "own aspect ratio and radius."
 msgstr ""
 
-#: src/Admin/SettingsWizard.php:407
+#: src/Admin/SettingsWizard.php:407 blocks/pizza-builder/block.js:27
 msgid "Round (circle)"
 msgstr ""
 
@@ -2693,7 +2726,7 @@ msgstr ""
 msgid "View Quickstart Guide"
 msgstr ""
 
-#: src/Admin/SetupGuide.php:291
+#: src/Admin/SetupGuide.php:291 src/Core/Upgrade.php:196
 msgid "Dismiss"
 msgstr ""
 
@@ -2731,192 +2764,226 @@ msgstr ""
 msgid "Shortcode Docs"
 msgstr ""
 
-#: src/Admin/SiteMigration.php:125
+#: src/Admin/SiteMigration.php:161
 msgid "PizzaTier Site Export"
 msgstr ""
 
-#: src/Admin/SiteMigration.php:126
+#: src/Admin/SiteMigration.php:162
 msgid "Site export"
 msgstr ""
 
-#: src/Admin/SiteMigration.php:362
+#: src/Admin/SiteMigration.php:568
 msgid "No file received."
 msgstr ""
 
-#: src/Admin/SiteMigration.php:373
+#: src/Admin/SiteMigration.php:579
 msgid "Upload error."
 msgstr ""
 
-#: src/Admin/SiteMigration.php:378
+#: src/Admin/SiteMigration.php:584
 msgid "Invalid upload."
 msgstr ""
 
 #. translators: %s = max size with unit
-#: src/Admin/SiteMigration.php:385
+#: src/Admin/SiteMigration.php:591
 #, php-format
 msgid "File too large (max %s)."
 msgstr ""
 
-#: src/Admin/SiteMigration.php:392
+#: src/Admin/SiteMigration.php:598
 msgid "Expected a .json file."
 msgstr ""
 
-#: src/Admin/SiteMigration.php:397
+#: src/Admin/SiteMigration.php:603
 msgid "Could not read file."
 msgstr ""
 
-#: src/Admin/SiteMigration.php:402
+#: src/Admin/SiteMigration.php:608
 msgid "Invalid JSON."
 msgstr ""
 
-#: src/Admin/SiteMigration.php:408
+#: src/Admin/SiteMigration.php:614
 msgid "Not a PizzaTier site export file."
 msgstr ""
 
 #. translators: %d = schema version found
-#: src/Admin/SiteMigration.php:414
+#: src/Admin/SiteMigration.php:620
 #, php-format
 msgid "Unsupported export schema version (%d)."
 msgstr ""
 
-#: src/Admin/SiteMigration.php:792
+#: src/Admin/SiteMigration.php:1284
 msgid ""
 "Move an entire PizzaTier setup — settings, ingredients, custom fields, "
 "taxonomy, prices and cart configuration — to another WordPress installation."
 msgstr ""
 
-#: src/Admin/SiteMigration.php:804
+#: src/Admin/SiteMigration.php:1296
 msgid ""
 "Build a complete JSON snapshot of this site's PizzaTier setup. Layer images "
 "travel as URL references, not packaged files."
 msgstr ""
 
-#: src/Admin/SiteMigration.php:808
+#: src/Admin/SiteMigration.php:1300
 msgid "What's included"
 msgstr ""
 
-#: src/Admin/SiteMigration.php:810
+#: src/Admin/SiteMigration.php:1302
 msgid "plugin settings"
 msgstr ""
 
-#: src/Admin/SiteMigration.php:811
+#: src/Admin/SiteMigration.php:1303
 msgid "total content items"
 msgstr ""
 
-#: src/Admin/SiteMigration.php:812
+#: src/Admin/SiteMigration.php:1304
 msgid "ingredient groups"
 msgstr ""
 
-#: src/Admin/SiteMigration.php:813 src/Admin/SiteMigration.php:862
+#: src/Admin/SiteMigration.php:1305 src/Admin/SiteMigration.php:1371
 msgid "Cart &amp; pricing settings, price grids and pizza products"
 msgstr ""
 
-#: src/Admin/SiteMigration.php:817
+#: src/Admin/SiteMigration.php:1306
+msgid "All template designs, ordering configuration and setup progress"
+msgstr ""
+
+#: src/Admin/SiteMigration.php:1310
 msgid "Per-type breakdown"
 msgstr ""
 
-#: src/Admin/SiteMigration.php:835
+#: src/Admin/SiteMigration.php:1332
+msgid "Include customer orders"
+msgstr ""
+
+#: src/Admin/SiteMigration.php:1333
+msgid "— contains personal data"
+msgstr ""
+
+#: src/Admin/SiteMigration.php:1338
+msgid ""
+"Order records hold customer names, phone numbers, email addresses and "
+"delivery addresses. Leave this unticked for a settings-only backup. Private "
+"staff notes are never exported."
+msgstr ""
+
+#: src/Admin/SiteMigration.php:1343
 msgid "Download Full Export (JSON)"
 msgstr ""
 
-#: src/Admin/SiteMigration.php:839
+#: src/Admin/SiteMigration.php:1348
 msgid ""
 "Image URLs in the export point to this site. The destination installation "
 "must be able to reach those URLs over HTTP at import time."
 msgstr ""
 
-#: src/Admin/SiteMigration.php:847
+#: src/Admin/SiteMigration.php:1356
 msgid "Import"
 msgstr ""
 
-#: src/Admin/SiteMigration.php:848
+#: src/Admin/SiteMigration.php:1357
 msgid ""
 "Restore a JSON site export. Imports are create-only: any existing post or "
 "term with the same slug is skipped, never overwritten."
 msgstr ""
 
-#: src/Admin/SiteMigration.php:854
+#: src/Admin/SiteMigration.php:1363
 msgid "Sections to restore"
 msgstr ""
 
-#: src/Admin/SiteMigration.php:856
+#: src/Admin/SiteMigration.php:1365
 msgid "Settings (all PizzaTier options)"
 msgstr ""
 
-#: src/Admin/SiteMigration.php:856
+#: src/Admin/SiteMigration.php:1365
 msgid "— overwrites current settings"
 msgstr ""
 
-#: src/Admin/SiteMigration.php:857
+#: src/Admin/SiteMigration.php:1366
 msgid "Ingredient groups (taxonomy)"
 msgstr ""
 
-#: src/Admin/SiteMigration.php:858
+#: src/Admin/SiteMigration.php:1367
 msgid ""
 "Content items (toppings, crusts, sauces, cheeses, drizzles, cuts, sizes, "
 "presets) and their custom fields"
 msgstr ""
 
-#: src/Admin/SiteMigration.php:859
+#: src/Admin/SiteMigration.php:1368
 msgid "Sideload layer images from their URLs into this site's media library"
 msgstr ""
 
-#: src/Admin/SiteMigration.php:866
+#: src/Admin/SiteMigration.php:1375
+msgid "Customer orders"
+msgstr ""
+
+#: src/Admin/SiteMigration.php:1376
+msgid "— personal data; only if the export included them"
+msgstr ""
+
+#: src/Admin/SiteMigration.php:1380
 msgid "Export file"
 msgstr ""
 
-#: src/Admin/SiteMigration.php:872
+#: src/Admin/SiteMigration.php:1386
 msgid "Heads up:"
 msgstr ""
 
-#: src/Admin/SiteMigration.php:873
+#: src/Admin/SiteMigration.php:1387
 msgid ""
 "Importing settings WILL overwrite this site's current PizzaTier settings. "
 "Posts, terms, price grids and pizza products are create-only by slug — "
 "already-present items will be left untouched."
 msgstr ""
 
-#: src/Admin/SiteMigration.php:878
+#: src/Admin/SiteMigration.php:1392
 msgid ""
 "Run the import now? Settings will be overwritten; posts and terms will be "
 "created if missing."
 msgstr ""
 
-#: src/Admin/SiteMigration.php:880
+#: src/Admin/SiteMigration.php:1394
 msgid "Run Import"
 msgstr ""
 
-#: src/Admin/SiteMigration.php:890
+#: src/Admin/SiteMigration.php:1404
 msgid "How site migration works"
 msgstr ""
 
-#: src/Admin/SiteMigration.php:892
+#: src/Admin/SiteMigration.php:1406
 msgid ""
 "On the source site: click Download Full Export. You get a single JSON file "
 "containing settings, all 8 content types with their custom fields, the "
 "ingredient-group taxonomy, and your cart and pricing configuration."
 msgstr ""
 
-#: src/Admin/SiteMigration.php:893
+#: src/Admin/SiteMigration.php:1407
 msgid ""
 "On the destination site: install PizzaTier, upload the JSON, and click Run "
 "Import."
 msgstr ""
 
-#: src/Admin/SiteMigration.php:894
+#: src/Admin/SiteMigration.php:1408
 msgid ""
 "Layer images are sideloaded from their original URLs into the destination "
 "media library. The source site must be reachable over HTTP at import time."
 msgstr ""
 
-#: src/Admin/SiteMigration.php:895
+#: src/Admin/SiteMigration.php:1409
 msgid ""
 "Existing posts/terms with the same slug are skipped — re-running an import "
 "is safe and idempotent for everything except settings."
 msgstr ""
 
+#: src/Admin/SiteMigration.php:1410
+msgid ""
+"Customer orders are opt-in on both sides: tick the box when exporting to "
+"include them in the file, and again when importing to restore them. They are "
+"matched by order number, so re-running an import never duplicates them."
+msgstr ""
+
 #. translators: %d = setting count
-#: src/Admin/SiteMigration.php:924
+#: src/Admin/SiteMigration.php:1439
 #, php-format
 msgid "%d setting restored"
 msgid_plural "%d settings restored"
@@ -2924,28 +2991,35 @@ msgstr[0] ""
 msgstr[1] ""
 
 #. translators: 1: created count, 2: skipped count
-#: src/Admin/SiteMigration.php:931
+#: src/Admin/SiteMigration.php:1446
 #, php-format
 msgid "Ingredient groups: %1$d created, %2$d skipped (already existed)"
 msgstr ""
 
 #. translators: 1: created, 2: skipped
-#: src/Admin/SiteMigration.php:939
+#: src/Admin/SiteMigration.php:1454
 #, php-format
 msgid "Content items: %1$d created, %2$d skipped (slug already existed)"
 msgstr ""
 
 #. translators: 1: loaded, 2: failed
-#: src/Admin/SiteMigration.php:947
+#: src/Admin/SiteMigration.php:1462
 #, php-format
 msgid "Layer images: %1$d sideloaded, %2$d failed"
 msgstr ""
 
-#: src/Admin/SiteMigration.php:953
+#. translators: 1: created, 2: skipped
+#: src/Admin/SiteMigration.php:1470
+#, php-format
+msgid ""
+"Customer orders: %1$d created, %2$d skipped (order number already existed)"
+msgstr ""
+
+#: src/Admin/SiteMigration.php:1476
 msgid "Nothing to import (no sections selected or all entries skipped)."
 msgstr ""
 
-#: src/Admin/SiteMigration.php:956
+#: src/Admin/SiteMigration.php:1479
 msgid "Import complete."
 msgstr ""
 
@@ -3060,7 +3134,7 @@ msgstr ""
 msgid "Content &amp; settings are never affected"
 msgstr ""
 
-#: src/Admin/TemplateChoice.php:311 src/Commerce/Admin/Dashboard.php:139
+#: src/Admin/TemplateChoice.php:311 src/Commerce/Admin/Dashboard.php:140
 msgid "Active"
 msgstr "Aktiv"
 
@@ -3215,7 +3289,7 @@ msgid "Site default"
 msgstr ""
 
 #: src/Blocks/BlockRegistrar.php:243 src/Blocks/BlockRegistrar.php:244
-#: src/Commerce/Admin/Settings.php:803
+#: src/Commerce/Admin/Settings.php:804
 #: src/Commerce/WooCommerce/ProductTab.php:466
 msgid "Default"
 msgstr "Standard"
@@ -3224,11 +3298,11 @@ msgstr "Standard"
 msgid "All tabs"
 msgstr ""
 
-#: src/Blocks/BlockRegistrar.php:264
+#: src/Blocks/BlockRegistrar.php:264 blocks/pizza-builder/block.js:108
 msgid "Max toppings"
 msgstr ""
 
-#: src/Blocks/BlockRegistrar.php:265
+#: src/Blocks/BlockRegistrar.php:265 blocks/pizza-builder/block.js:120
 msgid "Shape"
 msgstr ""
 
@@ -3236,7 +3310,7 @@ msgstr ""
 msgid "Visible tabs"
 msgstr ""
 
-#: src/Blocks/BlockRegistrar.php:290
+#: src/Blocks/BlockRegistrar.php:290 blocks/pizza-builder/block.js:235
 msgid "Pizza Builder"
 msgstr ""
 
@@ -3438,190 +3512,190 @@ msgstr ""
 msgid "Save changes"
 msgstr ""
 
-#: src/Commerce/Admin/Dashboard.php:100 src/Commerce/Admin/Dashboard.php:260
+#: src/Commerce/Admin/Dashboard.php:101 src/Commerce/Admin/Dashboard.php:261
 msgid "Help & Docs"
 msgstr "Hilfe & Dokumentation"
 
-#: src/Commerce/Admin/Dashboard.php:109
+#: src/Commerce/Admin/Dashboard.php:110
 msgid "WooCommerce Pizza Integration — Supercharged."
 msgstr "WooCommerce-Pizza-Integration — vollständig optimiert."
 
-#: src/Commerce/Admin/Dashboard.php:111
+#: src/Commerce/Admin/Dashboard.php:112
 msgid ""
 "PizzaTier connects your PizzaTier visual builder directly to WooCommerce. "
 "Customers build their pizza, see a live price update, and add it to the cart "
 "in one seamless flow — all fully configurable from this dashboard."
 msgstr ""
 
-#: src/Commerce/Admin/Dashboard.php:114
+#: src/Commerce/Admin/Dashboard.php:115
 msgid "Live server-side pricing"
 msgstr "Serverseitige Live-Preisberechnung"
 
-#: src/Commerce/Admin/Dashboard.php:115
+#: src/Commerce/Admin/Dashboard.php:116
 msgid "Cart &amp; order meta storage"
 msgstr "Warenkorb- und Bestellmetadaten-Speicherung"
 
-#: src/Commerce/Admin/Dashboard.php:116
+#: src/Commerce/Admin/Dashboard.php:117
 msgid "Pizza presets"
 msgstr "Pizza-Vorlagen"
 
-#: src/Commerce/Admin/Dashboard.php:117
+#: src/Commerce/Admin/Dashboard.php:118
 msgid "Size selector &amp; price grid"
 msgstr "Größenauswahl &amp; Preisraster"
 
-#: src/Commerce/Admin/Dashboard.php:118
+#: src/Commerce/Admin/Dashboard.php:119
 msgid "Custom product type"
 msgstr "Benutzerdefinierter Produkttyp"
 
-#: src/Commerce/Admin/Dashboard.php:123 src/Commerce/Admin/Dashboard.php:224
+#: src/Commerce/Admin/Dashboard.php:124 src/Commerce/Admin/Dashboard.php:225
 msgid "✦ New Pizza Wizard"
 msgstr "✦ Neuer Pizza-Assistent"
 
-#: src/Commerce/Admin/Dashboard.php:126
+#: src/Commerce/Admin/Dashboard.php:127
 msgid "+ New Preset"
 msgstr "+ Neue Vorlage"
 
-#: src/Commerce/Admin/Dashboard.php:137
+#: src/Commerce/Admin/Dashboard.php:138
 msgid "WooCommerce"
 msgstr "WooCommerce"
 
-#: src/Commerce/Admin/Dashboard.php:140 src/Commerce/Admin/Dashboard.php:151
+#: src/Commerce/Admin/Dashboard.php:141 src/Commerce/Admin/Dashboard.php:152
 msgid "Not active"
 msgstr "Nicht aktiv"
 
-#: src/Commerce/Admin/Dashboard.php:159
+#: src/Commerce/Admin/Dashboard.php:160
 msgid "Pizza Products"
 msgstr "Pizza-Produkte"
 
-#: src/Commerce/Admin/Dashboard.php:167 src/Commerce/Admin/Dashboard.php:185
-#: src/Commerce/Admin/Dashboard.php:203
+#: src/Commerce/Admin/Dashboard.php:168 src/Commerce/Admin/Dashboard.php:186
+#: src/Commerce/Admin/Dashboard.php:204
 msgid "Create first"
 msgstr "Zuerst erstellen"
 
-#: src/Commerce/Admin/Dashboard.php:177
+#: src/Commerce/Admin/Dashboard.php:178
 msgid "PizzaTier Templates"
 msgstr ""
 
-#: src/Commerce/Admin/Dashboard.php:218
+#: src/Commerce/Admin/Dashboard.php:219
 msgid "Quick Actions"
 msgstr "Schnellaktionen"
 
-#: src/Commerce/Admin/Dashboard.php:225
+#: src/Commerce/Admin/Dashboard.php:226
 msgid "Step-by-step: title → preset → layers → pricing → publish."
 msgstr ""
 "Schritt für Schritt: Titel → Vorlage → Beläge → Preise → Veröffentlichen."
 
-#: src/Commerce/Admin/Dashboard.php:230
+#: src/Commerce/Admin/Dashboard.php:231
 msgid "All Pizza Products"
 msgstr "Alle Pizza-Produkte"
 
-#: src/Commerce/Admin/Dashboard.php:231
+#: src/Commerce/Admin/Dashboard.php:232
 msgid "View and manage existing pizza products."
 msgstr "Bestehende Pizza-Produkte anzeigen und verwalten."
 
-#: src/Commerce/Admin/Dashboard.php:236
+#: src/Commerce/Admin/Dashboard.php:237
 msgid "Orders"
 msgstr "Bestellungen"
 
-#: src/Commerce/Admin/Dashboard.php:237
+#: src/Commerce/Admin/Dashboard.php:238
 msgid "View WooCommerce orders containing pizza products."
 msgstr "WooCommerce-Bestellungen mit Pizza-Produkten anzeigen."
 
-#: src/Commerce/Admin/Dashboard.php:243
+#: src/Commerce/Admin/Dashboard.php:244
 msgid "Configure size selector, price bar, cart behaviour, and defaults."
 msgstr ""
 "Größenauswahl, Preisanzeige, Warenkorbverhalten und Standardwerte "
 "konfigurieren."
 
-#: src/Commerce/Admin/Dashboard.php:248
+#: src/Commerce/Admin/Dashboard.php:249
 msgid "New Builder"
 msgstr "Neuer Builder"
 
-#: src/Commerce/Admin/Dashboard.php:249
+#: src/Commerce/Admin/Dashboard.php:250
 msgid "Create a new PizzaTier builder to assign to a product."
 msgstr "Einen neuen PizzaTier-Builder erstellen und einem Produkt zuweisen."
 
-#: src/Commerce/Admin/Dashboard.php:254
+#: src/Commerce/Admin/Dashboard.php:255
 msgid "New Pizza Preset"
 msgstr "Neue Pizza-Vorlage"
 
-#: src/Commerce/Admin/Dashboard.php:255
+#: src/Commerce/Admin/Dashboard.php:256
 msgid "Build a pre-configured pizza customers can start from."
 msgstr "Eine vorkonfigurierte Pizza erstellen, von der Kunden starten können."
 
-#: src/Commerce/Admin/Dashboard.php:261
+#: src/Commerce/Admin/Dashboard.php:262
 msgid "Reference for price grids, cart flow, hooks, and FAQ."
 msgstr "Referenz für Preisraster, Warenkorbablauf, Hooks und FAQ."
 
-#: src/Commerce/Admin/Dashboard.php:274
+#: src/Commerce/Admin/Dashboard.php:275
 msgid "Setup Progress"
 msgstr "Einrichtungsfortschritt"
 
-#: src/Commerce/Admin/Dashboard.php:282
+#: src/Commerce/Admin/Dashboard.php:283
 msgid "complete"
 msgstr "abgeschlossen"
 
-#: src/Commerce/Admin/Dashboard.php:287
+#: src/Commerce/Admin/Dashboard.php:288
 msgid "Review Checklist"
 msgstr "Checkliste prüfen"
 
-#: src/Commerce/Admin/Dashboard.php:288
+#: src/Commerce/Admin/Dashboard.php:289
 msgid "Continue Setup"
 msgstr "Einrichtung fortsetzen"
 
-#: src/Commerce/Admin/Dashboard.php:297
+#: src/Commerce/Admin/Dashboard.php:298
 msgid "Current Settings"
 msgstr "Aktuelle Einstellungen"
 
-#: src/Commerce/Admin/Dashboard.php:302
+#: src/Commerce/Admin/Dashboard.php:303
 msgid "Builder position"
 msgstr "Builder-Position"
 
-#: src/Commerce/Admin/Dashboard.php:303
+#: src/Commerce/Admin/Dashboard.php:304
 msgid "Size selector"
 msgstr "Größenauswahl"
 
-#: src/Commerce/Admin/Dashboard.php:303 src/Commerce/Admin/Dashboard.php:304
+#: src/Commerce/Admin/Dashboard.php:304 src/Commerce/Admin/Dashboard.php:305
 msgid "Visible"
 msgstr "Sichtbar"
 
-#: src/Commerce/Admin/Dashboard.php:303 src/Commerce/Admin/Dashboard.php:304
+#: src/Commerce/Admin/Dashboard.php:304 src/Commerce/Admin/Dashboard.php:305
 msgid "Hidden"
 msgstr "Ausgeblendet"
 
-#: src/Commerce/Admin/Dashboard.php:304
+#: src/Commerce/Admin/Dashboard.php:305
 msgid "Live price bar"
 msgstr "Live-Preisanzeige"
 
-#: src/Commerce/Admin/Dashboard.php:305
+#: src/Commerce/Admin/Dashboard.php:306
 msgid "Cart button"
 msgstr "Warenkorb-Schaltfläche"
 
-#: src/Commerce/Admin/Dashboard.php:305
+#: src/Commerce/Admin/Dashboard.php:306
 msgid "Enabled"
 msgstr "Aktiviert"
 
-#: src/Commerce/Admin/Dashboard.php:305
+#: src/Commerce/Admin/Dashboard.php:306
 msgid "Disabled"
 msgstr "Deaktiviert"
 
-#: src/Commerce/Admin/Dashboard.php:306
+#: src/Commerce/Admin/Dashboard.php:307
 msgid "Require crust"
 msgstr "Boden erforderlich"
 
-#: src/Commerce/Admin/Dashboard.php:306 src/Commerce/Admin/Dashboard.php:307
+#: src/Commerce/Admin/Dashboard.php:307 src/Commerce/Admin/Dashboard.php:308
 msgid "Yes"
 msgstr "Ja"
 
-#: src/Commerce/Admin/Dashboard.php:306 src/Commerce/Admin/Dashboard.php:307
+#: src/Commerce/Admin/Dashboard.php:307 src/Commerce/Admin/Dashboard.php:308
 msgid "No"
 msgstr "Nein"
 
-#: src/Commerce/Admin/Dashboard.php:307
+#: src/Commerce/Admin/Dashboard.php:308
 msgid "Require sauce"
 msgstr "Soße erforderlich"
 
-#: src/Commerce/Admin/Dashboard.php:318
+#: src/Commerce/Admin/Dashboard.php:319
 msgid "Edit settings →"
 msgstr "Einstellungen bearbeiten →"
 
@@ -4168,7 +4242,7 @@ msgstr "REST-API"
 msgid "Endpoint"
 msgstr "Endpunkt"
 
-#: src/Commerce/Admin/Help.php:306 src/Orders/Admin/OrdersPage.php:755
+#: src/Commerce/Admin/Help.php:306 src/Orders/Admin/OrdersPage.php:792
 msgid "Method"
 msgstr "Methode"
 
@@ -4336,6 +4410,7 @@ msgstr ""
 msgid "active (v%s)"
 msgstr ""
 
+#. translators: %s: WooCommerce version number.
 #: src/Commerce/Admin/HomeCard.php:87
 msgid "active"
 msgstr ""
@@ -4362,7 +4437,7 @@ msgstr ""
 msgid "Pricing Grid"
 msgstr ""
 
-#: src/Commerce/Admin/LayerGridMetaBox.php:153
+#: src/Commerce/Admin/LayerGridMetaBox.php:152
 msgid ""
 "Set prices for this ingredient by size and coverage. When saved, these "
 "override the product-level fallback grid for this specific ingredient."
@@ -4596,7 +4671,7 @@ msgstr "Zurück zum Dashboard"
 msgid "Product Info"
 msgstr "Produktinfo"
 
-#: src/Commerce/Admin/NewPizzaWizard.php:325
+#: src/Commerce/Admin/NewPizzaWizard.php:325 blocks/pizza-static/block.js:43
 msgid "Preset"
 msgstr "Vorlage"
 
@@ -4954,6 +5029,7 @@ msgstr ""
 #: templates/rustic/pztp-containers-menu.php:403
 #: templates/rustic/pztp-containers-menu.php:514
 #: templates/rustic/pztp-containers-menu.php:603
+#: blocks/pizza-builder/block.js:47 blocks/pizza-layer/block.js:26
 msgid "Sauce"
 msgstr "Soße"
 
@@ -4980,6 +5056,7 @@ msgstr "Soße"
 #: templates/rustic/pztp-containers-menu.php:404
 #: templates/rustic/pztp-containers-menu.php:537
 #: templates/rustic/pztp-containers-menu.php:604
+#: blocks/pizza-builder/block.js:48 blocks/pizza-layer/block.js:27
 msgid "Cheese"
 msgstr "Käse"
 
@@ -5006,12 +5083,14 @@ msgstr "Käse"
 #: templates/rustic/pztp-containers-menu.php:406
 #: templates/rustic/pztp-containers-menu.php:579
 #: templates/rustic/pztp-containers-menu.php:606
+#: blocks/pizza-builder/block.js:50 blocks/pizza-layer/block.js:29
 msgid "Drizzle"
 msgstr "Dressing"
 
 #: src/Commerce/Admin/Presets.php:86 src/Commerce/Admin/Presets.php:462
 #: src/Commerce/WooCommerce/OrderEmailSummary.php:323
 #: src/Commerce/WooCommerce/OrderEmailSummary.php:453
+#: blocks/pizza-layer/block.js:30
 msgid "Cut"
 msgstr "Schnitt"
 
@@ -5296,7 +5375,6 @@ msgid "Bulk discount %"
 msgstr "Mengenrabatt %"
 
 #: src/Commerce/Admin/PricingPage.php:253 src/Commerce/Admin/Settings.php:188
-#, no-php-format
 msgid ""
 "Percentage discount applied to the add-on subtotal when the bulk threshold "
 "is reached. E.g. \"10\" = 10% off add-ons."
@@ -5380,7 +5458,7 @@ msgstr ""
 
 #: src/Commerce/Admin/PricingPage.php:276 src/Commerce/Admin/Settings.php:211
 #: src/Commerce/WooCommerce/FrontendEmbed.php:564
-#: src/Commerce/WooCommerce/FrontendEmbed.php:986
+#: src/Commerce/WooCommerce/FrontendEmbed.php:988
 msgid "Price calculated on selection"
 msgstr "Preis wird bei Auswahl berechnet"
 
@@ -5513,12 +5591,12 @@ msgid "Yes, apply globally"
 msgstr ""
 
 #: src/Commerce/Admin/PricingPage.php:736
-#: src/Commerce/PriceGrid/GridImportExport.php:636
+#: src/Commerce/PriceGrid/GridImportExport.php:639
 msgid "You do not have permission to do this."
 msgstr "Sie haben keine Berechtigung für diese Aktion."
 
 #: src/Commerce/Admin/PricingPage.php:742
-#: src/Commerce/PriceGrid/GridImportExport.php:630
+#: src/Commerce/PriceGrid/GridImportExport.php:633
 msgid "Security check failed."
 msgstr "Sicherheitsprüfung fehlgeschlagen."
 
@@ -5563,7 +5641,7 @@ msgid ""
 msgstr ""
 
 #: src/Commerce/Admin/Settings.php:87 src/Commerce/Admin/SettingsPage.php:30
-#: src/Orders/Admin/OrdersPage.php:854
+#: src/Orders/Admin/OrdersPage.php:891
 msgid "General"
 msgstr "Allgemein"
 
@@ -5604,7 +5682,7 @@ msgstr ""
 
 #: src/Commerce/Admin/Settings.php:100
 #: src/Commerce/CheckoutBar/LayoutHelpers.php:46 src/Commerce/Plugin.php:158
-#: src/Commerce/WooCommerce/FrontendEmbed.php:1311
+#: src/Commerce/WooCommerce/FrontendEmbed.php:1313
 #: templates/colorbox/checkout-bar.php:68
 #: templates/commandcenter/checkout-bar.php:45
 #: templates/metro/checkout-bar.php:55 templates/nightpie/checkout-bar.php:42
@@ -6407,23 +6485,23 @@ msgstr ""
 msgid "Checkout bar layout"
 msgstr ""
 
-#: src/Commerce/Admin/Settings.php:737
+#: src/Commerce/Admin/Settings.php:738
 msgid "Base price"
 msgstr "Grundpreis"
 
-#: src/Commerce/Admin/Settings.php:744
+#: src/Commerce/Admin/Settings.php:745
 msgid "Grid cell (per topping/layer)"
 msgstr "Rasterzelle (pro Belag/Schicht)"
 
-#: src/Commerce/Admin/Settings.php:751
+#: src/Commerce/Admin/Settings.php:752
 msgid "Number of paid toppings"
 msgstr "Anzahl kostenpflichtiger Beläge"
 
-#: src/Commerce/Admin/Settings.php:755
+#: src/Commerce/Admin/Settings.php:756
 msgid "Estimated total"
 msgstr "Geschätzter Gesamtbetrag"
 
-#: src/Commerce/Admin/Settings.php:758
+#: src/Commerce/Admin/Settings.php:759
 msgid ""
 "Uses the currently saved settings. Save first, then this calculator reflects "
 "your actual engine configuration."
@@ -6431,12 +6509,12 @@ msgstr ""
 "Verwendet die aktuell gespeicherten Einstellungen. Zuerst speichern, dann "
 "spiegelt dieser Rechner Ihre tatsächliche Engine-Konfiguration wider."
 
-#: src/Commerce/Admin/Settings.php:801
+#: src/Commerce/Admin/Settings.php:802
 #: src/Commerce/WooCommerce/ProductTab.php:720
 msgid "Add-on per layer"
 msgstr "Aufpreis pro Schicht"
 
-#: src/Commerce/Admin/Settings.php:802
+#: src/Commerce/Admin/Settings.php:803
 msgid ""
 "Each selected layer adds its grid price (Size × Coverage) to the base pizza "
 "price. The most flexible and common mode."
@@ -6444,32 +6522,32 @@ msgstr ""
 "Jede ausgewählte Schicht addiert ihren Rasterpreis (Größe × Bedeckung) zum "
 "Grundpreis der Pizza. Der flexibelste und häufigste Modus."
 
-#: src/Commerce/Admin/Settings.php:808
+#: src/Commerce/Admin/Settings.php:809
 msgid "Flat price per size"
 msgstr "Pauschalpreis pro Größe"
 
-#: src/Commerce/Admin/Settings.php:809
+#: src/Commerce/Admin/Settings.php:810
 msgid ""
 "The grid's \"Whole\" column for the chosen size is a single flat add-on, "
 "regardless of how many layers are selected."
 msgstr ""
 
-#: src/Commerce/Admin/Settings.php:815
+#: src/Commerce/Admin/Settings.php:816
 #: src/Commerce/WooCommerce/ProductTab.php:732
 msgid "Highest layer wins"
 msgstr "Teuerste Schicht gewinnt"
 
-#: src/Commerce/Admin/Settings.php:816
+#: src/Commerce/Admin/Settings.php:817
 msgid ""
 "Only the most expensive layer's grid price is added. Good for \"any topping, "
 "same price\" setups."
 msgstr ""
 
-#: src/Commerce/Admin/Settings.php:822
+#: src/Commerce/Admin/Settings.php:823
 msgid "Tiered by topping count"
 msgstr "Gestuft nach Belaganzahl"
 
-#: src/Commerce/Admin/Settings.php:823
+#: src/Commerce/Admin/Settings.php:824
 msgid ""
 "Price depends on the number of toppings selected. Define tier thresholds "
 "below; grid columns must be labeled Tier1, Tier2, Tier3…"
@@ -6478,11 +6556,11 @@ msgstr ""
 "Stufenschwellenwerte unten definieren; Rasterspalten müssen Stufe1, Stufe2, "
 "Stufe3… heißen."
 
-#: src/Commerce/Admin/Settings.php:829
+#: src/Commerce/Admin/Settings.php:830
 msgid "Free first N toppings"
 msgstr "Erste N Beläge kostenlos"
 
-#: src/Commerce/Admin/Settings.php:830
+#: src/Commerce/Admin/Settings.php:831
 msgid ""
 "A configured number of toppings are included free. Each topping beyond that "
 "count is charged at the grid rate."
@@ -6490,11 +6568,11 @@ msgstr ""
 "Eine konfigurierte Anzahl von Belägen ist kostenlos enthalten. Jeder weitere "
 "Belag wird zum Rastersatz berechnet."
 
-#: src/Commerce/Admin/Settings.php:836
+#: src/Commerce/Admin/Settings.php:837
 msgid "Bundle (fixed total)"
 msgstr "Paket (Festpreis)"
 
-#: src/Commerce/Admin/Settings.php:837
+#: src/Commerce/Admin/Settings.php:838
 msgid ""
 "The WooCommerce product price IS the total — no grid add-ons applied. The "
 "grid is informational only."
@@ -6502,7 +6580,7 @@ msgstr ""
 "Der WooCommerce-Produktpreis IST der Gesamtbetrag – keine Raster-Aufpreise "
 "werden angewendet. Das Raster ist nur informativ."
 
-#: src/Commerce/Admin/Settings.php:1339
+#: src/Commerce/Admin/Settings.php:1340
 msgid "That list cannot be empty. Reverted to defaults."
 msgstr ""
 "Diese Liste darf nicht leer sein. Standardwerte wurden wiederhergestellt."
@@ -6634,19 +6712,19 @@ msgstr ""
 "Ihr Pizzashop ist bereit. Gehen Sie zu Ihrem Storefront, um den Builder zu "
 "testen."
 
-#: src/Commerce/Admin/SetupGuide.php:222 src/Commerce/Admin/SetupGuide.php:320
+#: src/Commerce/Admin/SetupGuide.php:222 src/Commerce/Admin/SetupGuide.php:321
 msgid "View Storefront"
 msgstr "Storefront anzeigen"
 
-#: src/Commerce/Admin/SetupGuide.php:254
+#: src/Commerce/Admin/SetupGuide.php:255
 msgid "WooCommerce installed & active"
 msgstr "WooCommerce installiert & aktiv"
 
-#: src/Commerce/Admin/SetupGuide.php:256
+#: src/Commerce/Admin/SetupGuide.php:257
 msgid "WooCommerce is active — great start!"
 msgstr "WooCommerce ist aktiv – ein guter Start!"
 
-#: src/Commerce/Admin/SetupGuide.php:257
+#: src/Commerce/Admin/SetupGuide.php:258
 msgid ""
 "These steps need WooCommerce, which handles the cart, checkout and payment. "
 "Install it from Plugins → Add New. If you would rather take orders without a "
@@ -6654,29 +6732,29 @@ msgid ""
 "this section."
 msgstr ""
 
-#: src/Commerce/Admin/SetupGuide.php:260
+#: src/Commerce/Admin/SetupGuide.php:261
 msgid "Install WooCommerce"
 msgstr "WooCommerce installieren"
 
-#: src/Commerce/Admin/SetupGuide.php:265
+#: src/Commerce/Admin/SetupGuide.php:266
 msgid "PizzaTier builder ready"
 msgstr ""
 
 #. translators: %s: PizzaTier version
-#: src/Commerce/Admin/SetupGuide.php:269
+#: src/Commerce/Admin/SetupGuide.php:270
 #, php-format
 msgid "PizzaTier %s is active."
 msgstr "PizzaTier %s ist aktiv."
 
-#: src/Commerce/Admin/SetupGuide.php:272
+#: src/Commerce/Admin/SetupGuide.php:273
 msgid "PizzaTier requires the PizzaTier base plugin to be active."
 msgstr ""
 
-#: src/Commerce/Admin/SetupGuide.php:278
+#: src/Commerce/Admin/SetupGuide.php:279
 msgid "Create a PizzaTier builder"
 msgstr "Einen PizzaTier-Builder erstellen"
 
-#: src/Commerce/Admin/SetupGuide.php:279
+#: src/Commerce/Admin/SetupGuide.php:280
 msgid ""
 "Go to PizzaTier → Add New and build your pizza with layers, toppings, and a "
 "template. Publish when ready."
@@ -6684,19 +6762,19 @@ msgstr ""
 "Gehen Sie zu PizzaTier → Neu hinzufügen und erstellen Sie Ihre Pizza mit "
 "Schichten, Belägen und einer Vorlage. Wenn fertig veröffentlichen."
 
-#: src/Commerce/Admin/SetupGuide.php:282
+#: src/Commerce/Admin/SetupGuide.php:283
 msgid "Open PizzaTier"
 msgstr ""
 
-#: src/Commerce/Admin/SetupGuide.php:283
+#: src/Commerce/Admin/SetupGuide.php:284
 msgid "Manage Layers"
 msgstr ""
 
-#: src/Commerce/Admin/SetupGuide.php:288
+#: src/Commerce/Admin/SetupGuide.php:289
 msgid "Create a WooCommerce Pizza product"
 msgstr "Ein WooCommerce-Pizza-Produkt erstellen"
 
-#: src/Commerce/Admin/SetupGuide.php:289
+#: src/Commerce/Admin/SetupGuide.php:290
 msgid ""
 "In WooCommerce → Products → Add New, set the product type to \"Pizza\". A "
 "Pizza Configurator tab will appear in the product data panel."
@@ -6704,19 +6782,19 @@ msgstr ""
 "Unter WooCommerce → Produkte → Neu hinzufügen den Produkttyp auf „Pizza\" "
 "setzen. Ein Pizza-Konfigurationsreiter erscheint im Produktdaten-Panel."
 
-#: src/Commerce/Admin/SetupGuide.php:292
+#: src/Commerce/Admin/SetupGuide.php:293
 msgid "Add Pizza Product"
 msgstr "Pizza-Produkt hinzufügen"
 
-#: src/Commerce/Admin/SetupGuide.php:293
+#: src/Commerce/Admin/SetupGuide.php:294
 msgid "View Products"
 msgstr "Produkte anzeigen"
 
-#: src/Commerce/Admin/SetupGuide.php:298
+#: src/Commerce/Admin/SetupGuide.php:299
 msgid "Assign a builder & configure the price grid"
 msgstr "Einen Builder zuweisen & das Preisraster konfigurieren"
 
-#: src/Commerce/Admin/SetupGuide.php:299
+#: src/Commerce/Admin/SetupGuide.php:300
 msgid ""
 "Open your Pizza product, go to the Pizza Configurator tab, select the "
 "PizzaTier builder you created, then fill in the Size/Coverage price grid. "
@@ -6726,29 +6804,29 @@ msgstr ""
 "wählen Sie den erstellten PizzaTier-Builder aus und füllen Sie das Größen-/"
 "Bedeckungspreisraster aus. Produkt speichern."
 
-#: src/Commerce/Admin/SetupGuide.php:302
+#: src/Commerce/Admin/SetupGuide.php:303
 msgid "Open Products"
 msgstr "Produkte öffnen"
 
-#: src/Commerce/Admin/SetupGuide.php:307
+#: src/Commerce/Admin/SetupGuide.php:308
 msgid "Review cart & pricing settings"
 msgstr ""
 
-#: src/Commerce/Admin/SetupGuide.php:308
+#: src/Commerce/Admin/SetupGuide.php:309
 msgid ""
 "Visit PizzaTier → Cart & Pricing to configure the size selector, live price "
 "bar, cart button, and other display options."
 msgstr ""
 
-#: src/Commerce/Admin/SetupGuide.php:311
+#: src/Commerce/Admin/SetupGuide.php:312
 msgid "Open Cart & Pricing"
 msgstr ""
 
-#: src/Commerce/Admin/SetupGuide.php:316
+#: src/Commerce/Admin/SetupGuide.php:317
 msgid "Test the front-end order flow"
 msgstr "Den Frontend-Bestellablauf testen"
 
-#: src/Commerce/Admin/SetupGuide.php:317
+#: src/Commerce/Admin/SetupGuide.php:318
 msgid ""
 "Visit your pizza product page, build a pizza, select a size, and add it to "
 "the cart. Confirm the configured price appears at checkout. Mark complete "
@@ -6835,7 +6913,7 @@ msgid ""
 "style embeds."
 msgstr ""
 
-#: src/Commerce/CheckoutBar/Layouts/sticky-bottom.php:29
+#: src/Commerce/CheckoutBar/Layouts/sticky-bottom.php:35
 #: templates/commandcenter/pztp-containers-menu.php:698
 msgid "Order summary"
 msgstr ""
@@ -7026,7 +7104,7 @@ msgid "Price for %1$s / %2$s cannot be negative."
 msgstr "Der Preis für %1$s / %2$s darf nicht negativ sein."
 
 #: src/Commerce/PriceGrid/GridImportExport.php:69
-#: src/Commerce/PriceGrid/GridImportExport.php:363
+#: src/Commerce/PriceGrid/GridImportExport.php:366
 msgid "Invalid product ID."
 msgstr "Ungültige Produkt-ID."
 
@@ -7060,28 +7138,28 @@ msgstr ""
 msgid "Layer pricing grid imported and saved."
 msgstr ""
 
-#: src/Commerce/PriceGrid/GridImportExport.php:414
+#: src/Commerce/PriceGrid/GridImportExport.php:417
 msgid "No CSV text received."
 msgstr ""
 
-#: src/Commerce/PriceGrid/GridImportExport.php:445
+#: src/Commerce/PriceGrid/GridImportExport.php:448
 msgid "CSV is valid. Review the grid and save."
 msgstr ""
 
-#: src/Commerce/PriceGrid/GridImportExport.php:527
+#: src/Commerce/PriceGrid/GridImportExport.php:530
 msgid "The CSV file is empty."
 msgstr "Die CSV-Datei ist leer."
 
-#: src/Commerce/PriceGrid/GridImportExport.php:547
+#: src/Commerce/PriceGrid/GridImportExport.php:550
 msgid "CSV must have a header row and at least one data row."
 msgstr "Die CSV muss eine Kopfzeile und mindestens eine Datenzeile haben."
 
-#: src/Commerce/PriceGrid/GridImportExport.php:557
+#: src/Commerce/PriceGrid/GridImportExport.php:560
 msgid "CSV header must contain at least one fraction column after \"Size\"."
 msgstr ""
 "Der CSV-Header muss nach „Größe\" mindestens eine Anteilsspalte enthalten."
 
-#: src/Commerce/PriceGrid/GridImportExport.php:584
+#: src/Commerce/PriceGrid/GridImportExport.php:587
 msgid "CSV contains no size rows."
 msgstr "Die CSV enthält keine Größenzeilen."
 
@@ -7195,27 +7273,27 @@ msgstr "Bezeichnung der gewählten Pizzagröße."
 msgid "Array of selected layers with their coverage fractions."
 msgstr "Array der ausgewählten Schichten mit ihren Bedeckungsanteilen."
 
-#: src/Commerce/WooCommerce/CartIntegration.php:190
+#: src/Commerce/WooCommerce/CartIntegration.php:191
 msgid "Security check failed. Please refresh the page and try again."
 msgstr ""
 "Sicherheitsprüfung fehlgeschlagen. Bitte die Seite neu laden und erneut "
 "versuchen."
 
-#: src/Commerce/WooCommerce/CartIntegration.php:208
+#: src/Commerce/WooCommerce/CartIntegration.php:209
 msgid "Invalid product."
 msgstr "Ungültiges Produkt."
 
-#: src/Commerce/WooCommerce/CartIntegration.php:216
+#: src/Commerce/WooCommerce/CartIntegration.php:217
 msgid "Could not read layer configuration."
 msgstr "Belagkonfiguration konnte nicht gelesen werden."
 
-#: src/Commerce/WooCommerce/CartIntegration.php:301
+#: src/Commerce/WooCommerce/CartIntegration.php:302
 msgid "Could not add the pizza to your cart. Please try again."
 msgstr ""
 "Die Pizza konnte nicht in den Warenkorb gelegt werden. Bitte erneut "
 "versuchen."
 
-#: src/Commerce/WooCommerce/CartIntegration.php:309
+#: src/Commerce/WooCommerce/CartIntegration.php:317
 msgid "Pizza added to cart!"
 msgstr "Pizza wurde in den Warenkorb gelegt!"
 
@@ -7239,51 +7317,51 @@ msgstr ""
 msgid "Selected toppings and prices"
 msgstr "Ausgewählte Beläge und Preise"
 
-#: src/Commerce/WooCommerce/FrontendEmbed.php:1312
+#: src/Commerce/WooCommerce/FrontendEmbed.php:1314
 msgid "Select a size"
 msgstr ""
 
-#: src/Commerce/WooCommerce/FrontendEmbed.php:1313
+#: src/Commerce/WooCommerce/FrontendEmbed.php:1315
 msgid "Adding…"
 msgstr "Wird hinzugefügt…"
 
-#: src/Commerce/WooCommerce/FrontendEmbed.php:1314
+#: src/Commerce/WooCommerce/FrontendEmbed.php:1316
 msgid "Added to cart!"
 msgstr "In den Warenkorb gelegt!"
 
-#: src/Commerce/WooCommerce/FrontendEmbed.php:1315
+#: src/Commerce/WooCommerce/FrontendEmbed.php:1317
 msgid "Something went wrong. Please try again."
 msgstr "Etwas ist schiefgelaufen. Bitte erneut versuchen."
 
-#: src/Commerce/WooCommerce/FrontendEmbed.php:1316
+#: src/Commerce/WooCommerce/FrontendEmbed.php:1318
 msgid "Configure your pizza above, then add to cart."
 msgstr "Konfigurieren Sie Ihre Pizza oben, dann zum Warenkorb hinzufügen."
 
-#: src/Commerce/WooCommerce/FrontendEmbed.php:1317
+#: src/Commerce/WooCommerce/FrontendEmbed.php:1319
 msgid "Calculating…"
 msgstr "Wird berechnet…"
 
-#: src/Commerce/WooCommerce/FrontendEmbed.php:1318
+#: src/Commerce/WooCommerce/FrontendEmbed.php:1320
 msgid "Price on request"
 msgstr "Preis auf Anfrage"
 
-#: src/Commerce/WooCommerce/FrontendEmbed.php:1319
+#: src/Commerce/WooCommerce/FrontendEmbed.php:1321
 msgid "Please select a pizza size."
 msgstr "Bitte eine Pizzagröße auswählen."
 
-#: src/Commerce/WooCommerce/FrontendEmbed.php:1320
+#: src/Commerce/WooCommerce/FrontendEmbed.php:1322
 msgid "Please add at least one topping or layer."
 msgstr "Bitte mindestens einen Belag oder eine Schicht hinzufügen."
 
-#: src/Commerce/WooCommerce/FrontendEmbed.php:1321
+#: src/Commerce/WooCommerce/FrontendEmbed.php:1323
 msgid "The pizza builder is not ready yet. Please wait a moment."
 msgstr "Der Pizza-Builder ist noch nicht bereit. Bitte einen Moment warten."
 
-#: src/Commerce/WooCommerce/FrontendEmbed.php:1322
+#: src/Commerce/WooCommerce/FrontendEmbed.php:1324
 msgid "cal"
 msgstr "kcal"
 
-#: src/Commerce/WooCommerce/FrontendEmbed.php:1323
+#: src/Commerce/WooCommerce/FrontendEmbed.php:1325
 msgid "Estimated nutrition"
 msgstr "Geschätzte Nährwerte"
 
@@ -7311,7 +7389,7 @@ msgstr "Pizza-Gesamtbetrag"
 
 #: src/Commerce/WooCommerce/OrderEmailSummary.php:381
 #: src/Commerce/WooCommerce/OrderEmailSummary.php:484
-#: src/Orders/Admin/OrdersPage.php:550
+#: src/Orders/Admin/OrdersPage.php:587
 msgid "Note:"
 msgstr "Notiz:"
 
@@ -7341,13 +7419,13 @@ msgstr "Pizza-Konfiguration"
 msgid "Total:"
 msgstr "Gesamt:"
 
-#: src/Commerce/WooCommerce/OrderMeta.php:73 src/Orders/OrderSubmission.php:472
+#: src/Commerce/WooCommerce/OrderMeta.php:73 src/Orders/OrderSubmission.php:520
 #: templates/colorbox/pztp-containers-menu.php:165
 #: templates/plainlist/pztp-containers-menu.php:554
 msgid "Left Half"
 msgstr ""
 
-#: src/Commerce/WooCommerce/OrderMeta.php:74 src/Orders/OrderSubmission.php:473
+#: src/Commerce/WooCommerce/OrderMeta.php:74 src/Orders/OrderSubmission.php:521
 #: templates/colorbox/pztp-containers-menu.php:166
 #: templates/plainlist/pztp-containers-menu.php:555
 msgid "Right Half"
@@ -7376,7 +7454,7 @@ msgstr "Grundpreis"
 
 #: src/Commerce/WooCommerce/OrderMeta.php:281
 #: src/Commerce/WooCommerce/OrderMeta.php:842
-#: src/Orders/OrderSubmission.php:593
+#: src/Orders/OrderSubmission.php:645
 msgid "Note"
 msgstr "Notiz"
 
@@ -7398,7 +7476,7 @@ msgstr ""
 msgid "Select \"Pizza\" as the product type to configure the price grid."
 msgstr ""
 
-#: src/Commerce/WooCommerce/ProductTab.php:139
+#: src/Commerce/WooCommerce/ProductTab.php:138
 msgid ""
 "These prices apply to any layer that does not have its own custom pricing "
 "grid set. To set per-ingredient prices, edit the individual topping, crust, "
@@ -7425,7 +7503,7 @@ msgstr ""
 "Den Builder konfigurieren, Standard-Schichten festlegen und verfügbare "
 "Beläge für dieses Produkt einschränken."
 
-#: src/Commerce/WooCommerce/ProductTab.php:282
+#: src/Commerce/WooCommerce/ProductTab.php:282 blocks/pizza-builder/block.js:91
 msgid "Builder Settings"
 msgstr "Builder-Einstellungen"
 
@@ -7597,21 +7675,33 @@ msgid ""
 "setting\" inherits from PizzaTier Settings."
 msgstr ""
 
-#: src/Commerce/WooCommerce/ProductType.php:74
+#: src/Commerce/WooCommerce/ProductType.php:74 src/Orders/Privacy.php:319
 msgid "Pizza"
 msgstr "Pizza"
 
-#: src/Orders/Admin/OrdersListTable.php:43 src/Orders/Admin/OrdersPage.php:509
-#: src/Orders/OrderSubmission.php:575
+#: src/Core/Upgrade.php:191
+msgid ""
+"PizzaTier 2.1 changed what \"both\" ordering means. Your builder used to "
+"show two buttons and let the customer pick between the cart and a recorded "
+"order. It now shows one button that records the order and adds it to the "
+"cart."
+msgstr ""
+
+#: src/Core/Upgrade.php:195
+msgid "Review your order routing"
+msgstr ""
+
+#: src/Orders/Admin/OrdersListTable.php:43 src/Orders/Admin/OrdersPage.php:546
+#: src/Orders/OrderSubmission.php:627
 msgid "Order"
 msgstr ""
 
-#: src/Orders/Admin/OrdersListTable.php:44 src/Orders/Admin/OrdersPage.php:787
+#: src/Orders/Admin/OrdersListTable.php:44 src/Orders/Admin/OrdersPage.php:824
 msgid "Placed"
 msgstr ""
 
-#: src/Orders/Admin/OrdersListTable.php:45 src/Orders/Admin/OrdersPage.php:688
-#: src/Orders/Admin/OrdersPage.php:1072 src/Orders/OrderSubmission.php:557
+#: src/Orders/Admin/OrdersListTable.php:45 src/Orders/Admin/OrdersPage.php:725
+#: src/Orders/Admin/OrdersPage.php:1213 src/Orders/OrderSubmission.php:609
 msgid "Customer"
 msgstr ""
 
@@ -7619,16 +7709,17 @@ msgstr ""
 msgid "Pizzas"
 msgstr ""
 
-#: src/Orders/Admin/OrdersListTable.php:47 src/Orders/Admin/OrdersPage.php:753
-#: src/Orders/Admin/OrdersPage.php:901 src/Orders/OrderSubmission.php:566
+#: src/Orders/Admin/OrdersListTable.php:47 src/Orders/Admin/OrdersPage.php:790
+#: src/Orders/Admin/OrdersPage.php:975 src/Orders/OrderSubmission.php:618
 msgid "Fulfilment"
 msgstr ""
 
-#: src/Orders/Admin/OrdersListTable.php:48 src/Orders/Admin/OrdersPage.php:582
+#: src/Orders/Admin/OrdersListTable.php:48 src/Orders/Admin/OrdersPage.php:619
 msgid "Total"
 msgstr ""
 
-#: src/Orders/Admin/OrdersListTable.php:49 src/Orders/Admin/OrdersPage.php:662
+#: src/Orders/Admin/OrdersListTable.php:49 src/Orders/Admin/OrdersPage.php:699
+#: src/Orders/Privacy.php:229
 msgid "Status"
 msgstr ""
 
@@ -7679,340 +7770,395 @@ msgstr[1] ""
 msgid "No orders yet. They will appear here as customers place them."
 msgstr ""
 
-#: src/Orders/Admin/OrdersPage.php:319
+#: src/Orders/Admin/OrdersPage.php:356
 msgid "Changed in bulk."
 msgstr ""
 
-#: src/Orders/Admin/OrdersPage.php:394
+#: src/Orders/Admin/OrdersPage.php:431
 msgid "You do not have permission to view orders."
 msgstr ""
 
-#: src/Orders/Admin/OrdersPage.php:425 src/Orders/Admin/OrdersPage.php:838
+#: src/Orders/Admin/OrdersPage.php:462 src/Orders/Admin/OrdersPage.php:875
 msgid "Ordering Settings"
 msgstr ""
 
 #. translators: %d: number of orders updated.
-#: src/Orders/Admin/OrdersPage.php:439
+#: src/Orders/Admin/OrdersPage.php:476
 #, php-format
 msgid "%d order updated."
 msgid_plural "%d orders updated."
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/Orders/Admin/OrdersPage.php:450
+#: src/Orders/Admin/OrdersPage.php:487
 msgid ""
 "Online ordering is currently switched off, so no new orders can come in."
 msgstr ""
 
-#: src/Orders/Admin/OrdersPage.php:452
+#: src/Orders/Admin/OrdersPage.php:489
 msgid "Turn it on"
 msgstr ""
 
-#: src/Orders/Admin/OrdersPage.php:465
+#: src/Orders/Admin/OrdersPage.php:502
 msgid "Search orders"
 msgstr ""
 
-#: src/Orders/Admin/OrdersPage.php:478
+#: src/Orders/Admin/OrdersPage.php:515
 msgid "Order not found"
 msgstr ""
 
-#: src/Orders/Admin/OrdersPage.php:479
+#: src/Orders/Admin/OrdersPage.php:516
 msgid "← Back to orders"
 msgstr ""
 
-#: src/Orders/Admin/OrdersPage.php:499 src/Orders/Admin/OrdersPage.php:840
+#: src/Orders/Admin/OrdersPage.php:536 src/Orders/Admin/OrdersPage.php:877
 msgid "← All orders"
 msgstr ""
 
-#: src/Orders/Admin/OrdersPage.php:562
+#: src/Orders/Admin/OrdersPage.php:599
 msgid "Subtotal"
 msgstr ""
 
-#: src/Orders/Admin/OrdersPage.php:563 src/Orders/Order.php:383
+#: src/Orders/Admin/OrdersPage.php:600 src/Orders/Order.php:392
 msgid "Delivery"
 msgstr ""
 
-#: src/Orders/Admin/OrdersPage.php:564
+#: src/Orders/Admin/OrdersPage.php:601
 msgid "Tax"
 msgstr ""
 
-#: src/Orders/Admin/OrdersPage.php:565
+#: src/Orders/Admin/OrdersPage.php:602
 msgid "Tip"
 msgstr ""
 
-#: src/Orders/Admin/OrdersPage.php:577
+#: src/Orders/Admin/OrdersPage.php:614
 msgid "Discount"
 msgstr ""
 
-#: src/Orders/Admin/OrdersPage.php:593
+#: src/Orders/Admin/OrdersPage.php:630
 msgid "Note from the customer"
 msgstr ""
 
-#: src/Orders/Admin/OrdersPage.php:600
+#: src/Orders/Admin/OrdersPage.php:637
 msgid "Internal notes"
 msgstr ""
 
-#: src/Orders/Admin/OrdersPage.php:601
+#: src/Orders/Admin/OrdersPage.php:638
 msgid ""
 "Only staff can see these. They never appear on receipts or in emails to the "
 "customer."
 msgstr ""
 
-#: src/Orders/Admin/OrdersPage.php:625
+#: src/Orders/Admin/OrdersPage.php:662
 msgid "Add an internal note…"
 msgstr ""
 
-#: src/Orders/Admin/OrdersPage.php:626
+#: src/Orders/Admin/OrdersPage.php:663
 msgid "Add Note"
 msgstr ""
 
-#: src/Orders/Admin/OrdersPage.php:632
+#: src/Orders/Admin/OrdersPage.php:669
 msgid "History"
 msgstr ""
 
-#: src/Orders/Admin/OrdersPage.php:680
+#: src/Orders/Admin/OrdersPage.php:717
 msgid "Why? (optional)"
 msgstr ""
 
-#: src/Orders/Admin/OrdersPage.php:682
+#: src/Orders/Admin/OrdersPage.php:719
 msgid "Update Status"
 msgstr ""
 
-#: src/Orders/Admin/OrdersPage.php:703
+#: src/Orders/Admin/OrdersPage.php:740 src/Orders/Privacy.php:236
 msgid "Company"
 msgstr ""
 
-#: src/Orders/Admin/OrdersPage.php:716
+#: src/Orders/Admin/OrdersPage.php:753
 msgid "Open customer profile"
 msgstr ""
 
-#: src/Orders/Admin/OrdersPage.php:721
+#: src/Orders/Admin/OrdersPage.php:758
 msgid "Ordered as a guest, matched to this account by email address."
 msgstr ""
 
-#: src/Orders/Admin/OrdersPage.php:725
+#: src/Orders/Admin/OrdersPage.php:762
 msgid "Ordered as a guest, with no matching account."
 msgstr ""
 
-#: src/Orders/Admin/OrdersPage.php:733 src/Orders/CustomerNotes.php:191
+#: src/Orders/Admin/OrdersPage.php:770 src/Orders/CustomerNotes.php:191
 msgid "Private customer notes"
 msgstr ""
 
-#: src/Orders/Admin/OrdersPage.php:735
+#: src/Orders/Admin/OrdersPage.php:772
 msgid ""
 "About this customer, across all their orders. The customer never sees these."
 msgstr ""
 
-#: src/Orders/Admin/OrdersPage.php:745 src/Orders/CustomerNotes.php:201
+#: src/Orders/Admin/OrdersPage.php:782 src/Orders/CustomerNotes.php:201
 msgid "Anything the team should know when this customer orders…"
 msgstr ""
 
-#: src/Orders/Admin/OrdersPage.php:746
+#: src/Orders/Admin/OrdersPage.php:783
 msgid "Save Notes"
 msgstr ""
 
-#: src/Orders/Admin/OrdersPage.php:767 src/Orders/OrderSubmission.php:568
+#: src/Orders/Admin/OrdersPage.php:804 src/Orders/OrderSubmission.php:620
 msgid "Requested for"
 msgstr ""
 
-#: src/Orders/Admin/OrdersPage.php:773 src/Orders/OrderSubmission.php:572
+#: src/Orders/Admin/OrdersPage.php:810 src/Orders/OrderSubmission.php:624
 msgid "Address"
 msgstr ""
 
-#: src/Orders/Admin/OrdersPage.php:778
+#: src/Orders/Admin/OrdersPage.php:815
 msgid "Instructions"
 msgstr ""
 
-#: src/Orders/Admin/OrdersPage.php:783
+#: src/Orders/Admin/OrdersPage.php:820
 msgid "Table"
 msgstr ""
 
-#: src/Orders/Admin/OrdersPage.php:803
+#: src/Orders/Admin/OrdersPage.php:840
 msgid "Where it came from"
 msgstr ""
 
-#: src/Orders/Admin/OrdersPage.php:805
+#: src/Orders/Admin/OrdersPage.php:842
 msgid "Source"
 msgstr ""
 
-#: src/Orders/Admin/OrdersPage.php:812
+#: src/Orders/Admin/OrdersPage.php:849
 msgid "Page"
 msgstr ""
 
-#: src/Orders/Admin/OrdersPage.php:816
+#: src/Orders/Admin/OrdersPage.php:853
 msgid "IP"
 msgstr ""
 
-#: src/Orders/Admin/OrdersPage.php:858
+#: src/Orders/Admin/OrdersPage.php:895
 msgid "Accept orders"
 msgstr ""
 
-#: src/Orders/Admin/OrdersPage.php:858
+#: src/Orders/Admin/OrdersPage.php:895
 msgid "Show the order bar in the builder and accept new orders."
 msgstr ""
 
-#: src/Orders/Admin/OrdersPage.php:859
+#: src/Orders/Admin/OrdersPage.php:896
 msgid "Button label"
 msgstr ""
 
-#: src/Orders/Admin/OrdersPage.php:860
+#: src/Orders/Admin/OrdersPage.php:897
 msgid "Require login"
 msgstr ""
 
-#: src/Orders/Admin/OrdersPage.php:860
+#: src/Orders/Admin/OrdersPage.php:897
 msgid "Only logged-in customers may place orders."
 msgstr ""
 
-#: src/Orders/Admin/OrdersPage.php:863
-msgid "Builder action bar"
+#: src/Orders/Admin/OrdersPage.php:900
+msgid "When a customer orders"
 msgstr ""
 
-#: src/Orders/Admin/OrdersPage.php:868
-msgid "Order bar only — record orders in WordPress"
+#: src/Orders/Admin/OrdersPage.php:909
+msgid "Where orders are sent"
 msgstr ""
 
-#: src/Orders/Admin/OrdersPage.php:871
-msgid "Add to Cart bar only — WooCommerce checkout"
+#: src/Orders/Admin/OrdersPage.php:926
+msgid "The cart routes need WooCommerce installed and active."
 msgstr ""
 
-#: src/Orders/Admin/OrdersPage.php:874
-msgid "Both — Add to Cart first, then Order Now"
-msgstr ""
-
-#: src/Orders/Admin/OrdersPage.php:878
-msgid ""
-"What customers see under the builder. WooCommerce gives a cart and a full "
-"checkout with payment; an order is recorded straight in WordPress with no "
-"payment step, which suits pay-on-collection and phone-order stores."
-msgstr ""
-
-#: src/Orders/Admin/OrdersPage.php:880
-msgid "The WooCommerce options need WooCommerce installed and active."
-msgstr ""
-
-#: src/Orders/Admin/OrdersPage.php:886
-msgid "New order status"
-msgstr ""
-
-#: src/Orders/Admin/OrdersPage.php:895
-msgid "The status every new order starts in."
-msgstr ""
-
-#: src/Orders/Admin/OrdersPage.php:905
-msgid "Methods offered"
-msgstr ""
-
-#: src/Orders/Admin/OrdersPage.php:914
-msgid "Delivery asks for an address; dine-in asks for a table number."
-msgstr ""
-
-#: src/Orders/Admin/OrdersPage.php:918
-msgid "Ask for a time"
-msgstr ""
-
-#: src/Orders/Admin/OrdersPage.php:918
-msgid "Let customers say when they need the order."
-msgstr ""
-
-#: src/Orders/Admin/OrdersPage.php:919
-msgid "Show size picker"
-msgstr ""
-
-#: src/Orders/Admin/OrdersPage.php:919
-msgid "Offer your Size options during checkout."
-msgstr ""
-
-#: src/Orders/Admin/OrdersPage.php:924
-msgid "Customer details"
-msgstr ""
-
-#: src/Orders/Admin/OrdersPage.php:928
-msgid "Require name"
-msgstr ""
-
-#: src/Orders/Admin/OrdersPage.php:929
-msgid "Require phone"
-msgstr ""
-
-#: src/Orders/Admin/OrdersPage.php:930
-msgid "Require email"
-msgstr ""
-
-#: src/Orders/Admin/OrdersPage.php:935
-msgid "Notes and quantity"
-msgstr ""
-
-#: src/Orders/Admin/OrdersPage.php:939
-msgid "Allow order notes"
-msgstr ""
-
-#: src/Orders/Admin/OrdersPage.php:939
-msgid "Let customers add special requests for the kitchen."
-msgstr ""
-
-#: src/Orders/Admin/OrdersPage.php:940
-msgid "Note placeholder"
+#: src/Orders/Admin/OrdersPage.php:933
+msgid "Pizza product"
 msgstr ""
 
 #: src/Orders/Admin/OrdersPage.php:941
-msgid "Note length limit"
-msgstr ""
-
-#: src/Orders/Admin/OrdersPage.php:942
-msgid "Show quantity stepper"
-msgstr ""
-
-#: src/Orders/Admin/OrdersPage.php:943
-msgid "Maximum quantity"
-msgstr ""
-
-#: src/Orders/Admin/OrdersPage.php:948
-msgid "Notifications and abuse control"
-msgstr ""
-
-#: src/Orders/Admin/OrdersPage.php:952
-msgid "Email the store"
-msgstr ""
-
-#: src/Orders/Admin/OrdersPage.php:952
-msgid "Send a summary to the store whenever an order arrives."
+msgid ""
+"No pizza products found. Create a product and choose a builder template on "
+"it before using a cart route away from a product page."
 msgstr ""
 
 #: src/Orders/Admin/OrdersPage.php:953
-msgid "Notification address"
-msgstr ""
-
-#: src/Orders/Admin/OrdersPage.php:954
-msgid "Confirmation message"
-msgstr ""
-
-#: src/Orders/Admin/OrdersPage.php:955
-msgid "Orders per hour per visitor"
-msgstr ""
-
-#: src/Orders/Admin/OrdersPage.php:955
-msgid "Set to 0 to switch the limit off."
+msgid ""
+"Which product the cart routes add to when the builder is on a normal page "
+"rather than a product page. On a product page the product itself is always "
+"used and this is ignored."
 msgstr ""
 
 #: src/Orders/Admin/OrdersPage.php:960
-msgid "Data"
-msgstr ""
-
-#: src/Orders/Admin/OrdersPage.php:964
-msgid "On uninstall"
+msgid "New order status"
 msgstr ""
 
 #: src/Orders/Admin/OrdersPage.php:969
+msgid "The status every new order starts in."
+msgstr ""
+
+#: src/Orders/Admin/OrdersPage.php:979
+msgid "Methods offered"
+msgstr ""
+
+#: src/Orders/Admin/OrdersPage.php:988
+msgid "Delivery asks for an address; dine-in asks for a table number."
+msgstr ""
+
+#: src/Orders/Admin/OrdersPage.php:992
+msgid "Ask for a time"
+msgstr ""
+
+#: src/Orders/Admin/OrdersPage.php:992
+msgid "Let customers say when they need the order."
+msgstr ""
+
+#: src/Orders/Admin/OrdersPage.php:993
+msgid "Show size picker"
+msgstr ""
+
+#: src/Orders/Admin/OrdersPage.php:993
+msgid "Offer your Size options during checkout."
+msgstr ""
+
+#: src/Orders/Admin/OrdersPage.php:998
+msgid "Customer details"
+msgstr ""
+
+#: src/Orders/Admin/OrdersPage.php:1002
+msgid "Require name"
+msgstr ""
+
+#: src/Orders/Admin/OrdersPage.php:1003
+msgid "Require phone"
+msgstr ""
+
+#: src/Orders/Admin/OrdersPage.php:1004
+msgid "Require email"
+msgstr ""
+
+#: src/Orders/Admin/OrdersPage.php:1012
+msgid "Personal-data requests:"
+msgstr ""
+
+#: src/Orders/Admin/OrdersPage.php:1013
+msgid ""
+"WordPress finds personal data by email address. Orders placed without one "
+"cannot be located by Tools → Export or Erase Personal Data, and have to be "
+"found by hand from the Orders screen. Require an email if you need those "
+"requests to be fully automatic."
+msgstr ""
+
+#: src/Orders/Admin/OrdersPage.php:1024
+msgid "Notes and quantity"
+msgstr ""
+
+#: src/Orders/Admin/OrdersPage.php:1028
+msgid "Allow order notes"
+msgstr ""
+
+#: src/Orders/Admin/OrdersPage.php:1028
+msgid "Let customers add special requests for the kitchen."
+msgstr ""
+
+#: src/Orders/Admin/OrdersPage.php:1029
+msgid "Note placeholder"
+msgstr ""
+
+#: src/Orders/Admin/OrdersPage.php:1030
+msgid "Note length limit"
+msgstr ""
+
+#: src/Orders/Admin/OrdersPage.php:1031
+msgid "Show quantity stepper"
+msgstr ""
+
+#: src/Orders/Admin/OrdersPage.php:1032
+msgid "Maximum quantity"
+msgstr ""
+
+#: src/Orders/Admin/OrdersPage.php:1037
+msgid "Notifications and abuse control"
+msgstr ""
+
+#: src/Orders/Admin/OrdersPage.php:1041
+msgid "Email the store"
+msgstr ""
+
+#: src/Orders/Admin/OrdersPage.php:1041
+msgid "Send a summary to the store whenever an order arrives."
+msgstr ""
+
+#: src/Orders/Admin/OrdersPage.php:1042
+msgid "Notification address"
+msgstr ""
+
+#: src/Orders/Admin/OrdersPage.php:1043
+msgid "Confirmation message"
+msgstr ""
+
+#: src/Orders/Admin/OrdersPage.php:1044
+msgid "Orders per hour per visitor"
+msgstr ""
+
+#: src/Orders/Admin/OrdersPage.php:1044
+msgid "Set to 0 to switch the limit off."
+msgstr ""
+
+#: src/Orders/Admin/OrdersPage.php:1047
+msgid "Webhook URL"
+msgstr ""
+
+#: src/Orders/Admin/OrdersPage.php:1053
+msgid ""
+"Every placed order is POSTed here as JSON — a kitchen display, a POS, or an "
+"automation service such as Zapier or Make. Leave empty to switch it off."
+msgstr ""
+
+#: src/Orders/Admin/OrdersPage.php:1058
+msgid "Webhook secret"
+msgstr ""
+
+#. translators: %s: HTTP header name.
+#: src/Orders/Admin/OrdersPage.php:1067
+#, php-format
+msgid ""
+"Optional. When set, each request carries an HMAC-SHA256 signature of the "
+"body in the %s header so the receiver can verify it came from this site."
+msgstr ""
+
+#: src/Orders/Admin/OrdersPage.php:1087
+msgid ""
+"Orders are set to be sent without being recorded, but there is nowhere to "
+"send them. Switch on the store email or set a webhook URL. Until then, "
+"orders will be kept in the list rather than lost."
+msgstr ""
+
+#: src/Orders/Admin/OrdersPage.php:1092
+msgid "Data"
+msgstr ""
+
+#: src/Orders/Admin/OrdersPage.php:1098
+msgid "Auto-anonymise after"
+msgstr ""
+
+#: src/Orders/Admin/OrdersPage.php:1101
+msgid ""
+"Months. After this long an order's name, contact details, address and notes "
+"are cleared automatically; the order number, date, items and total are kept "
+"so the transaction record survives. Set to 0 to switch this off. Retention "
+"periods differ by country — check yours before enabling."
+msgstr ""
+
+#: src/Orders/Admin/OrdersPage.php:1105
+msgid "On uninstall"
+msgstr ""
+
+#: src/Orders/Admin/OrdersPage.php:1110
 msgid "Delete all order history when the plugin is uninstalled"
 msgstr ""
 
-#: src/Orders/Admin/OrdersPage.php:972
+#: src/Orders/Admin/OrdersPage.php:1113
 msgid ""
 "Off by default. Orders are transaction records, so they are kept even if the "
 "plugin is removed."
 msgstr ""
 
-#: src/Orders/Admin/OrdersPage.php:1075
+#: src/Orders/Admin/OrdersPage.php:1216
 msgid "Unknown user"
 msgstr ""
 
@@ -8053,50 +8199,62 @@ msgstr ""
 msgid "Order created."
 msgstr ""
 
-#: src/Orders/Order.php:384
+#: src/Orders/Order.php:393
 msgid "Dine In"
 msgstr ""
 
-#: src/Orders/OrderCheckout.php:308
+#: src/Orders/OrderCheckout.php:318
 msgid "Build your pizza first, then place your order."
 msgstr ""
 
-#: src/Orders/OrderCheckout.php:310
+#: src/Orders/OrderCheckout.php:320
 msgid "Sending your order…"
 msgstr ""
 
 #. translators: %s: value inserted into the message.
-#: src/Orders/OrderCheckout.php:313
+#: src/Orders/OrderCheckout.php:323
 #, php-format
 msgid "Your order number is %s."
 msgstr ""
 
-#: src/Orders/OrderCheckout.php:314
+#: src/Orders/OrderCheckout.php:324
 msgid "Something went wrong sending your order. Please try again."
 msgstr ""
 
-#: src/Orders/OrderCheckout.php:315
+#: src/Orders/OrderCheckout.php:325
 msgid "Could not reach the store. Please check your connection and try again."
 msgstr ""
 
-#: src/Orders/OrderCheckout.php:316
+#: src/Orders/OrderCheckout.php:326
 msgid "This field is required."
 msgstr ""
 
-#: src/Orders/OrderCheckout.php:317 src/Orders/OrderSubmission.php:300
+#: src/Orders/OrderCheckout.php:327 src/Orders/OrderSubmission.php:346
 msgid "Please enter a valid email address."
 msgstr ""
 
-#: src/Orders/OrderCheckout.php:322
+#: src/Orders/OrderCheckout.php:332
 msgid "Place Another Order"
 msgstr ""
 
-#: src/Orders/OrderCheckout.php:323 src/Orders/OrderSubmission.php:471
+#: src/Orders/OrderCheckout.php:333 src/Orders/OrderSubmission.php:519
 #: templates/colorbox/pztp-containers-menu.php:164
 #: templates/commandcenter/pztp-containers-menu.php:246
 #: templates/plainlist/pztp-containers-menu.php:256
 #: templates/plainlist/pztp-containers-menu.php:553
 msgid "Whole"
+msgstr ""
+
+#: src/Orders/OrderCheckout.php:334
+msgid "Your pizza has also been added to your cart."
+msgstr ""
+
+#: src/Orders/OrderCheckout.php:335
+msgid "Go to cart"
+msgstr ""
+
+#: src/Orders/OrderCheckout.php:336
+msgid "We saved your order, but could not add it to your cart."
 msgstr ""
 
 #: src/Orders/OrderPostType.php:42 src/Orders/OrderPostType.php:44
@@ -8144,7 +8302,62 @@ msgstr ""
 msgid "Customer pizza orders submitted from the builder."
 msgstr ""
 
-#: src/Orders/OrderSettings.php:166
+#. translators: %d: product ID.
+#: src/Orders/OrderProduct.php:164
+#, php-format
+msgid "Product #%d"
+msgstr ""
+
+#: src/Orders/OrderRoute.php:74
+msgid "Pizza order list — record the order in WordPress"
+msgstr ""
+
+#: src/Orders/OrderRoute.php:75
+msgid "WooCommerce cart — add the pizza and keep shopping"
+msgstr ""
+
+#: src/Orders/OrderRoute.php:76
+msgid "WooCommerce checkout — add the pizza and go straight to payment"
+msgstr ""
+
+#: src/Orders/OrderRoute.php:77
+msgid "Both — record the order and add it to the cart"
+msgstr ""
+
+#: src/Orders/OrderRoute.php:78
+msgid "Notify only — send the ticket, keep no record"
+msgstr ""
+
+#: src/Orders/OrderRoute.php:89
+msgid ""
+"Suits pay-on-collection and phone-order stores. No cart and no payment step."
+msgstr ""
+
+#: src/Orders/OrderRoute.php:90
+msgid ""
+"The standard WooCommerce flow. Good when customers order more than one "
+"pizza, or pizza alongside other products."
+msgstr ""
+
+#: src/Orders/OrderRoute.php:91
+msgid ""
+"Skips the cart page. Fewer clicks for stores that mostly sell one pizza at a "
+"time."
+msgstr ""
+
+#: src/Orders/OrderRoute.php:92
+msgid ""
+"The kitchen gets the ticket immediately and the customer still pays through "
+"WooCommerce."
+msgstr ""
+
+#: src/Orders/OrderRoute.php:93
+msgid ""
+"The order is emailed and posted to your webhook, then discarded. Nothing "
+"personal is stored."
+msgstr ""
+
+#: src/Orders/OrderSettings.php:187
 msgid "Thanks! Your order has been sent to the kitchen."
 msgstr ""
 
@@ -8220,94 +8433,229 @@ msgstr ""
 msgid "Order could not be processed."
 msgstr ""
 
-#: src/Orders/OrderSubmission.php:62
+#: src/Orders/OrderSubmission.php:63
 msgid "Online ordering is not available right now."
 msgstr ""
 
-#: src/Orders/OrderSubmission.php:74
+#: src/Orders/OrderSubmission.php:75
 msgid "Your session expired. Please refresh the page and try again."
 msgstr ""
 
-#: src/Orders/OrderSubmission.php:109
+#: src/Orders/OrderSubmission.php:110
 msgid ""
 "You have placed several orders in a short time. Please wait a few minutes "
 "and try again."
 msgstr ""
 
-#: src/Orders/OrderSubmission.php:128
+#: src/Orders/OrderSubmission.php:129
 msgid "Please check the highlighted fields."
 msgstr ""
 
-#: src/Orders/OrderSubmission.php:161
+#: src/Orders/OrderSubmission.php:162
 msgid "Please enter a delivery address."
 msgstr ""
 
-#: src/Orders/OrderSubmission.php:163
+#: src/Orders/OrderSubmission.php:164
 msgid "A street address is required for delivery."
 msgstr ""
 
-#: src/Orders/OrderSubmission.php:177
+#: src/Orders/OrderSubmission.php:178
 msgid "We could not read your pizza. Please rebuild it and try again."
 msgstr ""
 
-#: src/Orders/OrderSubmission.php:198
+#: src/Orders/OrderSubmission.php:206
 msgid "Your order is empty. Please build a pizza before ordering."
 msgstr ""
 
-#: src/Orders/OrderSubmission.php:210
+#: src/Orders/OrderSubmission.php:218
 msgid "We could not save your order. Please try again."
 msgstr ""
 
-#: src/Orders/OrderSubmission.php:289
+#: src/Orders/OrderSubmission.php:335
 msgid "Please tell us your name."
 msgstr ""
 
-#: src/Orders/OrderSubmission.php:293
+#: src/Orders/OrderSubmission.php:339
 msgid "Please give us a contact phone number."
 msgstr ""
 
-#: src/Orders/OrderSubmission.php:298
+#: src/Orders/OrderSubmission.php:344
 msgid "Please enter your email address."
 msgstr ""
 
-#: src/Orders/OrderSubmission.php:399
+#: src/Orders/OrderSubmission.php:445
 msgid "Custom Pizza"
 msgstr ""
 
-#: src/Orders/OrderSubmission.php:474
+#: src/Orders/OrderSubmission.php:522
 msgid "Top Left Quarter"
 msgstr ""
 
-#: src/Orders/OrderSubmission.php:475
+#: src/Orders/OrderSubmission.php:523
 msgid "Top Right Quarter"
 msgstr ""
 
-#: src/Orders/OrderSubmission.php:476
+#: src/Orders/OrderSubmission.php:524
 msgid "Bottom Left Quarter"
 msgstr ""
 
-#: src/Orders/OrderSubmission.php:477
+#: src/Orders/OrderSubmission.php:525
 msgid "Bottom Right Quarter"
 msgstr ""
 
 #. translators: %s: order number.
-#: src/Orders/OrderSubmission.php:553
+#: src/Orders/OrderSubmission.php:605
 #, php-format
 msgid "New pizza order: %s"
 msgstr ""
 
-#: src/Orders/OrderSubmission.php:600
+#: src/Orders/OrderSubmission.php:652
 msgid "Order note"
 msgstr ""
 
-#: src/Orders/OrderSubmission.php:604
+#: src/Orders/OrderSubmission.php:656
 msgid "Manage this order:"
 msgstr ""
 
 #. translators: 1: site name, 2: order number.
-#: src/Orders/OrderSubmission.php:609
+#: src/Orders/OrderSubmission.php:661
 #, php-format
 msgid "[%1$s] New pizza order %2$s"
+msgstr ""
+
+#: src/Orders/Privacy.php:197
+msgid "Orders placed through the pizza builder."
+msgstr ""
+
+#: src/Orders/Privacy.php:227
+msgid "Order number"
+msgstr ""
+
+#: src/Orders/Privacy.php:228
+msgid "Date"
+msgstr ""
+
+#: src/Orders/Privacy.php:253
+msgid "Delivery address"
+msgstr ""
+
+#: src/Orders/Privacy.php:257
+msgid "Requested time"
+msgstr ""
+
+#. translators: %d = line item number
+#: src/Orders/Privacy.php:278
+#, php-format
+msgid "Item %d"
+msgstr ""
+
+#: src/Orders/Privacy.php:285
+msgid "Order total"
+msgstr ""
+
+#. translators: %d = staff note number
+#: src/Orders/Privacy.php:306
+#, php-format
+msgid "Internal note %d"
+msgstr ""
+
+#: src/Orders/Privacy.php:356
+msgid "Pizza Customer Notes"
+msgstr ""
+
+#: src/Orders/Privacy.php:357
+msgid "Internal notes recorded about this customer by staff."
+msgstr ""
+
+#: src/Orders/Privacy.php:360
+msgid "Notes"
+msgstr ""
+
+#: src/Orders/Privacy.php:400
+msgid ""
+"Personal details were removed from your pizza orders. The order number, "
+"date, items and totals were kept, because tax and accounting rules require "
+"the store to retain a record of the transaction."
+msgstr ""
+
+#: src/Orders/Privacy.php:453
+msgid "[removed at the customer's request]"
+msgstr ""
+
+#: src/Orders/Privacy.php:561
+msgid ""
+"This is suggested text describing what PizzaTier stores. Review it against "
+"how your store actually operates, and have it checked before publishing — "
+"retention periods in particular vary by country."
+msgstr ""
+
+#: src/Orders/Privacy.php:563
+msgid "Pizza orders"
+msgstr ""
+
+#: src/Orders/Privacy.php:564
+msgid ""
+"When you place an order through our pizza builder we store the name, phone "
+"number and email address you supply, your delivery address and any delivery "
+"instructions where the order is for delivery, the table number where the "
+"order is for a table, any notes you add to the order, what you ordered, and "
+"the order total. We use this to prepare and fulfil your order and to contact "
+"you about it."
+msgstr ""
+
+#: src/Orders/Privacy.php:565
+msgid ""
+"Our staff may add internal notes to your order or to your customer record. "
+"These form part of your personal data and are included if you ask us for a "
+"copy of it."
+msgstr ""
+
+#: src/Orders/Privacy.php:566
+msgid ""
+"To prevent abuse of the order form we briefly store a one-way, non-"
+"reversible fingerprint of your network address. It cannot be used to "
+"identify you and is discarded automatically after one hour."
+msgstr ""
+
+#: src/Orders/Privacy.php:567
+msgid ""
+"If you ask us to erase your data we remove your name, contact details, "
+"address and notes from your orders. We keep the order number, date, items "
+"and total, because tax and accounting rules require us to retain a record of "
+"the transaction."
+msgstr ""
+
+#: src/Orders/RouteDispatcher.php:81
+msgid "The order webhook could not be reached."
+msgstr ""
+
+#: src/Orders/RouteDispatcher.php:123
+msgid ""
+"WooCommerce is not available, so the pizza could not be added to the cart."
+msgstr ""
+
+#: src/Orders/RouteDispatcher.php:129
+msgid ""
+"This store has no pizza product set up, so the pizza could not be added to "
+"the cart."
+msgstr ""
+
+#: src/Orders/RouteDispatcher.php:134
+msgid "The cart could not be loaded. Please try again."
+msgstr ""
+
+#: src/Orders/RouteDispatcher.php:187
+msgid "Could not add the pizza to your cart."
+msgstr ""
+
+#: src/Plugin.php:283
+msgid "PizzaTier: incomplete installation detected."
+msgstr ""
+
+#: src/Plugin.php:285
+msgid ""
+"The following files are missing or unreadable. Delete the plugin folder and "
+"re-extract the plugin zip on the server, then reload this page."
 msgstr ""
 
 #: src/PostTypes/PostTypeRegistrar.php:56
@@ -8532,6 +8880,7 @@ msgstr ""
 #: templates/pocketpie/pztp-containers-menu.php:48
 #: templates/pocketpie/pztp-containers-menu.php:341
 #: templates/scaffold/pztp-containers-menu.php:118
+#: blocks/pizza-builder/block.js:52
 msgid "Your Pizza"
 msgstr ""
 
@@ -8558,6 +8907,7 @@ msgstr ""
 #: templates/pocketpie/pztp-containers-menu.php:382
 #: templates/rustic/pztp-containers-menu.php:407
 #: templates/rustic/pztp-containers-menu.php:607
+#: blocks/pizza-builder/block.js:51
 msgid "Slicing"
 msgstr ""
 
@@ -8970,3 +9320,256 @@ msgstr ""
 #, php-format
 msgid "Add %s to cart"
 msgstr "%s in den Warenkorb legen"
+
+#: blocks/pizza-builder/block.js:26 blocks/pizza-builder/block.js:35
+msgid "— Site default —"
+msgstr ""
+
+#: blocks/pizza-builder/block.js:28
+msgid "Square (rounded corners)"
+msgstr ""
+
+#: blocks/pizza-builder/block.js:29
+msgid "Rectangle / custom ratio"
+msgstr ""
+
+#: blocks/pizza-builder/block.js:30
+msgid "Custom (aspect ratio + radius)"
+msgstr ""
+
+#: blocks/pizza-builder/block.js:36
+msgid "Fade In"
+msgstr ""
+
+#: blocks/pizza-builder/block.js:37
+msgid "Scale In (pop)"
+msgstr ""
+
+#: blocks/pizza-builder/block.js:38
+msgid "Slide Up"
+msgstr ""
+
+#: blocks/pizza-builder/block.js:39
+msgid "Flip In (3-D rotate)"
+msgstr ""
+
+#: blocks/pizza-builder/block.js:40
+msgid "Drop In (from above)"
+msgstr ""
+
+#: blocks/pizza-builder/block.js:41
+msgid "Instant (no animation)"
+msgstr ""
+
+#: blocks/pizza-builder/block.js:94
+msgid "Instance ID"
+msgstr ""
+
+#: blocks/pizza-builder/block.js:95
+msgid ""
+"Leave blank to auto-generate. Set explicitly when placing two builders on "
+"the same page."
+msgstr ""
+
+#: blocks/pizza-builder/block.js:101
+msgid "Template slug"
+msgstr ""
+
+#: blocks/pizza-builder/block.js:102
+msgid "Override the active template for this block only, e.g. \"nightpie\"."
+msgstr ""
+
+#: blocks/pizza-builder/block.js:109
+msgid "Override the global max toppings limit for this builder."
+msgstr ""
+
+#: blocks/pizza-builder/block.js:121
+msgid "Overrides the site-wide shape for this block only."
+msgstr ""
+
+#: blocks/pizza-builder/block.js:129
+msgid "Aspect ratio"
+msgstr ""
+
+#: blocks/pizza-builder/block.js:130
+msgid "CSS aspect-ratio value, e.g. \"4 / 3\" or \"16 / 9\"."
+msgstr ""
+
+#: blocks/pizza-builder/block.js:138
+msgid "Border radius"
+msgstr ""
+
+#: blocks/pizza-builder/block.js:139
+msgid "CSS border-radius, e.g. \"12px\" or \"50%\"."
+msgstr ""
+
+#: blocks/pizza-builder/block.js:147
+msgid "Layer Animation"
+msgstr ""
+
+#: blocks/pizza-builder/block.js:150
+msgid "Animation style"
+msgstr ""
+
+#: blocks/pizza-builder/block.js:151
+msgid ""
+"Animation when a layer is added to the pizza. Overrides the site-wide "
+"setting for this block."
+msgstr ""
+
+#: blocks/pizza-builder/block.js:162
+msgid "Default crust slug"
+msgstr ""
+
+#: blocks/pizza-builder/block.js:163
+msgid "e.g. \"thin-crust\" — pre-selects on load."
+msgstr ""
+
+#: blocks/pizza-builder/block.js:169
+msgid "Default sauce slug"
+msgstr ""
+
+#: blocks/pizza-builder/block.js:175
+msgid "Default cheese slug"
+msgstr ""
+
+#: blocks/pizza-builder/block.js:182
+msgid "Visible Tabs"
+msgstr ""
+
+#: blocks/pizza-builder/block.js:185
+msgid "Uncheck tabs to hide them from the builder."
+msgstr ""
+
+#: blocks/pizza-builder/block.js:222
+msgid "Loading PizzaTier preview…"
+msgstr ""
+
+#: blocks/pizza-builder/block.js:236
+msgid ""
+"Configure this block using the sidebar panels. The builder will appear on "
+"the front end."
+msgstr ""
+
+#: blocks/pizza-builder/block.js:242
+msgid "Pizza Builder — Preview Error"
+msgstr ""
+
+#: blocks/pizza-builder/block.js:246 blocks/pizza-static/block.js:132
+msgid "Could not render preview."
+msgstr ""
+
+#: blocks/pizza-layer/block.js:28
+msgid "Topping"
+msgstr ""
+
+#: blocks/pizza-layer/block.js:34
+msgid "List image (menu/product photo)"
+msgstr ""
+
+#: blocks/pizza-layer/block.js:35
+msgid "Layer image (transparent stack image)"
+msgstr ""
+
+#: blocks/pizza-layer/block.js:52
+msgid "Layer Settings"
+msgstr ""
+
+#: blocks/pizza-layer/block.js:55
+msgid "Layer type"
+msgstr ""
+
+#: blocks/pizza-layer/block.js:63
+msgid "The post slug of the layer entry, e.g. \"thin-crust\" or \"pepperoni\"."
+msgstr ""
+
+#: blocks/pizza-layer/block.js:69
+msgid "Image field"
+msgstr ""
+
+#: blocks/pizza-layer/block.js:76
+msgid "Extra CSS class"
+msgstr ""
+
+#: blocks/pizza-layer/block.js:77
+msgid "Optional CSS class(es) added to the <img> tag."
+msgstr ""
+
+#: blocks/pizza-layer/block.js:95
+msgid "PizzaTier — Error"
+msgstr ""
+
+#: blocks/pizza-layer/block.js:98
+msgid "Layer not found. Check the type and slug."
+msgstr ""
+
+#: blocks/pizza-layer/block.js:107
+msgid "PizzaTier Image"
+msgstr ""
+
+#. translators: %s = layer type e.g. "Crust"
+#: blocks/pizza-layer/block.js:110
+msgid "Enter a %s slug in the settings panel →"
+msgstr ""
+
+#: blocks/pizza-static/block.js:46
+msgid "Preset slug"
+msgstr ""
+
+#: blocks/pizza-static/block.js:47
+msgid ""
+"Enter a Pizza Preset slug to load all layers automatically. Leave blank to "
+"set layers manually below."
+msgstr ""
+
+#: blocks/pizza-static/block.js:55
+msgid "Manual Layers"
+msgstr ""
+
+#: blocks/pizza-static/block.js:63
+msgid "Preset is active — manual layer slugs are ignored."
+msgstr ""
+
+#: blocks/pizza-static/block.js:67
+msgid "Crust slug"
+msgstr ""
+
+#: blocks/pizza-static/block.js:68
+msgid "e.g. \"thin-crust\""
+msgstr ""
+
+#: blocks/pizza-static/block.js:75
+msgid "Sauce slug"
+msgstr ""
+
+#: blocks/pizza-static/block.js:82
+msgid "Cheese slug"
+msgstr ""
+
+#: blocks/pizza-static/block.js:90
+msgid "Comma-separated topping slugs, e.g. \"pepperoni,mushrooms\""
+msgstr ""
+
+#: blocks/pizza-static/block.js:97
+msgid "Drizzle slug"
+msgstr ""
+
+#: blocks/pizza-static/block.js:104
+msgid "Cut slug"
+msgstr ""
+
+#: blocks/pizza-static/block.js:105
+msgid "e.g. \"8-slices\""
+msgstr ""
+
+#: blocks/pizza-static/block.js:124 blocks/pizza-static/block.js:139
+msgid "Pizza Static"
+msgstr ""
+
+#: blocks/pizza-static/block.js:129
+msgid "Pizza Static — Error"
+msgstr ""
+
+#: blocks/pizza-static/block.js:141
+msgid "Enter a preset slug or layer slugs in the block settings panel →"
+msgstr ""

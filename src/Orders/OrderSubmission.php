@@ -15,9 +15,10 @@ if ( ! defined( 'ABSPATH' ) ) { exit; }
  *     from the request, so a tampered payload cannot invent an item or rename
  *     one on the receipt.
  *
- * No dependency on PizzaTier or WooCommerce. Pricing, when a premium
- * extension supplies it, arrives through the `pizzatier_order_item_price`
- * filter rather than through any direct call.
+ * No hard dependency on WooCommerce. Pricing arrives through the
+ * `pizzatier_order_item_price` filter rather than through any direct call;
+ * since 2.1.0 Orders\OrderPricing hooks it when WooCommerce and the price
+ * grid are available, and any other integration may hook it too.
  */
 class OrderSubmission {
 
@@ -455,9 +456,11 @@ class OrderSubmission {
 		/**
 		 * Filter the unit price for a resolved order line item.
 		 *
-		 * PizzaTier itself does not price pizzas — it always returns null here.
-		 * A premium extension may return a float to attach authoritative
-		 * server-side pricing to native orders.
+		 * Since 2.1.0, Orders\OrderPricing hooks this filter and prices the
+		 * item from the product's price grid when WooCommerce and the
+		 * calculator are available. Any other integration may also return a
+		 * float to attach authoritative server-side pricing; an item nobody
+		 * prices stays at zero with a price_source of 'none'.
 		 *
 		 * @param float|null $price Unit price, or null when unpriced.
 		 * @param array      $item  The resolved item.

@@ -93,6 +93,36 @@ class AssetManager {
 				[ 'pizzatier-admin' ],
 				$v
 			);
+
+			// Live dashboard app — only on the default view, not on the
+			// settings / classic-list / order-detail views.
+			// phpcs:disable WordPress.Security.NonceVerification.Recommended -- Read-only view routing.
+			$pzt_view     = isset( $_GET['view'] ) ? sanitize_key( wp_unslash( $_GET['view'] ) ) : '';
+			$pzt_order_id = isset( $_GET['order'] ) ? absint( wp_unslash( $_GET['order'] ) ) : 0;
+			// phpcs:enable WordPress.Security.NonceVerification.Recommended
+
+			if ( '' === $pzt_view && 0 === $pzt_order_id ) {
+				wp_enqueue_style(
+					'pizzatier-orders-dashboard',
+					PIZZATIER_ASSETS_URL . 'css/admin/pizzatier-orders-dashboard.css',
+					[ 'pizzatier-orders-admin' ],
+					$v
+				);
+
+				wp_enqueue_script(
+					'pizzatier-orders-dashboard',
+					PIZZATIER_ASSETS_URL . 'js/admin/orders-dashboard.js',
+					[],
+					$v,
+					true
+				);
+
+				wp_localize_script(
+					'pizzatier-orders-dashboard',
+					'PizzaTierOrdersDash',
+					\PizzaTier\Orders\Admin\OrdersDashboardConfig::build()
+				);
+			}
 		}
 
 		if ( false === strpos( $hook, 'pizzatier' ) ) { return; }

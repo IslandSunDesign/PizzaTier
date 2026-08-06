@@ -10,7 +10,6 @@
     "keywords": ["pizza", "layer", "image", "topping", "ingredient"],
     "textdomain": "pizzatier",
     "editorScript": "file:./block.js",
-    "scriptDependencies": ["wp-blocks", "wp-element", "wp-components", "wp-block-editor", "wp-i18n", "wp-server-side-render"],
     "supports": {
         "html": false,
         "align": ["left", "center", "right"],

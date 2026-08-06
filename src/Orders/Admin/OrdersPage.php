@@ -359,7 +359,7 @@ class OrdersPage {
 			}
 		}
 
-		wp_safe_redirect( self::list_url( [ 'changed' => $changed ] ) );
+		wp_safe_redirect( self::list_url( [ 'view' => 'classic', 'changed' => $changed ] ) );
 		exit;
 	}
 
@@ -389,7 +389,7 @@ class OrdersPage {
 			wp_delete_post( $order_id, true );
 		}
 
-		wp_safe_redirect( self::list_url() );
+		wp_safe_redirect( self::list_url( [ 'view' => 'classic' ] ) );
 		exit;
 	}
 
@@ -442,8 +442,11 @@ class OrdersPage {
 			$this->render_settings();
 		} elseif ( $order_id > 0 ) {
 			$this->render_detail( $order_id );
-		} else {
+		} elseif ( 'classic' === $view ) {
 			$this->render_list();
+		} else {
+			// Default view since 2.2.0: the live dashboard + AJAX list.
+			( new OrdersDashboard() )->render();
 		}
 
 		echo '</div>';
@@ -457,7 +460,10 @@ class OrdersPage {
 
 		?>
 		<div class="pzt-orders-header">
-			<h1 class="wp-heading-inline"><?php esc_html_e( 'Pizza Orders', 'pizzatier' ); ?></h1>
+			<h1 class="wp-heading-inline"><?php esc_html_e( 'Pizza Orders', 'pizzatier' ); ?> <span class="pzt-orders-muted">(<?php esc_html_e( 'classic list', 'pizzatier' ); ?>)</span></h1>
+			<a href="<?php echo esc_url( self::list_url() ); ?>" class="page-title-action">
+				<?php esc_html_e( '← Dashboard', 'pizzatier' ); ?>
+			</a>
 			<a href="<?php echo esc_url( self::list_url( [ 'view' => 'settings' ] ) ); ?>" class="page-title-action">
 				<?php esc_html_e( 'Ordering Settings', 'pizzatier' ); ?>
 			</a>
@@ -498,6 +504,7 @@ class OrdersPage {
 			// bulk-pizza_orders nonce itself, and a second field with the same
 			// name would just duplicate it.
 			echo '<input type="hidden" name="page" value="' . esc_attr( self::SLUG ) . '" />';
+			echo '<input type="hidden" name="view" value="classic" />';
 			$table->views();
 			$table->search_box( __( 'Search orders', 'pizzatier' ), 'pizzatier-order-search' );
 			$table->display();

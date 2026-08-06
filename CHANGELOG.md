@@ -6,6 +6,49 @@ Versions follow [Semantic Versioning](https://semver.org/).
 
 ---
 
+## 2.2.1
+
+WordPress.org Plugin Check compliance release. No functional changes.
+
+* Changed: removed the manual `load_plugin_textdomain()` call added in 2.1.1, which Plugin Check flags as discouraged for WordPress.org-hosted plugins. Since WP 4.6, translations are loaded automatically from the language packs that translate.wordpress.org builds. The `/languages` catalogues stay in the repo as the translation source (`.pot`) — note the bundled es_ES / de_DE `.mo` files will not load at runtime until language packs exist on translate.wordpress.org.
+* Changed: shortened the 2.2.0 upgrade notice in `readme.txt` to fit the 300-character limit.
+
+---
+
+## 2.2.0
+
+**Pizza Orders dashboard.** Pizza Orders moves out from under the PizzaTier menu into its own top-level admin menu (same `pizzatier-orders` slug, so every existing link — notification emails, settings buttons, bookmarks — keeps resolving), and the default screen becomes a live dashboard designed for running a shop during service. All of it updates in place over admin-ajax; the page never reloads.
+
+**Dashboard**
+
+* Added: status count cards for every registered status plus All and Needs-attention. Cards double as list filters.
+* Added: an incoming-orders board showing open orders oldest first — the kitchen queue. Each card carries one primary next-step button so a manager can walk an order from New to Completed one tap at a time: Confirm → Start preparing → Mark ready → Complete, with Send for delivery / Mark delivered inserted automatically for delivery orders. The mapping is filterable via `pizzatier_orders_next_step_map`.
+* Added: waiting-time highlighting — orders open longer than 15 minutes turn amber, longer than 30 turn red, on both the board and the list.
+* Added: today at a glance — order count, pizza count, revenue (excluding cancelled/refunded/failed), average order value, and the pickup/delivery split.
+* Added: live polling (15s, paused automatically while the tab is hidden, pausable manually), an optional WebAudio new-order chime with the preference kept in localStorage, and the open-order count mirrored into the browser tab title.
+
+**List**
+
+* Added: an AJAX order list replacing the WP_List_Table as the default view — searchable (order number, name, phone, email), filterable (status, fulfilment method, date range), sortable (date, number, customer, total, status), paged, with bulk status change / trash / restore / delete. Sorting on meta-backed columns (total, customer) is done in PHP over a capped candidate set of 500 orders, with a notice when the cap is hit.
+* Added: a quick-view drawer — full ticket with layers and coverage, totals, customer contact links, one-tap advance, status select, internal notes (add without leaving the drawer), and status history.
+* Added: printable kitchen ticket from the drawer, styled for narrow receipt printers via a print stylesheet.
+* Changed: the classic WP_List_Table list survives at `?view=classic` (also linked from the new menu and used by the `<noscript>` fallback). Its bulk/row actions now redirect back to the classic view.
+
+**Under the hood**
+
+* Added: `Orders\Admin\OrdersMenu` (top-level menu, pizza-slice SVG icon, awaiting-attention bubble), `Orders\Admin\OrdersDashboard` (app shell), `Orders\Admin\OrdersAjax` (six nonce- and capability-guarded admin-ajax endpoints), `Orders\Admin\OrdersDashboardConfig` (localised JS config), `assets/js/admin/orders-dashboard.js`, `assets/css/admin/pizzatier-orders-dashboard.css`.
+* Changed: `AdminMenu` now registers the PizzaTier → Pizza Orders entry as a plain link (`.php`-style slug, no duplicate page hook) to the top-level menu.
+* Note: order data never leaves the admin — the drawer endpoint strips provenance (IP, user agent) and raw staff-note/history structures in favour of display-ready strings.
+
+## 2.1.1
+
+Compliance release for the WordPress.org submission.
+
+* Fixed: the three block script asset files (`blocks/*/block.asset.php`) returned their dependency arrays without a direct-access guard, tripping Plugin Check's `missing_direct_file_access_protection` rule. Each now exits when `ABSPATH` is undefined. When WordPress reads these files through `register_block_script_handle()`, `ABSPATH` is always defined, so behaviour is unchanged; a direct browser request now gets an empty response instead of executing the file.
+* Fixed: the bundled Spanish and German translations never loaded. The plugin ships compiled `.mo` catalogues in `/languages` and declares `Domain Path: /languages`, but never called `load_plugin_textdomain()` — and WordPress's just-in-time translation loader only looks in `wp-content/languages/plugins/` (the packs translate.wordpress.org builds once a plugin is hosted and translated there), never inside the plugin's own directory. The call is now hooked on `init`, the earliest point WP 6.7+ permits without a `_doing_it_wrong()` notice. Once language packs exist on WordPress.org they take precedence automatically; the bundled files are the fallback.
+
+---
+
 ## 2.1.0
 
 **Order routing**
@@ -40,6 +83,8 @@ Where an order goes when a customer places it is now a setting rather than a con
 * Added: the "notify only" route never discards an order it could not deliver. If neither the store email nor the webhook succeeded, the record is kept regardless of the setting, so a network failure costs a customer's dinner rather than the store's only copy of it. The settings screen warns when the route is active with nowhere to send.
 * Added: `pizzatier_order_discarded` fires while a notify-only order is still fully readable, as the last chance for an integration to copy anything off it.
 * Fixed: the site exporter no longer carries the webhook secret or the pizza product ID to another site. A secret in an exported file has stopped being a secret, and a post ID means something different on every install. Both are still deleted on uninstall. `OptionRegistry::is_portable()` and the `pizzatier_option_is_portable` filter control this.
+* Fixed: each block's editor script now declares its `wp-*` dependencies through a `block.asset.php` file. The previous `scriptDependencies` key is not part of the block.json schema and was silently ignored, leaving `block.js` registered with no dependencies and its load order against the editor bundles unguaranteed.
+* Changed: the bundled `.pot` file and the German and Spanish catalogs are regenerated for 2.1.0, covering the order routing, webhook, and migration-notice strings.
 
 **Also**
 

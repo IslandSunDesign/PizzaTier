@@ -85,25 +85,19 @@ class AdminMenu {
 		add_submenu_page( 'pizzatier', __( 'Shortcode Generator', 'pizzatier' ), __( 'Shortcode Generator', 'pizzatier' ), 'manage_options', 'pizzatier-shortcodes', [ $this, 'render_shortcodes' ] );
 
 		// ── Orders ───────────────────────────────────────────────────────
-		// Sits in Basics because taking orders is an everyday task. The label
-		// carries an awaiting-attention bubble, matching how WordPress badges
-		// pending comments.
+		// Since 2.2.0 Pizza Orders is its own top-level menu (registered by
+		// Orders\Admin\OrdersMenu). This link-style entry keeps it reachable
+		// from inside PizzaTier too — the `.php` in the slug makes WordPress
+		// treat it as a plain link, so no duplicate page hook is created.
 		if ( \PizzaTier\Orders\OrderCheckout::is_enabled() ) {
-			$orders_label = __( 'Pizza Orders', 'pizzatier' );
-			$open_orders  = \PizzaTier\Orders\OrderPostType::open_count();
-			if ( $open_orders > 0 ) {
-				$orders_label .= ' <span class="awaiting-mod"><span class="pending-count">'
-					. esc_html( number_format_i18n( $open_orders ) )
-					. '</span></span>';
-			}
+			$orders_label = __( 'Pizza Orders', 'pizzatier' ) . ' ↗';
 
 			add_submenu_page(
 				'pizzatier',
 				__( 'Pizza Orders', 'pizzatier' ),
 				$orders_label,
 				\PizzaTier\Orders\OrderPostType::capability(),
-				\PizzaTier\Orders\Admin\OrdersPage::SLUG,
-				[ $this, 'render_orders' ]
+				'admin.php?page=' . \PizzaTier\Orders\Admin\OrdersPage::SLUG
 			);
 		}
 
@@ -251,7 +245,6 @@ class AdminMenu {
 
 	public function render_layer_maker():   void { ( new LayerImageMaker() )->render(); }
 	public function render_layer_wizard():  void { ( new LayerBuilderWizard() )->render(); }
-	public function render_orders():     void { ( new \PizzaTier\Orders\Admin\OrdersPage() )->render(); }
 	public function render_home():       void { ( new AdminHome() )->render(); }
 	public function render_content():    void { ( new ContentHub() )->render(); }
 	public function render_setup():      void { ( new SetupGuide() )->render(); }

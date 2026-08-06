@@ -127,6 +127,12 @@ final class Plugin {
 			// every state change can finish with a clean redirect.
 			if ( Orders\OrderCheckout::is_enabled() ) {
 				( new Orders\Admin\OrdersPage() )->register();
+				// Top-level Pizza Orders menu (2.2.0).
+				( new Orders\Admin\OrdersMenu() )->register();
+				// AJAX backend for the live dashboard. admin-ajax.php runs
+				// inside is_admin(), so registering here covers both the
+				// screen and its XHR requests.
+				( new Orders\Admin\OrdersAjax() )->register();
 			}
 
 			// Private, staff-only notes about customers, on the user profile

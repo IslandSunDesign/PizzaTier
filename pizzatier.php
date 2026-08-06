@@ -3,7 +3,7 @@
  * Plugin Name: PizzaTier
  * Plugin URI:  https://pizzatier.com
  * Description: Pizza toppings customizer and visualizer.
- * Version:     2.1.0
+ * Version:     2.2.1
  * Author:      Island Sun Design
  * Author URI:  https://islandsundesign.com
  * Requires at least: 6.2
@@ -51,7 +51,7 @@ spl_autoload_register( function ( $class ) {
 } );
 
 // Constants
-define( 'PIZZATIER_VERSION',       '2.1.0' );
+define( 'PIZZATIER_VERSION',       '2.2.1' );
 define( 'PIZZATIER_PLUGIN_FILE',   __FILE__ );
 define( 'PIZZATIER_PLUGIN_DIR',    plugin_dir_path( __FILE__ ) );
 define( 'PIZZATIER_PLUGIN_URL',    plugin_dir_url( __FILE__ ) );
@@ -438,6 +438,15 @@ if ( ! function_exists( 'pizzatier_commerce_get_setting' ) ) {
 
 // Boot
 add_action( 'plugins_loaded', [ 'PizzaTier\\Plugin', 'init' ] );
+
+/*
+ * Translations: no load_plugin_textdomain() call here on purpose.
+ * WordPress.org-hosted plugins get language packs built by
+ * translate.wordpress.org and loaded automatically since WP 4.6, and
+ * Plugin Check flags a manual call as discouraged. The /languages
+ * catalogues remain in the repo as the translation source (.pot) and
+ * for import into translate.wordpress.org.
+ */
 
 register_activation_hook(   __FILE__, [ 'PizzaTier\\Core\\Activator',   'activate'   ] );
 register_deactivation_hook( __FILE__, [ 'PizzaTier\\Core\\Deactivator', 'deactivate' ] );

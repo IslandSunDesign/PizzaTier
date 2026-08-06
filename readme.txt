@@ -4,7 +4,7 @@ Tags: pizza, restaurant, woocommerce, customizer, builder
 Requires at least: 6.2
 Tested up to: 7.0
 Requires PHP: 7.4
-Stable tag: 2.1.0
+Stable tag: 2.2.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -186,10 +186,43 @@ Visit [pizzatier.com/support](https://pizzatier.com/support) or use the WordPres
 
 == Upgrade Notice ==
 
+= 2.2.1 =
+Compliance release for the WordPress.org plugin review. No functional changes.
+
+= 2.2.0 =
+Pizza Orders gets its own top-level admin menu with a live dashboard: status cards, a kitchen queue with one-tap next-step buttons, sound alerts, printable tickets, and a filterable list. Existing order URLs are unchanged.
+
+= 2.1.1 =
+Compliance release for the WordPress.org submission: adds direct-file-access guards to the block script asset files, and fixes the bundled Spanish/German translations, which never loaded.
+
 = 2.1.0 =
 Adds order routing: choose whether orders go to the WooCommerce cart, the pizza order list, both, or straight out by email and webhook. If your builder currently shows both an Add to Cart button and an Order Now button, it will now show one button that does both — see the changelog.
 
 == Changelog ==
+
+= 2.2.1 =
+
+* Changed: removed the manual `load_plugin_textdomain()` call flagged by Plugin Check — WordPress.org language packs are loaded automatically since WP 4.6. The `/languages` catalogues remain in the repo as the translation source.
+* Changed: shortened the 2.2.0 upgrade notice to fit the 300-character readme limit.
+
+= 2.2.0 =
+
+**Pizza Orders dashboard** — Pizza Orders is now its own top-level admin menu with a live dashboard built for running a shop during service. Everything updates in place over AJAX; the page never reloads.
+
+* Added: status count cards for every order status, plus All and Needs-attention totals. Tapping a card filters the list.
+* Added: an incoming-orders board — open orders oldest first, each with a single one-tap next-step button (Confirm → Start preparing → Mark ready → Complete, with Out for Delivery inserted automatically for delivery orders). Orders waiting over 15 minutes turn amber; over 30, red.
+* Added: today at a glance — orders, pizzas, revenue, average order and the pickup/delivery split for the current day.
+* Added: live polling with a pause toggle, an optional new-order chime, and the open-order count mirrored into the browser tab title.
+* Added: a fully filterable, sortable order list — search by order number, name, phone or email; filter by status, fulfilment method and date range; sort by date, number, customer, total or status; bulk status changes, trash, restore and delete — all without a page refresh.
+* Added: a quick-view drawer with the full ticket, one-tap advance, status change, internal notes and history — plus a printable kitchen ticket sized for receipt printers.
+* Changed: the classic server-rendered list remains available at Pizza Orders → Classic List, and is the automatic fallback when JavaScript is off.
+* Changed: the Pizza Orders entry under the PizzaTier menu is now a link to the new top-level menu. The page slug is unchanged, so bookmarked URLs and links in order-notification emails keep working.
+* Added: `pizzatier_orders_next_step_map` filter to customise the one-tap workflow buttons.
+
+= 2.1.1 =
+
+* Fixed: the three `block.asset.php` script-dependency files did not guard against direct URL access. Each now exits when `ABSPATH` is undefined, satisfying the Plugin Check `missing_direct_file_access_protection` rule. No functional change — WordPress always defines `ABSPATH` before reading these files.
+* Fixed: the bundled Spanish and German translations never loaded. The plugin ships `.mo` files in `/languages` but never called `load_plugin_textdomain()`, and WordPress's just-in-time loader only reads language packs from `wp-content/languages/plugins/`, not from inside the plugin. Now loaded on `init`.
 
 = 2.1.0 =
 
@@ -201,31 +234,6 @@ Adds order routing: choose whether orders go to the WooCommerce cart, the pizza 
 * Changed: "both" no longer means two buttons for the customer to choose between — it is one button, and the store chooses. Affected sites are migrated and shown a one-time notice.
 * Added: the notify-only route never discards an order it could not deliver. If neither the email nor the webhook succeeded, the record is kept regardless of the setting.
 * Fixed: the site exporter no longer carries the webhook secret or the pizza product ID to another site.
+* Fixed: block editor scripts now declare their wp-* dependencies, removing an editor load-order race.
 
-= 2.0.7 =
-
-* Fixed: `src/Core/OptionRegistry.php` used a compound direct-access guard (`! defined( 'ABSPATH' ) && ! defined( 'WP_UNINSTALL_PLUGIN' )`) that the WordPress.org Plugin Check scanner does not recognise. Replaced with the canonical single-condition guard. The second clause was redundant — `uninstall_plugin()` includes `uninstall.php` from inside a fully loaded WordPress, so `ABSPATH` is always defined when this file is required.
-
-= 2.0.6 =
-
-**Resilience against damaged installs**
-
-* Fixed: a missing or unreadable file under `src/` no longer takes the whole site down. The four shortcodes were the only classes instantiated lazily on `init`, so an incomplete upload threw an uncaught `Error` out of `do_action( 'init' )` — fatalling every request including wp-admin and locking the site owner out. Each shortcode is now registered independently and skipped if its class cannot be loaded.
-* Added: the autoloader now records and logs every class it cannot resolve, naming the expected file path and whether it is absent or merely unreadable, instead of returning silently and leaving a bare "Class not found" fatal.
-* Added: an admin notice listing any files the autoloader could not load, with instructions to re-extract the plugin server-side.
-
-= 2.0.5 =
-
-**Personal data / GDPR tooling for native orders**
-
-* Added: orders are now included in Tools → Export Personal Data. A request returns the order number, date, status, contact details, delivery address, instructions, order notes, line items and total.
-* Added: orders are now included in Tools → Erase Personal Data. Erasure **anonymises rather than deletes** — name, contact details, address and notes are cleared while the order number, date, items and total survive, because tax and accounting rules require the store to keep a record of the transaction. The requester is told this in the confirmation message.
-* Added: staff notes are included in personal-data exports by default. Notes written about an identifiable customer are that customer's data and a subject access request generally reaches them; "staff-only" is a display choice, not a legal exemption. Sites needing to withhold them can use the new `pizzatier_privacy_export_staff_notes` filter.
-* Added: suggested privacy-policy text, surfaced in Settings → Privacy, describing exactly what the plugin stores.
-* Added: optional retention sweep. Set "Auto-anonymise after" on the Orders settings screen and orders older than that are anonymised on a daily cron. Off by default.
-* Added: orders are now indexed by customer email so a personal-data request can actually find them — the customer record is a serialised array and could not be queried. Existing orders are backfilled on upgrade. Guest orders are covered, not just orders from registered users.
-* Added: the Orders settings screen now warns when "Require email" is off, because orders without an email address cannot be located by WordPress's email-keyed personal-data tools and must be handled manually.
-* Added: `pizzatier_order_anonymised` action, fired after an order's personal fields are cleared.
-* The retention cron is removed on deactivation.
-
-Older entries are listed in CHANGELOG.md, included with the plugin.
+Older releases are documented in CHANGELOG.md inside the plugin.
