@@ -35,7 +35,6 @@ class Help {
 
 		?>
 		<div class="wrap pztc-help">
-			<?php $this->render_styles(); ?>
 
 			<div class="pztc-help__header">
 				<div class="pztc-help__header-inner">
@@ -118,7 +117,6 @@ class Help {
 	public function render_embedded_section( string $slug ): void {
 		static $styles_sent = false;
 		if ( ! $styles_sent ) {
-			$this->render_styles();
 			$styles_sent = true;
 		}
 		echo '<div class="pztc-help">';
@@ -407,54 +405,4 @@ class Help {
 		echo '<div class="pztc-help__notice"><span class="dashicons dashicons-info"></span>' . esc_html( $text ) . '</div>';
 	}
 
-	// -------------------------------------------------------------------------
-	// Styles
-	// -------------------------------------------------------------------------
-
-	private function render_styles(): void {
-		?>
-		<style>
-		.pztc-help { max-width: 1100px; }
-		.pztc-help__header { background: linear-gradient(135deg, #1a1e23 0%, #2d3748 100%); color: #fff; border-radius: 10px; padding: 22px 28px; margin-bottom: 24px; border-bottom: 3px solid #ff6b35; }
-		.pztc-help__header-inner { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 16px; }
-		.pztc-help__header-brand { display: flex; align-items: center; gap: 16px; }
-		.pztc-help__header-icon { font-size: 38px !important; width: 38px !important; height: 38px !important; color: #ff6b35; flex-shrink: 0; }
-		.pztc-help__header-actions { display: flex; gap: 10px; flex-wrap: wrap; }
-		.pztc-help__hbtn { display: inline-flex; align-items: center; padding: 8px 18px; background: #ff6b35; color: #fff !important; border-radius: 50px; font-size: 13px; font-weight: 600; text-decoration: none; transition: background .2s; border: 2px solid transparent; }
-		.pztc-help__hbtn:hover { background: #e05a28; }
-		.pztc-help__hbtn--outline { background: transparent; border-color: rgba(255,255,255,.3); color: rgba(255,255,255,.8) !important; }
-		.pztc-help__hbtn--outline:hover { border-color: #ff6b35; color: #fff !important; background: transparent; }
-		.pztc-help__title { color: #fff; font-size: 22px; margin: 0 0 4px; }
-		.pztc-help__subtitle { color: rgba(255,255,255,.6); margin: 0; font-size: 13px; }
-		.pztc-help__layout { display: flex; gap: 24px; align-items: flex-start; }
-		.pztc-help__nav { width: 200px; flex-shrink: 0; background: #fff; border: 1px solid #e0e0e0; border-radius: 8px; overflow: hidden; position: sticky; top: 32px; }
-		.pztc-help__nav-item { display: flex; align-items: center; gap: 8px; padding: 12px 16px; text-decoration: none; color: #444; font-size: 13px; border-bottom: 1px solid #f0f0f0; transition: background .15s; }
-		.pztc-help__nav-item:hover { background: #f9f9f9; color: #1a1a2e; }
-		.pztc-help__nav-item--active { background: linear-gradient(135deg, #1a1e23 0%, #2d3748 100%); color: #fff; font-weight: 600; }
-		.pztc-help__nav-item--active .dashicons { color: #ff6b35; }
-		.pztc-help__content { flex: 1; background: #fff; border: 1px solid #e0e0e0; border-radius: 8px; padding: 28px 32px; }
-		.pztc-help__content h2 { margin-top: 0; border-bottom: 2px solid #ff6b35; padding-bottom: 8px; }
-		.pztc-help__list { padding-left: 20px; }
-		.pztc-help__list li { margin-bottom: 6px; }
-		.pztc-help__cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 14px; margin: 16px 0; }
-		.pztc-help__card { background: #f9f9f9; border: 1px solid #e8e8e8; border-radius: 8px; padding: 16px; }
-		.pztc-help__card-icon { font-size: 24px !important; color: #ff6b35; display: block; margin-bottom: 8px; }
-		.pztc-help__card-title { display: block; margin-bottom: 6px; font-size: 13px; }
-		.pztc-help__card-desc { margin: 0; font-size: 12px; color: #666; }
-		.pztc-help__table { width: 100%; border-collapse: collapse; margin: 12px 0 20px; font-size: 13px; }
-		.pztc-help__table th { background: linear-gradient(135deg, #1a1e23 0%, #2d3748 100%); color: #fff; padding: 8px 12px; text-align: left; }
-		.pztc-help__table td { padding: 8px 12px; border-bottom: 1px solid #eee; vertical-align: top; }
-		.pztc-help__table tr:nth-child(even) td { background: #f9f9f9; }
-		.pztc-help__notice { background: #fff8e5; border-left: 4px solid #ff6b35; border-radius: 4px; padding: 10px 14px; margin: 12px 0; display: flex; gap: 8px; font-size: 13px; }
-		.pztc-help__notice .dashicons { color: #ff6b35; flex-shrink: 0; }
-		.pztc-help__code { background: linear-gradient(135deg, #1a1e23 0%, #2d3748 100%); color: #ff6b35; padding: 10px 14px; border-radius: 6px; font-size: 13px; overflow-x: auto; }
-		.pztc-help__faq { display: flex; flex-direction: column; gap: 8px; }
-		.pztc-help__faq-item { border: 1px solid #e0e0e0; border-radius: 6px; overflow: hidden; }
-		.pztc-help__faq-q { padding: 12px 16px; cursor: pointer; font-weight: 600; font-size: 13px; list-style: none; background: #f9f9f9; }
-		.pztc-help__faq-q::-webkit-details-marker { display: none; }
-		.pztc-help__faq-item[open] .pztc-help__faq-q { background: linear-gradient(135deg, #1a1e23 0%, #2d3748 100%); color: #fff; }
-		.pztc-help__faq-a { padding: 12px 16px; font-size: 13px; color: #555; }
-		</style>
-		<?php
-	}
 }

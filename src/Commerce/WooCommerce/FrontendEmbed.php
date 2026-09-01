@@ -285,7 +285,7 @@ class FrontendEmbed {
 			<?php if ( $template_slug ) : ?>
 				<div class="pztc-builder-embed" id="pztc-builder-embed-<?php echo esc_attr( $idx ); ?>">
 					<?php
-					$sc = '[pizza_builder'
+					$sc = '[pizzatier_builder'
 						. ' template="' . esc_attr( $template_slug ) . '"'
 						. ' id="pztc-' . esc_attr( $idx ) . '"'
 						. $shortcode_atts
@@ -323,7 +323,7 @@ class FrontendEmbed {
 	 * post slug, and returns a string like:
 	 *   ' default_crust="thin" default_sauce="marinara" default_cheese="mozzarella"'
 	 *
-	 * These map directly to the [pizza_builder] shortcode attributes that
+	 * These map directly to the [pizzatier_builder] shortcode attributes that
 	 * PizzaBuilder::build_dynamic() reads to set the initial canvas state.
 	 *
 	 * @param int $product_id
@@ -775,7 +775,12 @@ class FrontendEmbed {
 			return;
 		}
 
-		echo '<script type="application/ld+json">' . wp_json_encode( $schema, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE ) . '</script>' . "\n"; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+		// wp_json_encode() without JSON_UNESCAPED_SLASHES escapes "/" so any
+		// "</script>" inside filtered schema values is emitted as
+		// "<\/script>" and cannot terminate the tag early. JSON-LD parses
+		// identically with escaped slashes; JSON_UNESCAPED_UNICODE is kept
+		// for readable non-ASCII product names.
+		echo '<script type="application/ld+json">' . wp_json_encode( $schema, JSON_UNESCAPED_UNICODE ) . '</script>' . "\n"; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- JSON output in a script context; slashes escaped by wp_json_encode (see above).
 	}
 
 	// -------------------------------------------------------------------------

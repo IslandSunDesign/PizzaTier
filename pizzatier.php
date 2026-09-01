@@ -3,7 +3,7 @@
  * Plugin Name: PizzaTier
  * Plugin URI:  https://pizzatier.com
  * Description: Pizza toppings customizer and visualizer.
- * Version:     2.2.1
+ * Version:     2.3.0
  * Author:      Island Sun Design
  * Author URI:  https://islandsundesign.com
  * Requires at least: 6.2
@@ -51,7 +51,7 @@ spl_autoload_register( function ( $class ) {
 } );
 
 // Constants
-define( 'PIZZATIER_VERSION',       '2.2.1' );
+define( 'PIZZATIER_VERSION',       '2.3.0' );
 define( 'PIZZATIER_PLUGIN_FILE',   __FILE__ );
 define( 'PIZZATIER_PLUGIN_DIR',    plugin_dir_path( __FILE__ ) );
 define( 'PIZZATIER_PLUGIN_URL',    plugin_dir_url( __FILE__ ) );
@@ -101,7 +101,7 @@ if ( ! function_exists( 'pz_get_enabled_fractions' ) ) {
  *
  * When SCF/ACF is active, delegates to get_field() so the configured return
  * format is preserved. When neither is active, falls back to post meta so the
- * front-end templates and the [pizza_layer_info] shortcode degrade gracefully
+ * front-end templates and the [pizzatier_layer_info] shortcode degrade gracefully
  * instead of fataling on an undefined get_field(). For image field keys
  * (those ending in "_image") a stored attachment ID is resolved to its URL,
  * matching what the layer-image meta box writes.
@@ -207,7 +207,7 @@ if ( ! function_exists( 'pzl_kses_builder_html' ) ) {
  * SVG icons, ARIA state, data-* hooks, and the onclick/onkeydown handlers the
  * cards use to talk to the front-end controller.
  *
- * Unlike pzl_kses_builder_html() (used for the non-interactive [pizza_static]
+ * Unlike pzl_kses_builder_html() (used for the non-interactive [pizzatier_static]
  * output), this allowlist intentionally permits interactive elements. It never
  * permits <script>, <style>, <iframe>, <object> or <form>, so those are stripped
  * even if they somehow reach the output.

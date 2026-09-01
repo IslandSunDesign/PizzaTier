@@ -4,7 +4,7 @@ namespace PizzaTier\Shortcodes;
 if ( ! defined( 'ABSPATH' ) ) { exit; }
 
 /**
- * [pizza_static] shortcode — renders a non-interactive static pizza.
+ * [pizzatier_static] shortcode — renders a non-interactive static pizza.
  *
  * Attributes:
  *   crust    Layer slug.
@@ -26,7 +26,7 @@ class StaticShortcode {
 			'cut'      => '',
 			// Legacy support for [pizzatier-static slices="..."]
 			'slices'   => '',
-		], $atts, 'pizza_static' ) );
+		], $atts, 'pizzatier_static' ) );
 
 		// Map legacy 'slices' → 'cut'
 		if ( $atts['cut'] === '' && $atts['slices'] !== '' ) {

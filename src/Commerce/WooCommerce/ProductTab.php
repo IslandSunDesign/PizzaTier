@@ -222,7 +222,7 @@ class ProductTab {
 	// -------------------------------------------------------------------------
 
 	public function register_tab( array $tabs ): array {
-		$tabs['pizza_configurator'] = [
+		$tabs['pizzatier_configurator'] = [
 			'label'    => __( 'Pizza Configurator', 'pizzatier' ),
 			'target'   => 'pizzatier_configurator_panel',
 			'class'    => [ 'show_if_pizza' ],

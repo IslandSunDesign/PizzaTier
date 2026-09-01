@@ -100,3 +100,24 @@
 			if ( row ) row.classList.add( 'pztc-row-grouped' );
 		} );
 	}() );
+
+
+/* ── Checkout-bar layout picker card sync (moved from inline <script>, v2.3.0) ── */
+// Minimal click-state sync — keeps the selected card outlined as the user
+// clicks without requiring a full page reload. The radio itself is what
+// actually submits the value. The inline original located its fieldset via
+// document.currentScript; as an enqueued file we bind every picker on the
+// page directly instead.
+( function () {
+	var pickers = document.querySelectorAll( '.pztc-layout-picker' );
+	Array.prototype.forEach.call( pickers, function ( group ) {
+		group.addEventListener( 'change', function ( e ) {
+			if ( ! e.target || 'radio' !== e.target.type ) { return; }
+			var cards = group.querySelectorAll( '.pztc-layout-card' );
+			for ( var i = 0; i < cards.length; i++ ) {
+				var chk = cards[ i ].querySelector( 'input[type="radio"]' );
+				cards[ i ].classList.toggle( 'pztc-layout-card--selected', !! ( chk && chk.checked ) );
+			}
+		} );
+	} );
+}() );

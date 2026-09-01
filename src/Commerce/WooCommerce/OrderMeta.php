@@ -149,6 +149,7 @@ class OrderMeta {
 
 		// Display in order admin (WC order items meta box).
 		add_action( 'woocommerce_after_order_itemmeta',               [ $this, 'display_in_order_admin' ], 10, 3 );
+		add_action( 'admin_enqueue_scripts',                          [ $this, 'enqueue_order_screen_styles' ] );
 
 		// Display in order confirmation / my-account order detail.
 		add_filter( 'woocommerce_order_item_get_formatted_meta_data', [ $this, 'format_order_item_meta' ], 10, 2 );
@@ -709,19 +710,36 @@ class OrderMeta {
 				</tfoot>
 			</table>
 		</div>
-		<style>
-		.pztc-order-meta { margin: 8px 0 4px; }
-		.pztc-order-meta__table { width: 100%; border-collapse: collapse; font-size: 12px; }
-		.pztc-order-meta__table th,
-		.pztc-order-meta__table td { padding: 4px 8px; border: 1px solid #ddd; text-align: left; vertical-align: top; }
-		.pztc-order-meta__table thead th { background: #1a1a2e; color: #fff; }
-		.pztc-order-meta__table tfoot td { background: #f9f9f9; }
-		.pztc-order-meta__total-row td { border-top: 2px solid #e8692a; }
-		.pztc-order-meta__type-cell { background: #f5f5f5; font-weight: 600; white-space: nowrap; }
-		.pztc-order-meta__base-row td { font-style: italic; background: #fafafa; }
-		.pztc-order-meta__note-row { font-size: 11px; color: #555; background: #fffbe6; border-top: 1px solid #f0b429; }
-		</style>
 		<?php
+	}
+
+	/**
+	 * Enqueue the order-screen stylesheet on order edit screens (legacy
+	 * post-based and HPOS). Styles the breakdown table rendered by
+	 * display_in_order_admin(); formerly an inline <style> block, moved to
+	 * a file per WordPress.org guidelines. Shares its handle with
+	 * OrderPizzaMetaBox so WordPress deduplicates the enqueue.
+	 *
+	 * @param string $hook Current admin page hook suffix.
+	 */
+	public function enqueue_order_screen_styles( string $hook ): void {
+		$is_legacy_order = in_array( $hook, [ 'post.php', 'post-new.php' ], true )
+			&& ( get_current_screen() && get_current_screen()->post_type === 'shop_order' );
+
+		$is_hpos_order = 'woocommerce_page_wc-orders' === $hook
+			// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only use of a request value for display; no state is changed.
+			&& isset( $_GET['id'] );
+
+		if ( ! $is_legacy_order && ! $is_hpos_order ) {
+			return;
+		}
+
+		wp_enqueue_style(
+			'pizzatier-commerce-order-screen',
+			PIZZATIER_PLUGIN_URL . 'assets/css/admin/commerce-order-screen.css',
+			[],
+			PIZZATIER_VERSION
+		);
 	}
 
 	// -------------------------------------------------------------------------

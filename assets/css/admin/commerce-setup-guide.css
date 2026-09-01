@@ -1,0 +1,39 @@
+/*
+ * PizzaTier Commerce admin styles — commerce-setup-guide.css
+ * Moved out of inline <style> blocks (WordPress.org compliance, v2.3.0).
+ */
+
+/* ── Commerce setup checklist (embedded on Setup Guide page) (SetupGuide.php) ─────────────────────────── */
+.pztc-setup { max-width: 820px; }
+		.pztc-setup__header-inner { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 16px; }
+		.pztc-setup__header-brand { display: flex; align-items: center; gap: 16px; }
+		.pztc-setup__header-icon { font-size: 38px !important; width: 38px !important; height: 38px !important; color: #ff6b35; flex-shrink: 0; }
+		.pztc-setup__header-actions { display: flex; gap: 10px; flex-wrap: wrap; }
+		.pztc-setup__hbtn { display: inline-flex; align-items: center; padding: 8px 18px; background: #ff6b35; color: #fff !important; border-radius: 50px; font-size: 13px; font-weight: 600; text-decoration: none; transition: background .2s; border: 2px solid transparent; }
+		.pztc-setup__hbtn:hover { background: #e05a28; }
+		.pztc-setup__hbtn--outline { background: transparent; border-color: rgba(255,255,255,.3); color: rgba(255,255,255,.8) !important; }
+		.pztc-setup__hbtn--outline:hover { border-color: #ff6b35; color: #fff !important; background: transparent; }
+		.pztc-setup__header { background: linear-gradient(135deg, #1a1e23 0%, #2d3748 100%); color: #fff; border-radius: 10px; padding: 22px 28px; margin-bottom: 24px; border-bottom: 3px solid #ff6b35; }
+		.pztc-setup__title { color: #fff; font-size: 22px; margin: 0 0 4px; display: flex; align-items: center; gap: 10px; }
+		.pztc-setup__title .dashicons { color: #ff6b35; font-size: 26px !important; }
+		.pztc-setup__subtitle { color: #aaa; margin: 0 0 20px; }
+		.pztc-setup__progress-wrap { }
+		.pztc-setup__progress-bar { background: rgba(255,255,255,.15); border-radius: 99px; height: 10px; overflow: hidden; margin-bottom: 8px; }
+		.pztc-setup__progress-fill { background: #ff6b35; height: 100%; border-radius: 99px; transition: width .4s ease; }
+		.pztc-setup__progress-label { color: #ccc; font-size: 13px; }
+		.pztc-setup__steps { display: flex; flex-direction: column; gap: 12px; }
+		.pztc-setup__step { display: flex; gap: 16px; background: #fff; border: 1px solid #e0e0e0; border-radius: 8px; padding: 20px 24px; transition: border-color .2s; }
+		.pztc-setup__step--done { border-color: #46b450; background: #f6fff6; }
+		.pztc-setup__step-indicator { flex-shrink: 0; width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; border-radius: 50%; background: #f0f0f0; font-weight: 700; font-size: 14px; color: #555; }
+		.pztc-setup__step--done .pztc-setup__step-indicator { background: #46b450; }
+		.pztc-setup__step-check { color: #fff; font-size: 22px !important; }
+		.pztc-setup__step-body { flex: 1; }
+		.pztc-setup__step-title { margin: 0 0 6px; font-size: 15px; }
+		.pztc-setup__step--done .pztc-setup__step-title { color: #46b450; }
+		.pztc-setup__step-desc { color: #666; margin: 0 0 12px; font-size: 13px; }
+		.pztc-setup__step-links { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 10px; }
+		.pztc-setup__tick-form { margin-top: 4px; }
+		.pztc-setup__tick-btn { display: inline-flex; align-items: center; gap: 4px; font-size: 12px; }
+		.pztc-setup__tick-btn--undo { color: #999; border-color: #ccc; }
+		.pztc-setup__complete-banner { margin-top: 24px; background: #ff6b35; color: #fff; border-radius: 8px; padding: 20px 24px; display: flex; align-items: center; gap: 12px; font-size: 15px; }
+		.pztc-setup__complete-banner .dashicons { font-size: 28px; }

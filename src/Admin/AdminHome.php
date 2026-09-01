@@ -215,8 +215,8 @@ class AdminHome {
 							<div class="plh-hero__step">
 								<span class="plh-hero__step-num">3</span>
 								<span><strong><?php esc_html_e( 'Embed &amp; go', 'pizzatier' ); ?></strong> — <?php
-									/* translators: [pizza_builder] is a shortcode, keep as-is */
-									esc_html_e( 'paste [pizza_builder] on any page and you\'re live.', 'pizzatier' );
+									/* translators: [pizzatier_builder] is a shortcode, keep as-is */
+									esc_html_e( 'paste [pizzatier_builder] on any page and you\'re live.', 'pizzatier' );
 								?></span>
 							</div>
 						</div>
@@ -271,10 +271,10 @@ class AdminHome {
 						<h3><?php esc_html_e( 'Shortcode Reference', 'pizzatier' ); ?></h3>
 					</div>
 					<div class="plh-card__content">
-						<p><code>[pizza_builder]</code><br><span class="plh-sc-desc"><?php esc_html_e( 'Interactive builder on any page.', 'pizzatier' ); ?></span></p>
-						<p><code>[pizza_builder id="pizza-1" max_toppings="5"]</code><br><span class="plh-sc-desc"><?php esc_html_e( 'Multiple builders, different settings.', 'pizzatier' ); ?></span></p>
-						<p><code>[pizza_static crust="thin-crust" sauce="tomato" toppings="pepperoni"]</code><br><span class="plh-sc-desc"><?php esc_html_e( 'Static pizza display anywhere.', 'pizzatier' ); ?></span></p>
-						<p><code>[pizza_layer type="topping" slug="pepperoni"]</code><br><span class="plh-sc-desc"><?php esc_html_e( 'Single layer image anywhere.', 'pizzatier' ); ?></span></p>
+						<p><code>[pizzatier_builder]</code><br><span class="plh-sc-desc"><?php esc_html_e( 'Interactive builder on any page.', 'pizzatier' ); ?></span></p>
+						<p><code>[pizzatier_builder id="pizza-1" max_toppings="5"]</code><br><span class="plh-sc-desc"><?php esc_html_e( 'Multiple builders, different settings.', 'pizzatier' ); ?></span></p>
+						<p><code>[pizzatier_static crust="thin-crust" sauce="tomato" toppings="pepperoni"]</code><br><span class="plh-sc-desc"><?php esc_html_e( 'Static pizza display anywhere.', 'pizzatier' ); ?></span></p>
+						<p><code>[pizzatier_layer type="topping" slug="pepperoni"]</code><br><span class="plh-sc-desc"><?php esc_html_e( 'Single layer image anywhere.', 'pizzatier' ); ?></span></p>
 						<p style="margin-top:12px;">
 							<a href="<?php echo esc_url( admin_url( 'admin.php?page=pizzatier-shortcodes' ) ); ?>" class="button button-secondary">
 								<?php esc_html_e( 'Open Shortcode Generator', 'pizzatier' ); ?>

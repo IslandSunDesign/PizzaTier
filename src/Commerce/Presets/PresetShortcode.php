@@ -2,7 +2,7 @@
 /**
  * PizzaTier — Pizza Preset Shortcode
  *
- * [pizza_preset id="42"]
+ * [pizzatier_preset id="42"]
  *
  * Renders a static, non-interactive pizza display using the layers saved in a
  * preset CPT entry. Output is a pure server-rendered layer stack — no JS, no
@@ -52,7 +52,12 @@ class PresetShortcode {
 	// -------------------------------------------------------------------------
 
 	public function register(): void {
-		add_shortcode( 'pizza_preset', [ $this, 'render' ] );
+		add_shortcode( 'pizzatier_preset', [ $this, 'render' ] );
+
+		// Pre-2.3.0 tag, opt-in only — see Plugin::register_shortcodes().
+		if ( apply_filters( 'pizzatier_register_legacy_shortcodes', false ) ) {
+			add_shortcode( 'pizza_preset', [ $this, 'render' ] );
+		}
 	}
 
 	// -------------------------------------------------------------------------
@@ -73,21 +78,21 @@ class PresetShortcode {
 				'align'    => 'center',
 			],
 			$atts,
-			'pizza_preset'
+			'pizzatier_preset'
 		);
 
 		// -- Validate preset --------------------------------------------------
 
 		$preset_id = absint( $atts['id'] );
 		if ( ! $preset_id ) {
-			return $this->error( __( '[pizza_preset] requires an id attribute.', 'pizzatier' ) );
+			return $this->error( __( '[pizzatier_preset] requires an id attribute.', 'pizzatier' ) );
 		}
 
 		$post = get_post( $preset_id );
 		if ( ! $post || 'pizzatier_presets' !== $post->post_type || 'publish' !== $post->post_status ) {
 			return $this->error(
 				/* translators: %d: preset post ID */
-				sprintf( __( '[pizza_preset] Preset #%d not found or not published.', 'pizzatier' ), $preset_id )
+				sprintf( __( '[pizzatier_preset] Preset #%d not found or not published.', 'pizzatier' ), $preset_id )
 			);
 		}
 
@@ -97,7 +102,7 @@ class PresetShortcode {
 		if ( ! is_array( $meta ) || empty( $meta ) ) {
 			return $this->error(
 				/* translators: %d: preset post ID */
-				sprintf( __( '[pizza_preset] Preset #%d has no layers configured.', 'pizzatier' ), $preset_id )
+				sprintf( __( '[pizzatier_preset] Preset #%d has no layers configured.', 'pizzatier' ), $preset_id )
 			);
 		}
 
@@ -109,7 +114,7 @@ class PresetShortcode {
 
 		if ( ! class_exists( 'PizzaTier\\Builder\\LayerRenderer' )
 			|| ! class_exists( 'PizzaTier\\Builder\\LayerDTO' ) ) {
-			return $this->error( __( '[pizza_preset] PizzaTier plugin is required.', 'pizzatier' ) );
+			return $this->error( __( '[pizzatier_preset] PizzaTier plugin is required.', 'pizzatier' ) );
 		}
 
 		$renderer    = new \PizzaTier\Builder\LayerRenderer();

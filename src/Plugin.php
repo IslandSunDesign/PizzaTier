@@ -225,7 +225,7 @@ final class Plugin {
 		// hooking unconditionally is safe.
 		( new \PizzaTier\Commerce\Admin\Presets() )->register();
 
-		// [pizza_preset] shortcode — depends only on PizzaTier. The
+		// [pizzatier_preset] shortcode — depends only on PizzaTier. The
 		// pizzatier_presets CPT is registered by PostTypeRegistrar.
 		( new \PizzaTier\Commerce\Presets\PresetShortcode() )->register();
 
@@ -253,15 +253,34 @@ final class Plugin {
 	 */
 	public function register_shortcodes(): void {
 		$shortcodes = [
-			'pizza_builder'     => 'PizzaTier\\Shortcodes\\BuilderShortcode',
-			'pizza_static'      => 'PizzaTier\\Shortcodes\\StaticShortcode',
-			'pizza_layer'       => 'PizzaTier\\Shortcodes\\LayerImageShortcode',
-			'pizza_layer_info'  => 'PizzaTier\\Shortcodes\\LayerInfoShortcode',
+			'pizzatier_builder'     => 'PizzaTier\\Shortcodes\\BuilderShortcode',
+			'pizzatier_static'      => 'PizzaTier\\Shortcodes\\StaticShortcode',
+			'pizzatier_layer'       => 'PizzaTier\\Shortcodes\\LayerImageShortcode',
+			'pizzatier_layer_info'  => 'PizzaTier\\Shortcodes\\LayerInfoShortcode',
 
 			// Deprecated aliases -- keep for one major version.
 			'pizzatier-menu'    => 'PizzaTier\\Shortcodes\\BuilderShortcode',
 			'pizzatier-static'  => 'PizzaTier\\Shortcodes\\StaticShortcode',
 		];
+
+		/**
+		 * Opt-in support for the pre-2.3.0 shortcode tags.
+		 *
+		 * The original pizza_* tags were renamed to pizzatier_* in 2.3.0 to
+		 * satisfy the WordPress.org unique-prefix guideline. Sites that
+		 * still have the old tags in existing content can restore them:
+		 *
+		 *     add_filter( 'pizzatier_register_legacy_shortcodes', '__return_true' );
+		 *
+		 * @since 2.3.0
+		 * @param bool $register Default false.
+		 */
+		if ( apply_filters( 'pizzatier_register_legacy_shortcodes', false ) ) {
+			$shortcodes['pizza_builder']    = 'PizzaTier\\Shortcodes\\BuilderShortcode';
+			$shortcodes['pizza_static']     = 'PizzaTier\\Shortcodes\\StaticShortcode';
+			$shortcodes['pizza_layer']      = 'PizzaTier\\Shortcodes\\LayerImageShortcode';
+			$shortcodes['pizza_layer_info'] = 'PizzaTier\\Shortcodes\\LayerInfoShortcode';
+		}
 
 		foreach ( $shortcodes as $tag => $class ) {
 			if ( ! class_exists( $class ) ) {

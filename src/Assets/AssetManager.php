@@ -155,6 +155,28 @@ class AssetManager {
 			);
 		}
 
+		// Commerce sections embedded on the Help and Setup Guide pages
+		// (Commerce\Admin\Help::render_embedded_section() and
+		// Commerce\Admin\SetupGuide::render_embedded_checklist()). Their CSS
+		// was formerly printed as inline <style> blocks by those classes;
+		// moved to files per WordPress.org guidelines.
+		if ( false !== strpos( $hook, 'pizzatier-help' ) ) {
+			wp_enqueue_style(
+				'pizzatier-commerce-help',
+				PIZZATIER_ASSETS_URL . 'css/admin/commerce-help.css',
+				[ 'pizzatier-admin' ],
+				$v
+			);
+		}
+		if ( false !== strpos( $hook, 'pizzatier-setup' ) ) {
+			wp_enqueue_style(
+				'pizzatier-commerce-setup-guide',
+				PIZZATIER_ASSETS_URL . 'css/admin/commerce-setup-guide.css',
+				[ 'pizzatier-admin' ],
+				$v
+			);
+		}
+
 		// Content Hub
 		if ( false !== strpos( $hook, 'pizzatier-content' ) ) {
 			wp_enqueue_script(

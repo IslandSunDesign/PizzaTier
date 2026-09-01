@@ -785,7 +785,7 @@
 		 *
 		 *  Discovery is "best-effort": a PizzaTier builder may be rendered via
 		 *  the WC product flow (wrapped in .pztc-builder-section[data-pztc-instance])
-		 *  OR via a bare [pizza_builder] shortcode with a custom id= attribute
+		 *  OR via a bare [pizzatier_builder] shortcode with a custom id= attribute
 		 *  (producing bar ids like "pztc-bar-price-pltp-metro"). Rather than
 		 *  guessing the suffix, we locate bars by DOM proximity and update all
 		 *  of them — safer and works regardless of how the builder was embedded. */

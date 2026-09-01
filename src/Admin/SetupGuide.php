@@ -152,7 +152,7 @@ class SetupGuide {
 			[
 				'key'        => 'shortcode',
 				'label'      => __( 'Embed the Builder on a page', 'pizzatier' ),
-				'desc'       => __( 'Use the Shortcode Generator to get your <code>[pizza_builder]</code> shortcode, then add it to any page. Auto-completes once the shortcode is found in published content.', 'pizzatier' ),
+				'desc'       => __( 'Use the Shortcode Generator to get your <code>[pizzatier_builder]</code> shortcode, then add it to any page. Auto-completes once the shortcode is found in published content.', 'pizzatier' ),
 				'detected'   => $builder_embedded,
 				'auto_done'  => $builder_embedded || isset( $done['shortcode'] ),
 				'manual'     => true,
@@ -356,11 +356,11 @@ class SetupGuide {
 	}
 
 	/**
-	 * Whether the [pizza_builder] shortcode appears in any published content.
+	 * Whether the [pizzatier_builder] shortcode appears in any published content.
 	 */
 	private function builder_is_embedded(): bool {
 		global $wpdb;
-		$like = '%' . $wpdb->esc_like( '[pizza_builder' ) . '%';
+		$like = '%' . $wpdb->esc_like( '[pizzatier_builder' ) . '%';
 
 		// phpcs:disable WordPress.DB.DirectDatabaseQuery
 		$found = $wpdb->get_var(

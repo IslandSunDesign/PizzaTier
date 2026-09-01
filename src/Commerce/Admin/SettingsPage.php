@@ -42,8 +42,6 @@ class SettingsPage {
 		?>
 		<div class="wrap pztc-page-wrap">
 
-			<?php $this->render_styles(); ?>
-
 			<!-- ══ Header ═════════════════════════════════════════════════ -->
 			<div class="pztc-header">
 				<div class="pztc-header__brand">
@@ -142,7 +140,6 @@ class SettingsPage {
 
 		</div><!-- /.pztc-page-wrap -->
 
-		<?php $this->render_tab_script(); ?>
 		<?php
 	}
 
@@ -171,180 +168,5 @@ class SettingsPage {
 		<?php
 	}
 
-	// -------------------------------------------------------------------------
-	// Inline tab script
-	// -------------------------------------------------------------------------
 
-	private function render_tab_script(): void {
-		?>
-		<style>
-		/* Grouped table rows — subtle left border accent */
-		tr.pztc-row-grouped th { border-left: 3px solid #ff6b35; padding-left: 12px; }
-		/* Pricing sub-section label row */
-		.pztc-table-section-label th {
-			padding-top: 18px !important;
-			font-size: 10px !important;
-			text-transform: uppercase;
-			letter-spacing: .06em;
-			color: #9ca3af !important;
-			font-weight: 700 !important;
-			border-top: 1px solid #f0f0f0;
-		}
-		.pztc-table-section-label td { padding-top: 0 !important; border-top: 1px solid #f0f0f0; }
-		</style>
-		<?php
-	}
-
-	// -------------------------------------------------------------------------
-	// Inline styles — mirrors base plugin plh-* design tokens
-	// -------------------------------------------------------------------------
-
-	private function render_styles(): void {
-		?>
-		<style>
-		/* ── Page wrap ──────────────────────────────────────────────── */
-		.pztc-page-wrap { max-width: 1100px; }
-
-		/* ── Header ─────────────────────────────────────────────────── */
-		.pztc-header {
-			display: flex; align-items: center; justify-content: space-between;
-			flex-wrap: wrap; gap: 16px;
-			background: linear-gradient(135deg, #1a1e23 0%, #2d3748 100%);
-			color: #fff; border-radius: 10px;
-			padding: 22px 28px; margin-bottom: 20px;
-		}
-		.pztc-header__brand { display: flex; align-items: center; gap: 16px; }
-		.pztc-header__icon {
-			font-size: 38px !important; width: 38px !important; height: 38px !important;
-			color: #ff6b35;
-		}
-		.pztc-header__title  { margin: 0; font-size: 24px; font-weight: 700; color: #fff; }
-		.pztc-header__tagline { margin: 3px 0 0; color: #8d97a5; font-size: 13px; }
-		.pztc-header__actions { display: flex; gap: 8px; flex-wrap: wrap; }
-		.pztc-header__actions .button {
-			display: inline-flex; align-items: center; gap: 5px;
-			padding: 7px 16px; border-radius: 50px; font-size: 13px; font-weight: 600;
-			border: 2px solid rgba(255,255,255,.3); color: rgba(255,255,255,.8) !important;
-			background: transparent; text-decoration: none; transition: all .2s;
-		}
-		.pztc-header__actions .button:hover { border-color: #ff6b35; color: #fff !important; background: transparent; box-shadow: none; }
-		.pztc-header__actions .dashicons { font-size: 15px !important; width: 15px !important; height: 15px !important; margin: 0; }
-
-		/* ── Generic card ───────────────────────────────────────────── */
-		.pztc-card {
-			background: #fff; border: 1px solid #e0e3e7;
-			border-radius: 10px; margin-bottom: 20px; overflow: hidden;
-		}
-		.pztc-card__head { padding: 20px 24px 0; }
-		.pztc-card__title {
-			margin: 0 0 4px; font-size: 16px;
-			display: flex; align-items: center; gap: 8px;
-		}
-		.pztc-card__title .dashicons { color: #646970; font-size: 18px !important; width: 18px !important; height: 18px !important; }
-		.pztc-card__subtitle { margin: 0; color: #646970; font-size: 13px; padding-bottom: 4px; }
-
-		/* ── Tab nav ────────────────────────────────────────────────── */
-		.pztc-tabnav {
-			display: flex; flex-wrap: wrap; border-bottom: 2px solid #e0e3e7;
-			padding: 8px 12px 0; background: #f8f9fa; gap: 2px;
-		}
-		.pztc-tab {
-			display: inline-flex; flex-direction: column; align-items: center; gap: 3px;
-			padding: 7px 10px 5px; border: none; border-bottom: 2px solid transparent;
-			background: transparent; cursor: pointer; font-size: 11px; font-weight: 500;
-			color: #646970; white-space: nowrap; margin-bottom: -2px; line-height: 1.2;
-			transition: color .15s, border-color .15s; min-width: 64px;
-			border-radius: 4px 4px 0 0;
-		}
-		.pztc-tab:hover { color: #1d2023; background: #eef0f2; }
-		.pztc-tab--active { color: #ff6b35; border-bottom-color: #ff6b35; font-weight: 600; background: #fff; }
-		.pztc-tab .dashicons {
-			font-size: 18px !important; width: 18px !important; height: 18px !important;
-			line-height: 1 !important; flex-shrink: 0;
-		}
-
-		/* ── Panels ─────────────────────────────────────────────────── */
-		.pztc-panels { padding: 0; }
-		.pztc-panel { display: none; }
-		.pztc-panel--active { display: block; }
-		.pztc-panel__body { padding: 20px 24px 24px; }
-		.pztc-section-desc { margin: 0 0 16px; color: #646970; font-size: 13px; }
-
-		/* ── Form table overrides ───────────────────────────────────── */
-		.pztc-form-table th {
-			width: 240px; padding: 14px 20px 14px 0;
-			font-size: 13px; font-weight: 600; color: #1d2023; vertical-align: top;
-		}
-		.pztc-form-table td { padding: 10px 0 14px; vertical-align: top; }
-		.pztc-form-table .description { margin-top: 6px !important; font-size: 12px !important; }
-
-		/* Field elements — inherit from admin.css but tighten focus ring */
-		.pztc-text-input,
-		.pztc-select-input {
-			border: 1px solid #8c8f94 !important; border-radius: 4px !important;
-			font-size: 13px !important; padding: 7px 10px !important;
-			transition: border-color .15s !important;
-		}
-		.pztc-text-input { width: 320px !important; }
-		.pztc-text-input:focus,
-		.pztc-select-input:focus {
-			border-color: #ff6b35 !important; outline: none !important;
-			box-shadow: 0 0 0 2px rgba(255,107,53,.15) !important;
-		}
-		.pztc-textarea-input {
-			border: 1px solid #8c8f94 !important; border-radius: 4px !important;
-			font-size: 13px !important; padding: 8px 10px !important;
-			width: 280px !important; resize: vertical; line-height: 1.6;
-		}
-		.pztc-textarea-input:focus {
-			border-color: #ff6b35 !important; outline: none !important;
-			box-shadow: 0 0 0 2px rgba(255,107,53,.15) !important;
-		}
-
-		/* Toggle switch */
-		.pztc-toggle-label { display: inline-flex; align-items: center; gap: 10px; cursor: pointer; user-select: none; }
-		.pztc-toggle-input { position: absolute; opacity: 0; width: 0; height: 0; }
-		.pztc-toggle-track {
-			position: relative; display: inline-block; width: 40px; height: 22px;
-			background: #c3c4c7; border-radius: 11px; transition: background .2s; flex-shrink: 0;
-		}
-		.pztc-toggle-track::after {
-			content: ''; position: absolute; top: 3px; left: 3px;
-			width: 16px; height: 16px; background: #fff; border-radius: 50%;
-			box-shadow: 0 1px 3px rgba(0,0,0,.25); transition: transform .2s;
-		}
-		.pztc-toggle-input:checked + .pztc-toggle-track { background: #ff6b35; }
-		.pztc-toggle-input:checked + .pztc-toggle-track::after { transform: translateX(18px); }
-		.pztc-toggle-input:focus + .pztc-toggle-track { box-shadow: 0 0 0 2px rgba(255,107,53,.3); }
-		.pztc-field-desc { margin-top: 6px !important; color: #646970 !important; font-size: 12px !important; max-width: 500px; }
-
-		/* ── Save footer ────────────────────────────────────────────── */
-		.pztc-save-row {
-			display: flex; align-items: center; gap: 20px;
-			margin-bottom: 20px; padding: 0;
-		}
-		.pztc-save-btn.button-primary {
-			background: #ff6b35 !important; border-color: #cf5519 !important;
-			color: #fff !important; padding: 0 22px !important;
-			height: 36px !important; font-size: 14px !important; font-weight: 600 !important;
-			border-radius: 4px !important;
-		}
-		.pztc-save-btn.button-primary:hover,
-		.pztc-save-btn.button-primary:focus { background: #cf5519 !important; }
-		.pztc-save-row__version { font-size: 12px; color: #9ca3af; }
-
-		/* ── Credits ────────────────────────────────────────────────── */
-		.pztc-credits { padding: 4px 0 24px; font-size: 12px; color: #aaa; }
-		.pztc-credits a { color: #aaa; text-decoration: none; }
-		.pztc-credits a:hover { color: #ff6b35; }
-
-		/* ── Responsive ─────────────────────────────────────────────── */
-		@media ( max-width: 782px ) {
-			.pztc-header { flex-direction: column; align-items: flex-start; }
-			.pztc-text-input { width: 100% !important; max-width: 320px !important; }
-			.pztc-form-table th { width: auto; }
-		}
-		</style>
-		<?php
-	}
 }

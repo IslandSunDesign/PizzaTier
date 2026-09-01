@@ -1,6 +1,6 @@
 <?php
 /**
- * NightPie Template — [pizza_builder] output.
+ * NightPie Template — [pizzatier_builder] output.
  *
  * This file is included (not called as a function) by BuilderShortcode.
  * Variables available from the shortcode:

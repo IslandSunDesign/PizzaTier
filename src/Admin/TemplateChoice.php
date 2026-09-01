@@ -96,7 +96,7 @@ class TemplateChoice {
 		$preview_page_auto = false; // true when we found a page automatically
 
 		if ( ! $preview_page_url ) {
-			// Search post_content for [pizza_builder] shortcode
+			// Search post_content for [pizzatier_builder] shortcode
 			global $wpdb;
 			$found_id = wp_cache_get( 'pizzatier_preview_page_id', 'pizzatier' );
 			if ( false === $found_id ) {
@@ -105,7 +105,7 @@ class TemplateChoice {
 					"SELECT ID FROM {$wpdb->posts}
 					 WHERE post_status = 'publish'
 					   AND post_type IN ('page','post')
-					   AND post_content LIKE '%pizza_builder%'
+					   AND post_content LIKE '%pizzatier_builder%'
 					 LIMIT 1"
 				);
 				wp_cache_set( 'pizzatier_preview_page_id', $found_id, 'pizzatier', HOUR_IN_SECONDS );
@@ -179,7 +179,7 @@ class TemplateChoice {
 				<input type="hidden" name="pizzatier_save_preview_url" value="1">
 				<label class="ptc-preview-url-label">
 					<span class="dashicons dashicons-admin-links"></span>
-					<?php echo wp_kses_post( __( 'Preview page URL — enter any page on your site that contains <code>[pizza_builder]</code>:', 'pizzatier' ) ); ?>
+					<?php echo wp_kses_post( __( 'Preview page URL — enter any page on your site that contains <code>[pizzatier_builder]</code>:', 'pizzatier' ) ); ?>
 				</label>
 				<div class="ptc-preview-url-row">
 					<input type="url" name="pizzatier_template_preview_url"
@@ -211,7 +211,7 @@ class TemplateChoice {
 		<?php elseif ( $preview_page_url === trailingslashit( home_url( '/' ) ) ) : ?>
 		<div class="ptc-notice ptc-notice--warn">
 			<span class="dashicons dashicons-warning"></span>
-			No page with <code>[pizza_builder]</code> found — previewing the homepage.
+			No page with <code>[pizzatier_builder]</code> found — previewing the homepage.
 			<?php esc_html_e( 'Click', 'pizzatier' ); ?> <strong><?php esc_html_e( 'Preview URL', 'pizzatier' ); ?></strong> <?php esc_html_e( 'above to set the correct page.', 'pizzatier' ); ?>
 		</div>
 		<?php endif; ?>

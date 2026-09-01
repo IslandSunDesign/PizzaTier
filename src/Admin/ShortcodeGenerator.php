@@ -5,7 +5,7 @@ if ( ! defined( 'ABSPATH' ) ) { exit; }
 
 /**
  * Shortcode Generator — visual configurator for all PizzaTier shortcodes.
- * Supports: [pizza_builder], [pizza_static], [pizza_layer], [pizza_layer_info]
+ * Supports: [pizzatier_builder], [pizzatier_static], [pizzatier_layer], [pizzatier_layer_info]
  */
 class ShortcodeGenerator {
 
@@ -61,22 +61,22 @@ class ShortcodeGenerator {
 		<div class="pscg-type-tabs">
 			<button class="pscg-type-tab pscg-type-tab--active" data-type="builder">
 				<span class="dashicons dashicons-hammer"></span>
-				<span class="pscg-type-tab__label">[pizza_builder]</span>
+				<span class="pscg-type-tab__label">[pizzatier_builder]</span>
 				<span class="pscg-type-tab__desc">Interactive builder</span>
 			</button>
 			<button class="pscg-type-tab" data-type="static">
 				<span class="dashicons dashicons-format-image"></span>
-				<span class="pscg-type-tab__label">[pizza_static]</span>
+				<span class="pscg-type-tab__label">[pizzatier_static]</span>
 				<span class="pscg-type-tab__desc">Static pizza display</span>
 			</button>
 			<button class="pscg-type-tab" data-type="layer">
 				<span class="dashicons dashicons-image-filter"></span>
-				<span class="pscg-type-tab__label">[pizza_layer]</span>
+				<span class="pscg-type-tab__label">[pizzatier_layer]</span>
 				<span class="pscg-type-tab__desc">Single layer image</span>
 			</button>
 			<button class="pscg-type-tab" data-type="layerinfo">
 				<span class="dashicons dashicons-info-outline"></span>
-				<span class="pscg-type-tab__label">[pizza_layer_info]</span>
+				<span class="pscg-type-tab__label">[pizzatier_layer_info]</span>
 				<span class="pscg-type-tab__desc">Layer field value</span>
 			</button>
 		</div>
@@ -84,7 +84,7 @@ class ShortcodeGenerator {
 		<!-- ══ Builder configurator ══════════════════════════════════ -->
 		<div class="pscg-form" id="pscg-form-builder">
 			<div class="pscg-card">
-				<div class="pscg-card__head"><h2>Interactive Builder — <code>[pizza_builder]</code></h2></div>
+				<div class="pscg-card__head"><h2>Interactive Builder — <code>[pizzatier_builder]</code></h2></div>
 				<div class="pscg-card__body">
 					<div class="pscg-grid">
 						<div class="pscg-field">
@@ -188,12 +188,12 @@ class ShortcodeGenerator {
 		<!-- ══ Static pizza configurator ═════════════════════════════ -->
 		<div class="pscg-form" id="pscg-form-static" style="display:none;">
 			<div class="pscg-card">
-				<div class="pscg-card__head"><h2>Static Display — <code>[pizza_static]</code></h2></div>
+				<div class="pscg-card__head"><h2>Static Display — <code>[pizzatier_static]</code></h2></div>
 				<div class="pscg-card__body">
 					<p class="pscg-desc">Renders a non-interactive pizza image. Specify layers individually, or pick a saved preset.</p>
 					<div class="pscg-grid">
 						<div class="pscg-field">
-							<label>Preset <span class="pscg-hint">Outputs <code>[pizza_preset]</code> — renders the full saved pizza incl. toppings (requires PizzaTier)</span></label>
+							<label>Preset <span class="pscg-hint">Outputs <code>[pizzatier_preset]</code> — renders the full saved pizza incl. toppings (requires PizzaTier)</span></label>
 							<select class="pscg-select" id="s-preset">
 								<option value="">— none (specify layers below) —</option>
 								<?php
@@ -265,7 +265,7 @@ class ShortcodeGenerator {
 		<!-- ══ Single layer image configurator ═══════════════════════ -->
 		<div class="pscg-form" id="pscg-form-layer" style="display:none;">
 			<div class="pscg-card">
-				<div class="pscg-card__head"><h2>Single Layer Image — <code>[pizza_layer]</code></h2></div>
+				<div class="pscg-card__head"><h2>Single Layer Image — <code>[pizzatier_layer]</code></h2></div>
 				<div class="pscg-card__body">
 					<p class="pscg-desc">Outputs a single layer <code>&lt;img&gt;</code> tag. Useful for menu pages or product listings.</p>
 					<div class="pscg-grid">
@@ -302,7 +302,7 @@ class ShortcodeGenerator {
 		<!-- ══ Layer info configurator ═══════════════════════════════ -->
 		<div class="pscg-form" id="pscg-form-layerinfo" style="display:none;">
 			<div class="pscg-card">
-				<div class="pscg-card__head"><h2>Layer Field Value — <code>[pizza_layer_info]</code></h2></div>
+				<div class="pscg-card__head"><h2>Layer Field Value — <code>[pizzatier_layer_info]</code></h2></div>
 				<div class="pscg-card__body">
 					<p class="pscg-desc">Outputs a single SCF field value as escaped text. Good for displaying ingredient lists or descriptions.</p>
 					<div class="pscg-grid">
@@ -331,7 +331,7 @@ class ShortcodeGenerator {
 		<div class="pscg-output-card">
 			<label class="pscg-output-label">Generated Shortcode</label>
 			<div class="pscg-output-row">
-				<code class="pscg-output" id="pscg-output">[pizza_builder]</code>
+				<code class="pscg-output" id="pscg-output">[pizzatier_builder]</code>
 				<button class="button button-primary pscg-copy-btn" id="pscg-copy-btn">
 					<span class="dashicons dashicons-clipboard"></span> Copy
 				</button>

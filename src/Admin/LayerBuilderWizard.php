@@ -428,7 +428,7 @@ class LayerBuilderWizard {
 		];
 		$sc_type   = $layer_type_map[ $type ] ?? $type;
 		$post_slug = get_post_field( 'post_name', $post_id );
-		$shortcode = '[pizza_layer type="' . $sc_type . '" slug="' . $post_slug . '"]';
+		$shortcode = '[pizzatier_layer type="' . $sc_type . '" slug="' . $post_slug . '"]';
 
 		wp_send_json_success( [
 			'post_id'   => $post_id,

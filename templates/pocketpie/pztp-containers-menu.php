@@ -1,6 +1,6 @@
 <?php
 /**
- * PocketPie Template — [pizza_builder] / [pizzatier-menu] output.
+ * PocketPie Template — [pizzatier_builder] / [pizzatier-menu] output.
  *
  * Layouts:
  *   corner-quad   — pizza centred, four corner menus expand inward

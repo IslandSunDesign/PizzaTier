@@ -26,8 +26,8 @@ class OrdersListTable extends \WP_List_Table {
 	public function __construct() {
 		parent::__construct(
 			[
-				'singular' => 'pizza_order',
-				'plural'   => 'pizza_orders',
+				'singular' => 'pizzatier_order',
+				'plural'   => 'pizzatier_orders',
 				'ajax'     => false,
 			]
 		);

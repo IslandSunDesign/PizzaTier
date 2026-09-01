@@ -680,26 +680,6 @@ class Settings {
 		<?php if ( $desc ) : ?>
 			<p class="description pztc-field-desc"><?php echo esc_html( $desc ); ?></p>
 		<?php endif; ?>
-		<script>
-		// Minimal click-state sync — keeps the selected card outlined as the
-		// user clicks without requiring a full page reload. The radio itself
-		// is what actually submits the value.
-		( function () {
-			var group = document.currentScript.previousElementSibling;
-			while ( group && ! group.classList.contains( 'pztc-layout-picker' ) ) {
-				group = group.previousElementSibling;
-			}
-			if ( ! group ) { return; }
-			group.addEventListener( 'change', function ( e ) {
-				if ( ! e.target || 'radio' !== e.target.type ) { return; }
-				var cards = group.querySelectorAll( '.pztc-layout-card' );
-				for ( var i = 0; i < cards.length; i++ ) {
-					var chk = cards[ i ].querySelector( 'input[type="radio"]' );
-					cards[ i ].classList.toggle( 'pztc-layout-card--selected', !! ( chk && chk.checked ) );
-				}
-			} );
-		}() );
-		</script>
 		<?php
 	}
 
@@ -759,31 +739,6 @@ class Settings {
 			<p class="pztc-calc__note"><?php esc_html_e( 'Uses the currently saved settings. Save first, then this calculator reflects your actual engine configuration.', 'pizzatier' ); ?></p>
 		</div>
 
-		<style>
-		.pztc-calc {
-			background: #f8f9fa; border: 1px solid #e0e3e7;
-			border-radius: 10px; padding: 16px 20px; max-width: 480px;
-			display: flex; flex-direction: column; gap: 10px;
-		}
-		.pztc-calc__row { display: flex; align-items: center; gap: 12px; }
-		.pztc-calc__label { font-size: 12px; color: #646970; width: 200px; flex-shrink: 0; }
-		.pztc-calc__input-wrap { display: flex; align-items: center; gap: 4px; }
-		.pztc-calc__sym { font-size: 13px; color: #1d2023; font-weight: 600; }
-		.pztc-calc__num {
-			width: 90px; padding: 5px 8px;
-			border: 1px solid #c3c4c7; border-radius: 4px;
-			font-size: 13px; text-align: right;
-		}
-		.pztc-calc__num:focus { border-color: #ff6b35; outline: none; box-shadow: 0 0 0 2px rgba(255,107,53,.15); }
-		.pztc-calc__result {
-			display: flex; align-items: center; justify-content: space-between;
-			background: #1a1e23; border-radius: 8px; padding: 12px 16px;
-			margin-top: 4px;
-		}
-		.pztc-calc__result-label { font-size: 12px; color: rgba(255,255,255,.65); }
-		.pztc-calc__result-value { font-size: 22px; font-weight: 700; color: #ff6b35; font-variant-numeric: tabular-nums; }
-		.pztc-calc__note { font-size: 11px; color: #9ca3af; margin: 0; }
-		</style>
 
 		<?php // JS enqueued via wp_enqueue_script — see enqueue_assets() ?>
 		<?php
@@ -866,58 +821,6 @@ class Settings {
 			<?php endforeach; ?>
 		</div>
 
-		<style>
-		.pztc-mode-grid {
-			display: grid;
-			grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
-			gap: 12px;
-			max-width: 800px;
-			margin-top: 6px;
-		}
-		.pztc-mode-card {
-			--mc: #ff6b35;
-			position: relative;
-			display: flex; flex-direction: column; gap: 7px;
-			padding: 16px 14px 14px;
-			background: #fff;
-			border: 2px solid #e0e3e7;
-			border-radius: 12px;
-			cursor: pointer;
-			transition: border-color .15s, background .15s, box-shadow .15s, transform .1s;
-			user-select: none;
-		}
-		.pztc-mode-card:hover {
-			border-color: var(--mc);
-			background: color-mix(in srgb, var(--mc) 5%, white);
-			transform: translateY(-1px);
-			box-shadow: 0 4px 12px rgba(0,0,0,.08);
-		}
-		.pztc-mode-card--selected {
-			border-color: var(--mc);
-			background: color-mix(in srgb, var(--mc) 8%, white);
-			box-shadow: 0 0 0 3px color-mix(in srgb, var(--mc) 20%, transparent);
-		}
-		.pztc-mode-card__tag {
-			position: absolute; top: -1px; right: 12px;
-			color: #fff;
-			font-size: 10px; font-weight: 700;
-			padding: 2px 8px; border-radius: 0 0 6px 6px;
-			text-transform: uppercase; letter-spacing: .04em;
-		}
-		.pztc-mode-card__icon { font-size: 26px; line-height: 1; }
-		.pztc-mode-card__title { font-size: 13px; font-weight: 700; color: #1d2023; }
-		.pztc-mode-card--selected .pztc-mode-card__title { color: var(--mc); }
-		.pztc-mode-card__desc { font-size: 11px; color: #646970; line-height: 1.5; flex: 1; }
-		.pztc-mode-card__check {
-			display: none;
-			position: absolute; top: 10px; right: 10px;
-			width: 20px; height: 20px; border-radius: 50%;
-			background: var(--mc); color: #fff;
-			font-size: 11px; font-weight: 700;
-			align-items: center; justify-content: center;
-		}
-		.pztc-mode-card--selected .pztc-mode-card__check { display: flex; }
-		</style>
 
 		<?php // JS enqueued via wp_enqueue_script — see enqueue_assets() ?>
 		<?php
@@ -1297,6 +1200,10 @@ class Settings {
 		}
 		$v = PIZZATIER_VERSION;
 		wp_enqueue_style( 'pizzatier-commerce-admin', PIZZATIER_PLUGIN_URL . 'assets/css/admin.css', [], $v );
+		// Settings-page + field styles — formerly inline <style> blocks in
+		// SettingsPage and the field callbacks; moved to a file per
+		// WordPress.org guidelines.
+		wp_enqueue_style( 'pizzatier-commerce-settings', PIZZATIER_PLUGIN_URL . 'assets/css/admin/commerce-settings.css', [ 'pizzatier-commerce-admin' ], $v );
 		wp_enqueue_script( 'pizzatier-commerce-admin-settings',      PIZZATIER_PLUGIN_URL . 'assets/js/admin-settings.js',      [], $v, true );
 		wp_enqueue_script( 'pizzatier-commerce-admin-settings-page', PIZZATIER_PLUGIN_URL . 'assets/js/admin-settings-page.js', [], $v, true );
 		$currency = function_exists( 'get_woocommerce_currency_symbol' ) ? get_woocommerce_currency_symbol() : '$';

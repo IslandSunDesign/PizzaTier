@@ -4,7 +4,7 @@ namespace PizzaTier\Shortcodes;
 if ( ! defined( 'ABSPATH' ) ) { exit; }
 
 /**
- * [pizza_builder] shortcode — renders the interactive pizza builder.
+ * [pizzatier_builder] shortcode — renders the interactive pizza builder.
  *
  * The template file receives these variables:
  *   $instance_id      — unique string ID for this builder instance
@@ -58,7 +58,7 @@ class BuilderShortcode {
 			'pizza_radius'     => '',
 			'layer_anim'       => '',
 			'layer_anim_speed' => '',
-		], $atts, 'pizza_builder' ) );
+		], $atts, 'pizzatier_builder' ) );
 
 		// Ensure a unique instance ID
 		if ( $atts['id'] === '' ) {

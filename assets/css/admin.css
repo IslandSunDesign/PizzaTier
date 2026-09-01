@@ -302,7 +302,7 @@
 /* ============================================================
    WC product tab icon
    ============================================================ */
-#woocommerce-product-data ul.wc-tabs li.pizza_configurator_options a::before {
+#woocommerce-product-data ul.wc-tabs li.pizzatier_configurator_options a::before {
 	/* Use a pizza / food icon from the dashicons set.
 	   dashicons-food is not available in older WP; fall back to grid-view. */
 	content: "\f539"; /* dashicons-grid-view */

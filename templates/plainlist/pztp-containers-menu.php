@@ -1,6 +1,6 @@
 <?php
 /**
- * Plainlist Template — [pizza_builder] output.
+ * Plainlist Template — [pizzatier_builder] output.
  *
  * A text-first, checklist-style pizza builder with no visual pizza canvas.
  * Two modes controlled by plainlist_setting_layout_mode:

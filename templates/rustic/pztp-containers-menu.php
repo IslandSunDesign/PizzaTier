@@ -1,6 +1,6 @@
 <?php
 /**
- * Fornaia Template — [pizza_builder] output.
+ * Fornaia Template — [pizzatier_builder] output.
  *
  * Rustic artisan pizza builder: warm earthy palette, aged-paper texture,
  * serif typography, vintage badge accents, horizontal step-nav,

@@ -1,0 +1,179 @@
+/*
+ * PizzaTier Commerce admin styles — commerce-presets.css
+ * Moved out of inline <style> blocks (WordPress.org compliance, v2.3.0).
+ */
+
+/* ── Preset editor meta box (Presets.php) ─────────────────────────── */
+/* ── Preset Builder — Wizard-style UI ──────────────────────────── */
+		.pztc-preset-page {
+			font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+			max-width: 100%;
+		}
+
+		/* Page header bar */
+		.pztc-preset-header {
+			display: flex; align-items: center; gap: 14px;
+			background: linear-gradient(135deg, #1a1e23 0%, #2d3748 100%); border-radius: 10px;
+			padding: 18px 22px; margin-bottom: 20px; border-bottom: 3px solid #ff6b35;
+		}
+		.pztc-preset-header__icon { font-size: 28px; flex-shrink: 0; }
+		.pztc-preset-header__text h2 { color: #fff; margin: 0; font-size: 17px; }
+		.pztc-preset-header__text p  { color: rgba(255,255,255,.55); margin: 2px 0 0; font-size: 13px; }
+
+		/* Two-column layout: preview left, pickers right */
+		.pztc-preset-wrap {
+			display: grid;
+			grid-template-columns: 280px 1fr;
+			gap: 20px;
+		}
+		@media (max-width: 960px) { .pztc-preset-wrap { grid-template-columns: 1fr; } }
+
+		/* ── Canvas column ───────────────────────────────────────────── */
+		.pztc-canvas-col { display: flex; flex-direction: column; align-items: center; gap: 14px; }
+
+		.pztc-canvas-wrap {
+			position: relative;
+			width: 240px; height: 240px;
+			border-radius: 50%;
+			overflow: hidden;
+			background: #f5f5f5;
+			border: 3px solid #e0e0e0;
+			box-shadow: 0 4px 20px rgba(0,0,0,.12);
+			flex-shrink: 0;
+		}
+		.pztc-canvas-wrap img {
+			position: absolute; inset: 0;
+			width: 100%; height: 100%;
+			object-fit: cover; border-radius: 50%;
+			display: none;
+		}
+		.pztc-canvas-wrap img.pztc-visible { display: block; }
+		.pztc-canvas-empty {
+			position: absolute; inset: 0;
+			display: flex; align-items: center; justify-content: center;
+			flex-direction: column; gap: 8px;
+			color: #bbb; font-size: 13px; text-align: center;
+		}
+		.pztc-canvas-empty .dashicons { font-size: 48px !important; color: #ddd; }
+
+		/* Legend chips */
+		.pztc-layer-legend {
+			display: flex; flex-wrap: wrap; justify-content: center; gap: 6px;
+			max-width: 260px;
+		}
+		.pztc-legend-chip {
+			display: inline-flex; align-items: center; gap: 4px;
+			background: #fff; border: 1px solid #e0e0e0; border-radius: 20px;
+			padding: 3px 10px; font-size: 11px; color: #555;
+		}
+		.pztc-legend-chip span { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
+
+		/* Summary card */
+		.pztc-preset-summary {
+			width: 100%;
+			background: #fff; border: 1px solid #e0e0e0; border-radius: 10px;
+			padding: 14px 16px; font-size: 12px;
+		}
+		.pztc-preset-summary__title {
+			font-size: 11px; font-weight: 700; text-transform: uppercase;
+			letter-spacing: .05em; color: #888; margin: 0 0 8px;
+		}
+		.pztc-preset-summary__item {
+			display: flex; justify-content: space-between; gap: 8px;
+			padding: 4px 0; border-bottom: 1px solid #f5f5f5; font-size: 12px;
+		}
+		.pztc-preset-summary__item:last-child { border-bottom: none; }
+		.pztc-preset-summary__label { color: #888; }
+		.pztc-preset-summary__value { color: #1a1a2e; font-weight: 600; text-align: right; }
+		#pztc-preset-empty-msg { color: #bbb; font-style: italic; font-size: 12px; }
+
+		/* ── Picker column ───────────────────────────────────────────── */
+		.pztc-picker-col { display: flex; flex-direction: column; gap: 2px; }
+
+		/* Section cards — same as wizard card style */
+		.pztc-psec {
+			background: #fff;
+			border: 1px solid #e8e8e8;
+			border-radius: 10px;
+			overflow: hidden;
+		}
+
+		.pztc-psec__header {
+			display: flex; align-items: center; gap: 10px;
+			padding: 12px 16px;
+			background: #f9f9f9;
+			border-bottom: 1px solid #eee;
+			cursor: pointer; user-select: none;
+		}
+		.pztc-psec__header:hover { background: #f3f3f3; }
+		.pztc-psec__dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+		.pztc-psec__title { font-size: 13px; font-weight: 700; color: #1a1a2e; flex: 1; }
+		.pztc-psec__badge {
+			font-size: 11px; font-weight: 700; color: #1a7a4a;
+			background: #e8f5ee; border-radius: 20px; padding: 1px 8px;
+		}
+		.pztc-psec__sel {
+			font-size: 11px; color: #888; font-style: italic; max-width: 120px;
+			overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+		}
+		.pztc-psec__arrow { color: #aaa; font-size: 16px; transition: transform .2s; }
+		.pztc-psec.pztc-open .pztc-psec__arrow { transform: rotate(180deg); }
+
+		.pztc-psec__body { display: none; padding: 12px; }
+		.pztc-psec.pztc-open .pztc-psec__body { display: block; }
+
+		/* Item grid inside each section */
+		.pztc-item-grid {
+			display: grid;
+			grid-template-columns: repeat(auto-fill, minmax(76px, 1fr));
+			gap: 8px;
+		}
+
+		.pztc-item {
+			display: flex; flex-direction: column; align-items: center; gap: 4px;
+			cursor: pointer;
+			padding: 8px 4px;
+			border-radius: 10px;
+			border: 2px solid transparent;
+			transition: border-color .15s, background .15s;
+			text-align: center;
+		}
+		.pztc-item:hover { border-color: #ff6b35; background: #fff7f3; }
+		.pztc-item.pztc-selected { border-color: #ff6b35; background: #fff3ec; }
+		.pztc-item.pztc-selected-topping { border-color: #1a7a4a; background: #f0fff5; }
+
+		.pztc-item-thumb {
+			width: 60px; height: 60px;
+			border-radius: 50%;
+			object-fit: cover;
+			background: #f0f0f0;
+			flex-shrink: 0;
+		}
+		.pztc-item-thumb-placeholder {
+			width: 60px; height: 60px; border-radius: 50%;
+			background: #f0f0f0;
+			display: flex; align-items: center; justify-content: center;
+			color: #ccc;
+		}
+		.pztc-item-label { font-size: 10px; color: #555; line-height: 1.2; max-width: 76px; word-break: break-word; }
+		.pztc-item.pztc-selected .pztc-item-label { color: #ff6b35; font-weight: 700; }
+		.pztc-item.pztc-selected-topping .pztc-item-label { color: #1a7a4a; font-weight: 700; }
+
+		/* "None" option */
+		.pztc-item-none .pztc-item-thumb-placeholder {
+			border: 2px dashed #ccc; background: transparent; font-size: 18px;
+		}
+
+		/* No items notice */
+		.pztc-no-items { font-size: 12px; color: #aaa; padding: 8px 4px; }
+		.pztc-no-items a { color: #ff6b35; text-decoration: none; }
+
+/* ── Preset editor meta box — extras (Presets.php) ─────────────────────────── */
+	.pztc-shortcode-panel__title { font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#888;margin:0 0 10px; }
+			.pztc-shortcode-panel__row { display:flex;align-items:center;gap:10px;flex-wrap:wrap; }
+			.pztc-shortcode-panel__code { flex:1;min-width:200px;font-family:monospace;font-size:14px;font-weight:600;background:#fff;border:2px solid #e0e0e0;border-radius:6px;padding:8px 12px;color:#1a1a2e;user-select:all;cursor:text; }
+			.pztc-shortcode-panel__copy { display:inline-flex;align-items:center;gap:6px;background:#ff6b35;color:#fff;border:none;border-radius:6px;padding:8px 14px;font-size:13px;font-weight:600;cursor:pointer;transition:background .2s;white-space:nowrap; }
+			.pztc-shortcode-panel__copy:hover { background:#e05a28; }
+			.pztc-shortcode-panel__copy.pztc-copied { background:#1a7a4a; }
+			.pztc-shortcode-panel__hint { font-size:12px;color:#888;margin:8px 0 0;line-height:1.5; }
+			.pztc-shortcode-panel__hint code { background:#fff;border:1px solid #e0e0e0;border-radius:4px;padding:1px 5px;font-size:11px; }

@@ -67,7 +67,7 @@
 		$( '#woocommerce-product-updated-message' ).addClass( 'show_if_pizza' );
 
 		// ── Pizza Configurator tab + panel ───────────────────────────────────
-		$( '.product_data_tabs .pizza_configurator_options' ).addClass( 'show_if_pizza' );
+		$( '.product_data_tabs .pizzatier_configurator_options' ).addClass( 'show_if_pizza' );
 		$( '#pizzatier_configurator_panel' ).addClass( 'show_if_pizza' );
 		$( '#pizzatier_configurator_panel .options_group' ).addClass( 'show_if_pizza' );
 	}

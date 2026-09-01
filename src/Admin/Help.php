@@ -176,7 +176,7 @@ class Help {
 				<div class="plhelp-step__body">
 					<h3>Embed the builder on a page</h3>
 					<p>Edit any WordPress page and add:</p>
-					<pre class="plhelp-code">[pizza_builder]</pre>
+					<pre class="plhelp-code">[pizzatier_builder]</pre>
 					<p>Or insert the <strong>Pizza Builder</strong> Gutenberg block from the block inserter. Use the Shortcode Generator to build more advanced shortcodes with per-page attribute overrides (custom shape, max toppings, hidden tabs, etc.).</p>
 					<a href="<?php echo esc_url( admin_url('admin.php?page=pizzatier-shortcodes') ); ?>" class="button">Shortcode Generator →</a>
 				</div>
@@ -357,11 +357,11 @@ class Help {
 				'steps' => [
 					'Go to <strong>PizzaTier → Shortcode Generator</strong>.',
 					'Configure your builder options — template, max toppings, default layers, visible tabs.',
-					'Copy the generated <code>[pizza_builder]</code> shortcode.',
+					'Copy the generated <code>[pizzatier_builder]</code> shortcode.',
 					'Paste it into any WordPress page or post using the Block Editor or Classic Editor.',
 					'Preview the page to confirm layers load and the visualizer responds to selections.',
 				],
-				'tip'   => 'You can place multiple builders on the same page by giving each a unique <code>id</code> attribute: <code>[pizza_builder id="pizza-1"]</code>.',
+				'tip'   => 'You can place multiple builders on the same page by giving each a unique <code>id</code> attribute: <code>[pizzatier_builder id="pizza-1"]</code>.',
 				'cpt'   => null,
 			],
 		];
@@ -675,10 +675,10 @@ class Help {
 	private function section_shortcodes(): void { ?>
 		<p class="plhelp-lead">PizzaTier provides four shortcodes. Every attribute is optional — defaults come from the global Settings unless overridden at the shortcode level. Use the <a href="<?php echo esc_url( admin_url('admin.php?page=pizzatier-shortcodes') ); ?>">Shortcode Generator</a> for a visual builder.</p>
 
-		<!-- ── [pizza_builder] ─────────────────────────────────────────── -->
+		<!-- ── [pizzatier_builder] ─────────────────────────────────────────── -->
 		<div class="plhelp-sc-block">
 			<div class="plhelp-sc-block__head">
-				<code class="plhelp-sc-name">[pizza_builder]</code>
+				<code class="plhelp-sc-name">[pizzatier_builder]</code>
 				<span class="plhelp-sc-tag">Interactive builder</span>
 			</div>
 			<p>Renders the full interactive pizza builder. Customers select layers, add toppings, see coverage options, and review their pizza in real time.</p>
@@ -703,22 +703,22 @@ class Help {
 
 			<h4>Copy-paste examples</h4>
 			<pre class="plhelp-code"><?php echo esc_html(
-'[pizza_builder]
+'[pizzatier_builder]
 
-[pizza_builder id="pizza-1" max_toppings="5" default_crust="thin-crust" default_sauce="classic-tomato"]
+[pizzatier_builder id="pizza-1" max_toppings="5" default_crust="thin-crust" default_sauce="classic-tomato"]
 
-[pizza_builder hide_tabs="drizzle,slicing" pizza_shape="square"]
+[pizzatier_builder hide_tabs="drizzle,slicing" pizza_shape="square"]
 
-[pizza_builder pizza_shape="rectangle" pizza_aspect="4 / 3" layer_anim="scale-in"]
+[pizzatier_builder pizza_shape="rectangle" pizza_aspect="4 / 3" layer_anim="scale-in"]
 
-[pizza_builder id="gf-builder" template="nightpie" default_cheese="dairy-free" hide_tabs="sizes,yourpizza"]'
+[pizzatier_builder id="gf-builder" template="nightpie" default_cheese="dairy-free" hide_tabs="sizes,yourpizza"]'
 ); ?></pre>
 		</div>
 
-		<!-- ── [pizza_static] ──────────────────────────────────────────── -->
+		<!-- ── [pizzatier_static] ──────────────────────────────────────────── -->
 		<div class="plhelp-sc-block">
 			<div class="plhelp-sc-block__head">
-				<code class="plhelp-sc-name">[pizza_static]</code>
+				<code class="plhelp-sc-name">[pizzatier_static]</code>
 				<span class="plhelp-sc-tag plhelp-sc-tag--green">Static display</span>
 			</div>
 			<p>Renders a static pizza image stack — no builder UI. Great for menu pages, featured pizzas, inline displays in blog posts, or order confirmation pages.</p>
@@ -737,18 +737,18 @@ class Help {
 
 			<h4>Copy-paste examples</h4>
 			<pre class="plhelp-code"><?php echo esc_html(
-'[pizza_static crust="thin-crust" sauce="classic-tomato" cheese="mozzarella" toppings="pepperoni,basil"]
+'[pizzatier_static crust="thin-crust" sauce="classic-tomato" cheese="mozzarella" toppings="pepperoni,basil"]
 
-[pizza_static crust="thick-crust" sauce="garlic-white" cheese="cheddar" toppings="chicken,bacon" drizzle="ranch"]
+[pizzatier_static crust="thick-crust" sauce="garlic-white" cheese="cheddar" toppings="chicken,bacon" drizzle="ranch"]
 
-[pizza_static crust="thin-crust" sauce="bbq" cheese="mozzarella" toppings="chicken,red-onion" cut="square-cut"]'
+[pizzatier_static crust="thin-crust" sauce="bbq" cheese="mozzarella" toppings="chicken,red-onion" cut="square-cut"]'
 ); ?></pre>
 		</div>
 
-		<!-- ── [pizza_layer] ──────────────────────────────────────────── -->
+		<!-- ── [pizzatier_layer] ──────────────────────────────────────────── -->
 		<div class="plhelp-sc-block">
 			<div class="plhelp-sc-block__head">
-				<code class="plhelp-sc-name">[pizza_layer]</code>
+				<code class="plhelp-sc-name">[pizzatier_layer]</code>
 				<span class="plhelp-sc-tag plhelp-sc-tag--purple">Single image</span>
 			</div>
 			<p>Renders a single layer image anywhere on the page — useful for ingredient spotlights, menu cards, "featured topping" sections, or decorative use.</p>
@@ -765,18 +765,18 @@ class Help {
 
 			<h4>Copy-paste examples</h4>
 			<pre class="plhelp-code"><?php echo esc_html(
-'[pizza_layer type="topping" slug="pepperoni"]
+'[pizzatier_layer type="topping" slug="pepperoni"]
 
-[pizza_layer type="crust" slug="thick-crust" field="layer"]
+[pizzatier_layer type="crust" slug="thick-crust" field="layer"]
 
-[pizza_layer type="sauce" slug="bbq" class="my-sauce-preview"]'
+[pizzatier_layer type="sauce" slug="bbq" class="my-sauce-preview"]'
 ); ?></pre>
 		</div>
 
-		<!-- ── [pizza_layer_info] ─────────────────────────────────────── -->
+		<!-- ── [pizzatier_layer_info] ─────────────────────────────────────── -->
 		<div class="plhelp-sc-block">
 			<div class="plhelp-sc-block__head">
-				<code class="plhelp-sc-name">[pizza_layer_info]</code>
+				<code class="plhelp-sc-name">[pizzatier_layer_info]</code>
 				<span class="plhelp-sc-tag plhelp-sc-tag--purple">Field value</span>
 			</div>
 			<p>Outputs the value of any custom field attached to a layer post — useful for displaying allergen info, nutrition data, ingredient notes, or any ACF/SCF field inline in page content.</p>
@@ -792,18 +792,18 @@ class Help {
 
 			<h4>Copy-paste examples</h4>
 			<pre class="plhelp-code"><?php echo esc_html(
-'[pizza_layer_info type="topping" slug="pepperoni" field="topping_ingredients"]
+'[pizzatier_layer_info type="topping" slug="pepperoni" field="topping_ingredients"]
 
-[pizza_layer_info type="size" slug="large-16" field="size_diameter_in"]
+[pizzatier_layer_info type="size" slug="large-16" field="size_diameter_in"]
 
-[pizza_layer_info type="cheese" slug="mozzarella" field="cheese_melt_factor"]'
+[pizzatier_layer_info type="cheese" slug="mozzarella" field="cheese_melt_factor"]'
 ); ?></pre>
 		</div>
 
 		<div class="plhelp-info-box">
 			<span class="dashicons dashicons-editor-code"></span>
 			<div>
-				<strong>Gutenberg Blocks:</strong> The three builder shortcodes (<code>[pizza_builder]</code>, <code>[pizza_static]</code>, <code>[pizza_layer]</code>) are available as native Gutenberg blocks. The Pizza Builder block includes the same attribute controls in the block sidebar — including per-block shape, animation, and tab visibility overrides. No shortcode syntax required.
+				<strong>Gutenberg Blocks:</strong> The three builder shortcodes (<code>[pizzatier_builder]</code>, <code>[pizzatier_static]</code>, <code>[pizzatier_layer]</code>) are available as native Gutenberg blocks. The Pizza Builder block includes the same attribute controls in the block sidebar — including per-block shape, animation, and tab visibility overrides. No shortcode syntax required.
 			</div>
 		</div>
 	<?php }
@@ -1040,13 +1040,13 @@ add_action( \'pizzatier_import_payload\', function( $payload, $results ) {
 			[ 'q' => 'Layers look misaligned or don\'t stack correctly.',
 			  'a' => 'All layer images must use the same canvas size with a transparent background. If your crust is 500×500 px but a topping was exported at 400×400 px (with no padding to reach 500×500), it will appear offset. Re-export on a consistent canvas across all assets.' ],
 			[ 'q' => 'Can I place two builders on the same page?',
-			  'a' => 'Yes. Give each shortcode a unique <code>id</code>: <code>[pizza_builder id="pizza-1"]</code> and <code>[pizza_builder id="pizza-2"]</code>. Each instance manages its own state independently.' ],
+			  'a' => 'Yes. Give each shortcode a unique <code>id</code>: <code>[pizzatier_builder id="pizza-1"]</code> and <code>[pizzatier_builder id="pizza-2"]</code>. Each instance manages its own state independently.' ],
 			[ 'q' => 'The builder CSS conflicts with my theme.',
 			  'a' => 'PizzaTier templates use namespaced CSS classes (e.g. <code>.np-*</code> for NightPie) to avoid conflicts. If you still see issues, open your browser inspector, identify the conflicting rule\'s selector, and add a more specific override in your theme\'s custom CSS or in a child template\'s <code>template.css</code>.' ],
 			[ 'q' => 'How do I add WooCommerce cart integration?',
 			  'a' => 'Yes — it is built in. PizzaTier registers a "Pizza" WooCommerce product type, embeds the builder on its product page, prices the build server-side from your price grids, and stores the full configuration on the order line item. Configure it under <strong>PizzaTier → Cart &amp; Pricing</strong>. WooCommerce is optional: without it you can still take orders through PizzaTier\'s own ordering system.' ],
 			[ 'q' => 'Can I display a static pizza without the full builder?',
-			  'a' => 'Yes — use <code>[pizza_static crust="thin-crust" sauce="tomato" cheese="mozzarella" toppings="pepperoni"]</code>. Specify each layer directly in the shortcode attributes. No builder UI is rendered.' ],
+			  'a' => 'Yes — use <code>[pizzatier_static crust="thin-crust" sauce="tomato" cheese="mozzarella" toppings="pepperoni"]</code>. Specify each layer directly in the shortcode attributes. No builder UI is rendered.' ],
 			[ 'q' => 'How do I pre-load a state from JavaScript (e.g. from a WooCommerce cart)?',
 			  'a' => 'Use the public API: <code>window.PizzaTierAPI.setState("instance-id", stateObject)</code>. See the Developer Reference section for the full state object schema.' ],
 			[ 'q' => 'Does PizzaTier respect the "Reduce Motion" accessibility preference?',
@@ -1293,10 +1293,10 @@ PizzaTier\Admin\SiteMigration     — full-site export/import (settings + CPTs +
 PizzaTier\PostTypes\PostTypeRegistrar — all 8 CPT registrations (7 layer types + Presets)
 
 // Shortcodes
-PizzaTier\Shortcodes\BuilderShortcode    — [pizza_builder]
-PizzaTier\Shortcodes\StaticShortcode     — [pizza_static]
-PizzaTier\Shortcodes\LayerImageShortcode — [pizza_layer]
-PizzaTier\Shortcodes\LayerInfoShortcode  — [pizza_layer_info]
+PizzaTier\Shortcodes\BuilderShortcode    — [pizzatier_builder]
+PizzaTier\Shortcodes\StaticShortcode     — [pizzatier_static]
+PizzaTier\Shortcodes\LayerImageShortcode — [pizzatier_layer]
+PizzaTier\Shortcodes\LayerInfoShortcode  — [pizzatier_layer_info]
 
 // Template
 PizzaTier\Template\TemplateLoader — template path resolution + file loading

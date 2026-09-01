@@ -286,148 +286,16 @@ class OrderPizzaMetaBox {
 			return;
 		}
 
-		$this->output_inline_styles();
-	}
-
-	/**
-	 * Output the meta box CSS as an inline style block.
-	 *
-	 * Keeps the meta box self-contained — no extra enqueue handle needed.
-	 */
-	private function output_inline_styles(): void {
-		// Only output once even if called multiple times.
-		static $done = false;
-		if ( $done ) return;
-		$done = true;
-		?>
-		<style id="pztc-omb-styles">
-		/* PizzaTier — Order Pizza Build meta box */
-		.pztc-omb { display: flex; flex-direction: column; gap: 20px; }
-
-		.pztc-omb__item {
-			border: 1px solid #e0e0e0;
-			border-radius: 6px;
-			overflow: hidden;
-			background: #fff;
-		}
-
-		/* Item header */
-		.pztc-omb__item-header {
-			display: flex;
-			align-items: center;
-			gap: 10px;
-			padding: 10px 14px;
-			background: #1a1a2e;
-			color: #fff;
-		}
-		.pztc-omb__product-name {
-			font-weight: 700;
-			font-size: 13px;
-			flex: 1;
-		}
-		.pztc-omb__qty {
-			background: rgba(255,255,255,.15);
-			border-radius: 4px;
-			padding: 2px 8px;
-			font-size: 12px;
-			font-weight: 600;
-		}
-		.pztc-omb__size-badge {
-			background: #ff6b35;
-			color: #fff;
-			border-radius: 4px;
-			padding: 2px 10px;
-			font-size: 12px;
-			font-weight: 700;
-			letter-spacing: .5px;
-			text-transform: uppercase;
-		}
-
-		/* Build table */
-		.pztc-omb__table {
-			width: 100%;
-			border-collapse: collapse;
-			font-size: 12px;
-		}
-		.pztc-omb__table th,
-		.pztc-omb__table td {
-			padding: 5px 10px;
-			border-bottom: 1px solid #f0f0f0;
-			text-align: left;
-			vertical-align: middle;
-		}
-		.pztc-omb__table thead th {
-			background: #f7f7f7;
-			color: #555;
-			font-size: 11px;
-			text-transform: uppercase;
-			letter-spacing: .4px;
-			font-weight: 600;
-			border-bottom: 2px solid #e0e0e0;
-		}
-		.pztc-omb__th-type     { width: 80px; }
-		.pztc-omb__th-coverage { width: 90px; }
-		.pztc-omb__th-price    { width: 90px; text-align: right !important; }
-
-		/* Type group cell (rowspan, left column) */
-		.pztc-omb__type-cell {
-			background: #fafafa;
-			font-weight: 600;
-			color: #333;
-			white-space: nowrap;
-			vertical-align: top;
-			padding-top: 7px;
-			border-right: 2px solid #e8692a;
-		}
-		.pztc-omb__type-cell em {
-			font-weight: 400;
-			color: #888;
-		}
-
-		/* Base price row */
-		.pztc-omb__base-row td {
-			background: #fffdf9;
-			font-style: italic;
-			color: #777;
-		}
-
-		/* Layer rows */
-		.pztc-omb__layer-row:hover td { background: #fafeff; }
-		.pztc-omb__coverage { color: #666; }
-		.pztc-omb__note { font-size: 10px; color: #999; }
-		.pztc-omb__included { color: #bbb; }
-
-		/* Price column */
-		.pztc-omb__price-cell { text-align: right; font-variant-numeric: tabular-nums; }
-
-		/* Total footer */
-		.pztc-omb__total-row td {
-			background: #f9f9f9;
-			border-top: 2px solid #ff6b35;
-			padding-top: 7px;
-			padding-bottom: 7px;
-		}
-		.pztc-omb__total-row .pztc-omb__price-cell {
-			font-size: 14px;
-			color: #1a1a2e;
-		}
-
-		/* Customer note row */
-		.pztc-omb__note-row td {
-			font-size: 11px;
-			color: #555;
-			background: #fffbe6;
-			border-top: 1px solid #f0b429;
-		}
-
-		/* Empty state */
-		.pztc-omb__empty {
-			color: #888;
-			font-style: italic;
-			padding: 8px 0;
-		}
-		</style>
-		<?php
+		// Order-screen styles (this meta box + the order item breakdown
+		// table). Shared handle with OrderMeta — WordPress deduplicates.
+		// Formerly an inline <style> block; moved to a file per
+		// WordPress.org guidelines.
+		wp_enqueue_style(
+			'pizzatier-commerce-order-screen',
+			PIZZATIER_PLUGIN_URL . 'assets/css/admin/commerce-order-screen.css',
+			[],
+			PIZZATIER_VERSION
+		);
 	}
 
 	// -------------------------------------------------------------------------

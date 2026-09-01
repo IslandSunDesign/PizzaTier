@@ -192,7 +192,7 @@ class BlockRegistrar {
 	/**
 	 * Render callback for pizzatier/pizza-builder.
 	 *
-	 * Maps block attributes to [pizza_builder] shortcode attributes.
+	 * Maps block attributes to [pizzatier_builder] shortcode attributes.
 	 * In the block editor REST preview context we return a styled static
 	 * placeholder so the editor always shows something useful — the full
 	 * template pipeline requires frontend globals that are not available

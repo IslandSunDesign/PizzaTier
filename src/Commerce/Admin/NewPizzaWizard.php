@@ -70,6 +70,14 @@ class NewPizzaWizard {
 			[ 'woocommerce_admin_styles' ],
 			PIZZATIER_VERSION
 		);
+		// Wizard styles — formerly an inline <style> block in the page
+		// render; moved to a file per WordPress.org guidelines.
+		wp_enqueue_style(
+			'pizzatier-commerce-new-pizza-wizard-css',
+			PIZZATIER_PLUGIN_URL . 'assets/css/admin/commerce-new-pizza-wizard.css',
+			[ 'pizzatier-commerce-wizard' ],
+			PIZZATIER_VERSION
+		);
 		wp_enqueue_media(); // for featured image picker in step 1
 		wp_enqueue_script(
 			'pizzatier-commerce-new-pizza-wizard',
@@ -301,7 +309,6 @@ class NewPizzaWizard {
 
 		?>
 		<div class="wrap pztc-wizard-page">
-			<?php $this->render_wizard_styles(); ?>
 
 			<!-- Page header -->
 			<div class="pztc-wiz-page-header">
@@ -737,98 +744,6 @@ class NewPizzaWizard {
 				<?php esc_html_e( 'After publishing you will be taken to the full product edit screen where you can make further adjustments.', 'pizzatier' ); ?>
 			</div>
 		</div>
-		<?php
-	}
-
-	// -------------------------------------------------------------------------
-	// Wizard styles
-	// -------------------------------------------------------------------------
-
-	private function render_wizard_styles(): void {
-		?>
-		<style>
-		.pztc-wizard-page { max-width: 900px; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
-
-		/* Page header */
-		.pztc-wiz-page-header { display:flex; align-items:center; justify-content:space-between; background:linear-gradient(135deg,#1a1e23 0%,#2d3748 100%); border-radius:10px; padding:20px 24px; margin-bottom:20px; border-bottom:3px solid #ff6b35; }
-		.pztc-wiz-page-header__brand { display:flex; align-items:center; gap:14px; }
-		.pztc-wiz-page-header__brand h1 { color:#fff; margin:0; font-size:20px; }
-		.pztc-wiz-page-header__brand p { color:rgba(255,255,255,.55); margin:2px 0 0; font-size:13px; }
-		.pztc-wiz-exit-link { color:rgba(255,255,255,.7); text-decoration:none; font-size:13px; }
-		.pztc-wiz-exit-link:hover { color:#fff; }
-
-		/* Stepper */
-		.pztc-wiz-stepper { display:flex; align-items:center; background:#fff; border:1px solid #e0e0e0; border-radius:10px; padding:16px 20px; margin-bottom:20px; gap:0; }
-		.pztc-wiz-stepper__item { display:flex; align-items:center; gap:8px; }
-		.pztc-wiz-stepper__num { width:28px; height:28px; border-radius:50%; background:#e0e0e0; color:#888; display:flex; align-items:center; justify-content:center; font-size:13px; font-weight:700; flex-shrink:0; }
-		.pztc-wiz-stepper__item--active .pztc-wiz-stepper__num { background:#ff6b35; color:#fff; }
-		.pztc-wiz-stepper__item--done .pztc-wiz-stepper__num { background:#46b450; color:#fff; }
-		.pztc-wiz-stepper__label { font-size:13px; font-weight:600; color:#aaa; }
-		.pztc-wiz-stepper__item--active .pztc-wiz-stepper__label { color:#1a1a2e; }
-		.pztc-wiz-stepper__item--done .pztc-wiz-stepper__label { color:#46b450; }
-		.pztc-wiz-stepper__line { flex:1; height:2px; background:#e0e0e0; margin:0 12px; }
-		.pztc-wiz-stepper__line--done { background:#46b450; }
-
-		/* Body */
-		.pztc-wiz-body { background:#fff; border:1px solid #e0e0e0; border-radius:10px; padding:28px; margin-bottom:16px; }
-
-		/* Step */
-		.pztc-wiz-step__header { display:flex; align-items:flex-start; gap:14px; margin-bottom:24px; padding-bottom:16px; border-bottom:1px solid #f0f0f0; }
-		.pztc-wiz-step__icon { font-size:32px; line-height:1; flex-shrink:0; }
-		.pztc-wiz-step__header h2 { font-size:17px; margin:0 0 4px; color:#1a1a2e; }
-		.pztc-wiz-step__header p { font-size:13px; color:#666; margin:0; }
-
-		/* Fields */
-		.pztc-wiz-fields { display:flex; flex-direction:column; gap:18px; }
-		.pztc-wiz-field label { display:block; font-weight:600; font-size:13px; color:#1a1a2e; margin-bottom:6px; }
-		.pztc-field-hint { font-size:12px; color:#888; margin:4px 0 0; }
-		.pztc-req { color:#ff6b35; }
-
-		/* Image picker */
-		.pztc-wiz-image-picker { display:flex; align-items:center; gap:16px; flex-wrap:wrap; }
-		.pztc-wiz-image-preview { width:120px; height:120px; border:2px dashed #e0e0e0; border-radius:8px; display:flex; align-items:center; justify-content:center; overflow:hidden; background:#fafafa; }
-		.pztc-wiz-image-preview img { width:100%; height:100%; object-fit:cover; }
-		.pztc-wiz-image-placeholder { display:flex; flex-direction:column; align-items:center; gap:4px; color:#bbb; font-size:11px; }
-		.pztc-wiz-image-placeholder .dashicons { font-size:32px !important; }
-		.pztc-wiz-image-actions { display:flex; flex-direction:column; gap:8px; }
-
-		/* Preset grid */
-		.pztc-wiz-preset-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(160px,1fr)); gap:14px; margin-top:8px; }
-		.pztc-wiz-preset-card { display:flex; flex-direction:column; align-items:center; gap:8px; padding:16px 12px; border:2px solid #e0e0e0; border-radius:10px; background:#fff; cursor:pointer; text-align:center; transition:border-color .15s, background .15s; }
-		.pztc-wiz-preset-card:hover { border-color:#ff6b35; background:#fff7f3; }
-		.pztc-wiz-preset-card--selected { border-color:#ff6b35; background:#fff7f3; }
-		.pztc-wiz-preset-card--none { border-style:dashed; }
-		.pztc-wiz-preset-card__icon { font-size:32px; }
-		.pztc-wiz-preset-card__thumb { width:80px; height:80px; object-fit:cover; border-radius:50%; }
-		.pztc-wiz-preset-card__title { font-size:13px; font-weight:700; color:#1a1a2e; }
-		.pztc-wiz-preset-card__desc { font-size:11px; color:#888; }
-		.pztc-wiz-no-presets { font-size:13px; color:#aaa; }
-
-		/* Layer groups in step 3 */
-		.pztc-wiz-layers-section { margin-top:24px; }
-		.pztc-wiz-layers-section h3 { font-size:14px; text-transform:uppercase; letter-spacing:.04em; color:#888; margin:0 0 6px; }
-		.pztc-wiz-layer-group { margin-bottom:20px; }
-		.pztc-wiz-layer-group__title { display:flex; align-items:center; justify-content:space-between; font-size:13px; font-weight:700; color:#1a1a2e; margin:0 0 8px; padding:8px 0; border-bottom:1px solid #eee; }
-		.pztc-wiz-select-all-label { display:flex; align-items:center; gap:4px; font-size:12px; font-weight:400; color:#888; cursor:pointer; }
-
-		/* Review */
-		.pztc-wiz-review { border:1px solid #e8e8e8; border-radius:8px; overflow:hidden; margin-bottom:16px; }
-		.pztc-wiz-review__row { display:flex; align-items:center; padding:12px 16px; border-bottom:1px solid #f5f5f5; gap:16px; }
-		.pztc-wiz-review__row:last-child { border-bottom:none; }
-		.pztc-wiz-review__label { font-size:12px; text-transform:uppercase; letter-spacing:.04em; color:#888; font-weight:600; width:140px; flex-shrink:0; }
-		.pztc-wiz-review__value { font-size:13px; color:#1a1a2e; }
-		.pztc-wiz-review__note { font-size:12px; color:#666; display:flex; align-items:center; gap:6px; }
-		.pztc-wiz-review__note .dashicons { color:#888; font-size:14px !important; }
-
-		/* Nav */
-		.pztc-wiz-nav { display:flex; align-items:center; gap:12px; padding-top:20px; border-top:1px solid #f0f0f0; margin-top:4px; }
-		.pztc-wiz-nav__back { }
-		.pztc-wiz-nav__next, .pztc-wiz-nav__publish { padding:8px 24px !important; font-size:14px !important; }
-		.pztc-wiz-nav__publish { background:#46b450 !important; border-color:#3d9e43 !important; }
-		.pztc-wiz-nav__publish:hover { background:#3d9e43 !important; }
-		.pztc-wiz-nav__reset { margin-left:auto; font-size:12px; color:#aaa; text-decoration:none; }
-		.pztc-wiz-nav__reset:hover { color:#ff6b35; }
-		</style>
 		<?php
 	}
 

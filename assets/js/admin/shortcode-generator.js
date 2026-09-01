@@ -54,7 +54,7 @@
 			if ( hiddenTabs.length && hiddenTabs.length < allCbs.length ) {
 				attrs.push( 'hide_tabs="' + hiddenTabs.join( ',' ) + '"' );
 			}
-			sc = '[pizza_builder' + ( attrs.length ? ' ' + attrs.join( ' ' ) : '' ) + ']';
+			sc = '[pizzatier_builder' + ( attrs.length ? ' ' + attrs.join( ' ' ) : '' ) + ']';
 
 		} else if ( type === 'static' ) {
 			var preset = val( 's-preset' );
@@ -67,10 +67,10 @@
 			if ( tops.length ) { attrs.push( 'toppings="' + tops.join( ',' ) + '"' ); }
 			if ( preset ) {
 				// A preset defines the entire pizza (incl. toppings) and renders via the
-				// [pizza_preset] shortcode (PizzaTier), keyed by the preset's post ID.
-				sc = '[pizza_preset id="' + preset + '"]';
+				// [pizzatier_preset] shortcode (PizzaTier), keyed by the preset's post ID.
+				sc = '[pizzatier_preset id="' + preset + '"]';
 			} else {
-				sc = '[pizza_static' + ( attrs.length ? ' ' + attrs.join( ' ' ) : '' ) + ']';
+				sc = '[pizzatier_static' + ( attrs.length ? ' ' + attrs.join( ' ' ) : '' ) + ']';
 			}
 
 		} else if ( type === 'layer' ) {
@@ -78,13 +78,13 @@
 			var sl  = val( 'l-slug' );  if ( sl )                     { attrs.push( 'slug="' + sl + '"' ); }
 			var img = val( 'l-image' ); if ( img && img !== 'layer' ) { attrs.push( 'image="' + img + '"' ); }
 			var cls = val( 'l-class' ); if ( cls )                    { attrs.push( 'class="' + cls + '"' ); }
-			sc = '[pizza_layer' + ( attrs.length ? ' ' + attrs.join( ' ' ) : '' ) + ']';
+			sc = '[pizzatier_layer' + ( attrs.length ? ' ' + attrs.join( ' ' ) : '' ) + ']';
 
 		} else if ( type === 'layerinfo' ) {
 			var lit = val( 'li-type' );  if ( lit ) { attrs.push( 'type="' + lit + '"' ); }
 			var lis = val( 'li-slug' );  if ( lis ) { attrs.push( 'slug="' + lis + '"' ); }
 			var lif = val( 'li-field' ); if ( lif ) { attrs.push( 'field="' + lif + '"' ); }
-			sc = '[pizza_layer_info' + ( attrs.length ? ' ' + attrs.join( ' ' ) : '' ) + ']';
+			sc = '[pizzatier_layer_info' + ( attrs.length ? ' ' + attrs.join( ' ' ) : '' ) + ']';
 		}
 
 		output.textContent = sc;

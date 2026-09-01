@@ -76,6 +76,7 @@ class BulkPricingPage {
 	public function register(): void {
 		add_action( 'wp_ajax_' . self::ACTION_LOAD, [ $this, 'ajax_load_items' ] );
 		add_action( 'wp_ajax_' . self::ACTION_SAVE, [ $this, 'ajax_save_prices' ] );
+		add_action( 'admin_enqueue_scripts',        [ $this, 'enqueue_assets' ] );
 	}
 
 	// -------------------------------------------------------------------------
@@ -379,52 +380,13 @@ class BulkPricingPage {
 			wp_die( esc_html__( 'You do not have permission to access this page.', 'pizzatier' ) );
 		}
 
-		// get_woocommerce_currency_symbol() returns an HTML entity (e.g. "&#36;"
-		// for USD, "&pound;" for GBP). It's meant to be printed as HTML so the
-		// browser decodes it, but the editor inserts it via textContent (which
-		// escapes it), so the raw entity — "&#36;" — would show in every input.
-		// Decode to the actual character here so the client renders "$", "£", etc.
-		$currency = function_exists( 'get_woocommerce_currency_symbol' )
-			? html_entity_decode( get_woocommerce_currency_symbol() ?: '$', ENT_QUOTES, 'UTF-8' )
-			: '$';
-
-		// Type list for the scope selector.
-		$types = [];
-		foreach ( $this->types() as $slug => $meta ) {
-			$types[] = [ 'slug' => $slug, 'label' => $meta['label'], 'fraction' => (bool) $meta['fraction'] ];
-		}
-
-		$boot = [
-			'ajaxUrl'  => admin_url( 'admin-ajax.php' ),
-			'nonce'    => wp_create_nonce( self::NONCE_ACTION ),
-			'actions'  => [ 'load' => self::ACTION_LOAD, 'save' => self::ACTION_SAVE ],
-			'currency' => $currency,
-			'types'    => $types,
-			'i18n'     => [
-				'loading'      => __( 'Loading ingredients…', 'pizzatier' ),
-				'noItems'      => __( 'No ingredients found for this type yet. Add some under the PizzaTier menu first.', 'pizzatier' ),
-				'saving'       => __( 'Saving…', 'pizzatier' ),
-				/* translators: %s: value inserted into the message. */
-				'savedN'       => __( 'Saved %d ingredient(s).', 'pizzatier' ),
-				/* translators: %s: value inserted into the message. */
-				'clearedN'     => __( 'Reverted %d ingredient(s) to fallback pricing.', 'pizzatier' ),
-				/* translators: %s: value inserted into the message. */
-				'failedN'      => __( '%d ingredient(s) could not be saved.', 'pizzatier' ),
-				'nothing'      => __( 'No changes to save.', 'pizzatier' ),
-				'dirtyLeave'   => __( 'You have unsaved price changes. Leave this page and discard them?', 'pizzatier' ),
-				'confirmClear' => __( 'Clear custom prices for this ingredient and revert to the fallback grid? This is saved when you click Save changes.', 'pizzatier' ),
-				'fallback'     => __( 'Using fallback', 'pizzatier' ),
-				'custom'       => __( 'Custom prices', 'pizzatier' ),
-				'edited'       => __( 'Edited', 'pizzatier' ),
-				'cleared'      => __( 'Will revert', 'pizzatier' ),
-				/* translators: %s: value inserted into the message. */
-				'cappedNote'   => __( 'Showing the first %d ingredients. Narrow the scope to a single type to see the rest.', 'pizzatier' ),
-			],
-		];
+		// Type list for the scope selector. The client boot config (currency,
+		// nonce, i18n, this same list) is attached to the enqueued script in
+		// enqueue_assets() via wp_add_inline_script().
+		$types = $this->scope_types();
 		?>
 		<div class="wrap pztc-page-wrap pztc-bulk-page">
 
-			<?php $this->render_styles(); ?>
 
 			<!-- ══ Header ═════════════════════════════════════════════════ -->
 			<div class="pztc-header">
@@ -504,576 +466,110 @@ class BulkPricingPage {
 				</div>
 			</div>
 
-			<script type="text/javascript">
-				window.PIZZATIER_COMMERCE_BULK = <?php echo wp_json_encode( $boot ); ?>;
-			</script>
-			<?php $this->render_script(); ?>
 		</div>
 		<?php
 	}
 
 	// -------------------------------------------------------------------------
-	// Styles
+	// Assets
 	// -------------------------------------------------------------------------
 
-	private function render_styles(): void {
-		?>
-		<style>
-		.pztc-bulk-page { max-width: 1180px; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
-
-		/* Header (mirrors the Pricing page header) */
-		.pztc-header { display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; background: linear-gradient(135deg,#1a1e23 0%,#2d3748 100%); border-radius: 10px; padding: 20px 24px; margin: 16px 0 20px; border-bottom: 3px solid #ff6b35; }
-		.pztc-header__brand { display: flex; align-items: center; gap: 14px; }
-		.pztc-header__icon { font-size: 30px !important; width: 30px !important; height: 30px !important; color: #ff6b35; }
-		.pztc-header__title { margin: 0; color: #fff; font-size: 21px; font-weight: 700; line-height: 1.2; }
-		.pztc-header__tagline { margin: 3px 0 0; color: rgba(255,255,255,.55); font-size: 12px; }
-		.pztc-header__actions { display: flex; gap: 8px; flex-wrap: wrap; }
-		.pztc-header__actions .button { display: inline-flex; align-items: center; gap: 4px; }
-
-		.pztc-card { background: #fff; border: 1px solid #e0e3e7; border-radius: 10px; box-shadow: 0 1px 2px rgba(16,24,40,.04); margin-bottom: 18px; }
-
-		/* Scope bar */
-		.pztc-bulk-scope { padding: 16px 20px; }
-		.pztc-bulk-scope__row { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
-		.pztc-bulk-scope__label { font-size: 13px; font-weight: 600; color: #1d2023; }
-		.pztc-select-input { border: 1px solid #8c8f94; border-radius: 4px; font-size: 13px; padding: 6px 10px; background: #fff; min-width: 220px; }
-		.pztc-select-input:focus { border-color: #ff6b35; outline: none; box-shadow: 0 0 0 2px rgba(255,107,53,.15); }
-		.pztc-bulk-scope__check { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; color: #4b5563; user-select: none; }
-		.pztc-bulk-scope__spacer { flex: 1 1 auto; }
-		.pztc-bulk-scope__search-wrap { position: relative; display: inline-flex; align-items: center; }
-		.pztc-bulk-scope__search-wrap .dashicons { position: absolute; left: 8px; color: #9ca3af; font-size: 16px; width: 16px; height: 16px; }
-		.pztc-bulk-search { border: 1px solid #8c8f94; border-radius: 4px; font-size: 13px; padding: 6px 10px 6px 28px; min-width: 200px; }
-		.pztc-bulk-search:focus { border-color: #ff6b35; outline: none; box-shadow: 0 0 0 2px rgba(255,107,53,.15); }
-		.pztc-bulk-scope__hint { margin: 12px 0 0; color: #646970; font-size: 12px; line-height: 1.5; }
-
-		/* Mount + loading */
-		.pztc-bulk-mount { margin-bottom: 90px; }
-		.pztc-bulk-loading { display: flex; align-items: center; gap: 10px; padding: 40px; color: #646970; font-size: 13px; justify-content: center; }
-		.pztc-spinner { width: 16px; height: 16px; border: 2px solid #e5e7eb; border-top-color: #ff6b35; border-radius: 50%; animation: pztc-spin .7s linear infinite; display: inline-block; }
-		@keyframes pztc-spin { to { transform: rotate(360deg); } }
-
-		.pztc-bulk-empty { padding: 40px; text-align: center; color: #646970; font-size: 13px; }
-
-		/* Per-type section */
-		.pztc-bulk-section { background: #fff; border: 1px solid #e0e3e7; border-radius: 10px; box-shadow: 0 1px 2px rgba(16,24,40,.04); margin-bottom: 20px; overflow: hidden; }
-		.pztc-bulk-section__head { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; padding: 14px 18px; border-bottom: 1px solid #eef0f2; background: #fbfbfc; flex-wrap: wrap; }
-		.pztc-bulk-section__title { margin: 0; font-size: 15px; font-weight: 700; color: #1d2023; display: flex; align-items: center; gap: 8px; }
-		.pztc-bulk-section__title .dashicons { color: #ff6b35; }
-		.pztc-bulk-section__count { font-size: 11px; font-weight: 600; color: #6b7280; background: #f3f4f6; border-radius: 20px; padding: 2px 9px; }
-		.pztc-bulk-section__desc { margin: 3px 0 0; font-size: 12px; color: #646970; }
-		.pztc-bulk-section__tools { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
-		.pztc-bulk-section__tools .button { display: inline-flex; align-items: center; gap: 4px; font-size: 12px; }
-		.pztc-bulk-section__tools .dashicons { font-size: 15px !important; width: 15px !important; height: 15px !important; }
-
-		.pztc-bulk-capnote { margin: 0; padding: 8px 18px; background: #fff7ed; color: #9a3412; font-size: 12px; border-bottom: 1px solid #fed7aa; }
-
-		/* Table */
-		.pztc-bulk-table-wrap { overflow-x: auto; }
-		.pztc-bulk-table { width: 100%; border-collapse: separate; border-spacing: 0; font-size: 13px; }
-		.pztc-bulk-table th, .pztc-bulk-table td { padding: 7px 8px; border-bottom: 1px solid #eef0f2; text-align: center; white-space: nowrap; }
-		.pztc-bulk-table thead th { background: #f9fafb; font-size: 11px; font-weight: 700; color: #374151; position: sticky; top: 32px; z-index: 2; }
-		.pztc-bulk-table thead tr.pztc-bulk-sizes th { text-transform: uppercase; letter-spacing: .03em; border-bottom: 1px solid #e5e7eb; }
-		.pztc-bulk-table thead tr.pztc-bulk-fracs th { font-size: 10px; color: #6b7280; font-weight: 600; padding-top: 3px; padding-bottom: 5px; }
-		.pztc-bulk-col-size { border-left: 2px solid #f0e6df; }
-		.pztc-bulk-th-item { text-align: left; min-width: 200px; position: sticky; left: 0; background: #f9fafb; z-index: 3; }
-		.pztc-bulk-td-item { text-align: left; position: sticky; left: 0; background: #fff; z-index: 1; }
-		.pztc-bulk-table tbody tr:hover .pztc-bulk-td-item { background: #fff9f5; }
-		.pztc-bulk-table tbody tr:hover td { background: #fff9f5; }
-		.pztc-bulk-table tbody tr.is-hidden { display: none; }
-
-		.pztc-bulk-itemcell { display: flex; align-items: center; gap: 8px; }
-		.pztc-bulk-itemcell__name { font-weight: 600; color: #1d2023; }
-		.pztc-bulk-check { margin: 0; }
-
-		.pztc-bulk-badge { display: inline-block; font-size: 10px; font-weight: 700; padding: 1px 7px; border-radius: 20px; text-transform: uppercase; letter-spacing: .02em; }
-		.pztc-bulk-badge--fallback { background: #fff4e5; color: #b26a00; }
-		.pztc-bulk-badge--custom   { background: #e7f6ec; color: #1a7a3e; }
-		.pztc-bulk-badge--edited   { background: #fdecef; color: #b4245a; }
-		.pztc-bulk-badge--cleared  { background: #eef1f4; color: #52606d; }
-
-		.pztc-bulk-rowclear { border: none; background: transparent; color: #b91c1c; cursor: pointer; padding: 2px; border-radius: 4px; line-height: 1; opacity: .55; }
-		.pztc-bulk-rowclear:hover { opacity: 1; background: #fee2e2; }
-		.pztc-bulk-rowclear .dashicons { font-size: 16px; width: 16px; height: 16px; }
-
-		/* Price inputs */
-		.pztc-price-cell { position: relative; }
-		.pztc-price-input { width: 74px; padding: 4px 6px 4px 16px; border: 1px solid #d1d5db; border-radius: 5px; font-size: 13px; text-align: right; background: #fff; transition: border-color .12s, box-shadow .12s; }
-		.pztc-price-input:focus { border-color: #ff6b35; outline: none; box-shadow: 0 0 0 2px rgba(255,107,53,.15); }
-		.pztc-price-input.is-edited { border-color: #ff6b35; background: #fff8f4; font-weight: 600; }
-		.pztc-price-cell__cur { position: absolute; left: 5px; top: 50%; transform: translateY(-50%); font-size: 11px; color: #9ca3af; pointer-events: none; }
-		tr.is-cleared .pztc-price-input { opacity: .4; text-decoration: line-through; }
-
-		/* Fill row (Set all) */
-		tr.pztc-bulk-fillrow th, tr.pztc-bulk-fillrow td { background: #fcfaf8; border-bottom: 1px dashed #e5d9cf; padding-top: 6px; padding-bottom: 6px; }
-		.pztc-bulk-fill-label { text-align: left; font-size: 11px; font-weight: 700; color: #9a5a2a; text-transform: uppercase; letter-spacing: .03em; }
-		.pztc-bulk-fill-input { width: 74px; padding: 4px 6px 4px 16px; border: 1px dashed #d8b48f; border-radius: 5px; font-size: 12px; text-align: right; background: #fff; }
-		.pztc-bulk-fill-input:focus { border-color: #ff6b35; outline: none; box-shadow: 0 0 0 2px rgba(255,107,53,.12); }
-
-		/* Sticky save bar */
-		.pztc-bulk-savebar { position: fixed; left: 160px; right: 0; bottom: 0; z-index: 9990; display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 12px 24px; background: #fff; border-top: 1px solid #e0e3e7; box-shadow: 0 -4px 16px rgba(16,24,40,.06); transform: translateY(0); transition: transform .2s; }
-		.folded-menu .pztc-bulk-savebar { left: 36px; }
-		@media (max-width: 960px) { .pztc-bulk-savebar { left: 0; } }
-		.pztc-bulk-savebar__status { font-size: 13px; color: #52606d; }
-		.pztc-bulk-savebar__count { display: inline-block; min-width: 22px; text-align: center; font-weight: 700; color: #fff; background: #ff6b35; border-radius: 20px; padding: 1px 8px; margin-right: 4px; }
-		.pztc-bulk-savebar__count.is-zero { background: #c3c4c7; }
-		.pztc-bulk-savebar__actions { display: flex; align-items: center; gap: 10px; }
-		.pztc-bulk-savebar__actions .button { display: inline-flex; align-items: center; gap: 5px; }
-		.pztc-save-btn.button-primary { background: #ff6b35 !important; border-color: #cf5519 !important; color: #fff !important; height: 34px; font-weight: 600; padding: 0 20px !important; }
-		.pztc-save-btn.button-primary:hover:not(:disabled) { background: #cf5519 !important; }
-		.pztc-save-btn.button-primary:disabled { background: #f3b39c !important; border-color: #f3b39c !important; cursor: default; }
-
-		/* Toast + inline result */
-		.pztc-bulk-toast { position: fixed; right: 24px; bottom: 74px; z-index: 9995; max-width: 380px; background: #1d2023; color: #fff; font-size: 13px; padding: 12px 16px; border-radius: 8px; box-shadow: 0 8px 30px rgba(16,24,40,.25); opacity: 0; transform: translateY(8px); transition: opacity .2s, transform .2s; pointer-events: none; }
-		.pztc-bulk-toast.is-shown { opacity: 1; transform: translateY(0); }
-		.pztc-bulk-toast--ok { border-left: 4px solid #16a34a; }
-		.pztc-bulk-toast--warn { border-left: 4px solid #f59e0b; }
-		.pztc-bulk-toast--err { border-left: 4px solid #ef4444; }
-		.pztc-bulk-errlist { margin: 6px 0 0; padding-left: 16px; font-size: 12px; color: #fca5a5; }
-		.pztc-bulk-errlist li { margin: 2px 0; }
-
-		@media (max-width: 782px) {
-			.pztc-header { flex-direction: column; align-items: flex-start; }
-			.pztc-bulk-th-item, .pztc-bulk-td-item { min-width: 150px; }
+	/**
+	 * Type list for the scope selector — shared by the page HTML and the
+	 * client boot config.
+	 *
+	 * @return array<int,array{slug:string,label:string,fraction:bool}>
+	 */
+	private function scope_types(): array {
+		$types = [];
+		foreach ( $this->types() as $slug => $meta ) {
+			$types[] = [ 'slug' => $slug, 'label' => $meta['label'], 'fraction' => (bool) $meta['fraction'] ];
 		}
-		@media (prefers-reduced-motion: reduce) {
-			.pztc-spinner { animation: none; }
-			.pztc-bulk-toast { transition: none; }
-		}
-		</style>
-		<?php
+		return $types;
 	}
 
-	// -------------------------------------------------------------------------
-	// Client script (self-contained — no build step, no external deps)
-	// -------------------------------------------------------------------------
+	/**
+	 * Boot config consumed by commerce-bulk-pricing.js as
+	 * window.PIZZATIER_COMMERCE_BULK. Formerly printed by an inline
+	 * bootstrap <script> during render; attached to the enqueued script
+	 * via wp_add_inline_script() (WordPress.org compliance, v2.3.0).
+	 *
+	 * @return array<string,mixed>
+	 */
+	private function boot_data(): array {
+		// get_woocommerce_currency_symbol() returns an HTML entity (e.g. "&#36;"
+		// for USD, "&pound;" for GBP). It's meant to be printed as HTML so the
+		// browser decodes it, but the editor inserts it via textContent (which
+		// escapes it), so the raw entity — "&#36;" — would show in every input.
+		// Decode to the actual character here so the client renders "$", "£", etc.
+		$currency = function_exists( 'get_woocommerce_currency_symbol' )
+			? html_entity_decode( get_woocommerce_currency_symbol() ?: '$', ENT_QUOTES, 'UTF-8' )
+			: '$';
 
-	private function render_script(): void {
-		?>
-		<script type="text/javascript">
-		( function () {
-			'use strict';
-			var CFG = window.PIZZATIER_COMMERCE_BULK || {};
-			var SEP = '|';
+		return [
 
-			var mount   = document.getElementById( 'pztc-bulk-mount' );
-			var typeSel = document.getElementById( 'pztc-bulk-type' );
-			var selOnly = document.getElementById( 'pztc-bulk-selected-only' );
-			var search  = document.getElementById( 'pztc-bulk-search' );
-			var saveBtn = document.getElementById( 'pztc-bulk-save' );
-			var resetBtn= document.getElementById( 'pztc-bulk-reset' );
-			var dirtyEl = document.getElementById( 'pztc-bulk-dirtycount' );
+			'ajaxUrl'  => admin_url( 'admin-ajax.php' ),
+			'nonce'    => wp_create_nonce( self::NONCE_ACTION ),
+			'actions'  => [ 'load' => self::ACTION_LOAD, 'save' => self::ACTION_SAVE ],
+			'currency' => $currency,
+			'types'    => $this->scope_types(),
+			'i18n'     => [
+				'loading'      => __( 'Loading ingredients…', 'pizzatier' ),
+				'noItems'      => __( 'No ingredients found for this type yet. Add some under the PizzaTier menu first.', 'pizzatier' ),
+				'saving'       => __( 'Saving…', 'pizzatier' ),
+				/* translators: %s: value inserted into the message. */
+				'savedN'       => __( 'Saved %d ingredient(s).', 'pizzatier' ),
+				/* translators: %s: value inserted into the message. */
+				'clearedN'     => __( 'Reverted %d ingredient(s) to fallback pricing.', 'pizzatier' ),
+				/* translators: %s: value inserted into the message. */
+				'failedN'      => __( '%d ingredient(s) could not be saved.', 'pizzatier' ),
+				'nothing'      => __( 'No changes to save.', 'pizzatier' ),
+				'dirtyLeave'   => __( 'You have unsaved price changes. Leave this page and discard them?', 'pizzatier' ),
+				'confirmClear' => __( 'Clear custom prices for this ingredient and revert to the fallback grid? This is saved when you click Save changes.', 'pizzatier' ),
+				'fallback'     => __( 'Using fallback', 'pizzatier' ),
+				'custom'       => __( 'Custom prices', 'pizzatier' ),
+				'edited'       => __( 'Edited', 'pizzatier' ),
+				'cleared'      => __( 'Will revert', 'pizzatier' ),
+				/* translators: %s: value inserted into the message. */
+				'cappedNote'   => __( 'Showing the first %d ingredients. Narrow the scope to a single type to see the rest.', 'pizzatier' ),
+			],
+		];
+	}
 
-			// In-memory model of what's currently rendered: type slug -> payload.
-			var MODEL = {};
-
-			function cellKey( size, frac ) { return size + SEP + frac; }
-			function esc( s ) { var d = document.createElement( 'div' ); d.textContent = s == null ? '' : String( s ); return d.innerHTML; }
-			function sprintf1( tpl, n ) { return String( tpl ).replace( '%d', n ); }
-
-			function ajax( action, extra ) {
-				var body = new URLSearchParams();
-				body.set( 'action', CFG.actions[ action ] );
-				body.set( 'nonce', CFG.nonce );
-				Object.keys( extra || {} ).forEach( function ( k ) { body.set( k, extra[ k ] ); } );
-				return fetch( CFG.ajaxUrl, {
-					method: 'POST',
-					credentials: 'same-origin',
-					headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-					body: body.toString()
-				} ).then( function ( r ) { return r.json(); } );
-			}
-
-			// ── Load a scope ──────────────────────────────────────────────
-			function load() {
-				mount.innerHTML = '<div class="pztc-bulk-loading"><span class="pztc-spinner"></span> ' + esc( CFG.i18n.loading ) + '</div>';
-				ajax( 'load', { type: typeSel.value } ).then( function ( res ) {
-					if ( ! res || ! res.success ) {
-						mount.innerHTML = '<div class="pztc-bulk-empty">' + esc( ( res && res.data && res.data.message ) || 'Error' ) + '</div>';
-						return;
-					}
-					MODEL = {};
-					mount.innerHTML = '';
-					var any = false;
-					res.data.types.forEach( function ( t ) {
-						MODEL[ t.type ] = t;
-						mount.appendChild( renderSection( t ) );
-						if ( t.items.length ) { any = true; }
-					} );
-					if ( ! any ) {
-						mount.innerHTML = '<div class="pztc-bulk-section"><div class="pztc-bulk-empty">' + esc( CFG.i18n.noItems ) + '</div></div>';
-					}
-					applyFilter();
-					recount();
-				} ).catch( function () {
-					mount.innerHTML = '<div class="pztc-bulk-empty">Network error. Please reload.</div>';
-				} );
-			}
-
-			// ── Render one type section ───────────────────────────────────
-			function renderSection( t ) {
-				var sizes = t.sizes, fracs = t.fractions, isFrac = t.is_fraction;
-				var cols = [];
-				sizes.forEach( function ( s ) { fracs.forEach( function ( f ) { cols.push( { size: s, frac: f } ); } ); } );
-
-				var sec = document.createElement( 'div' );
-				sec.className = 'pztc-bulk-section';
-				sec.setAttribute( 'data-type', t.type );
-
-				// Head
-				var head = '<div class="pztc-bulk-section__head">' +
-					'<div><h2 class="pztc-bulk-section__title"><span class="dashicons dashicons-grid-view"></span>' +
-					esc( t.label ) + ' <span class="pztc-bulk-section__count">' + t.items.length + '</span></h2>' +
-					'<p class="pztc-bulk-section__desc">' + esc( t.desc ) + '</p></div>' +
-					'<div class="pztc-bulk-section__tools">' +
-					'<button type="button" class="button pztc-bulk-selall"><span class="dashicons dashicons-yes"></span>' + esc( 'Tick all' ) + '</button>' +
-					'<button type="button" class="button pztc-bulk-clearcol"><span class="dashicons dashicons-dismiss"></span>' + esc( 'Revert all' ) + '</button>' +
-					'</div></div>';
-
-				var capNote = t.capped ? '<p class="pztc-bulk-capnote">' + esc( sprintf1( CFG.i18n.cappedNote, t.cap ) ) + '</p>' : '';
-
-				// Header rows
-				var thItem = '<th class="pztc-bulk-th-item"><label class="pztc-bulk-itemcell"><input type="checkbox" class="pztc-bulk-check pztc-bulk-checkall" /> ' + esc( 'Ingredient' ) + '</label></th>';
-				var sizeRow = '<tr class="pztc-bulk-sizes">' + thItem;
-				sizes.forEach( function ( s ) {
-					sizeRow += '<th class="pztc-bulk-col-size" colspan="' + fracs.length + '">' + esc( s ) + '</th>';
-				} );
-				sizeRow += '<th></th></tr>';
-
-				var fracRow = '';
-				if ( isFrac ) {
-					fracRow = '<tr class="pztc-bulk-fracs"><th class="pztc-bulk-th-item"></th>';
-					sizes.forEach( function ( s ) {
-						fracs.forEach( function ( f, i ) {
-							fracRow += '<th class="' + ( i === 0 ? 'pztc-bulk-col-size' : '' ) + '">' + esc( f ) + '</th>';
-						} );
-					} );
-					fracRow += '<th></th></tr>';
-				}
-
-				// Fill row ("Set all" per column)
-				var fillRow = '<tr class="pztc-bulk-fillrow"><th class="pztc-bulk-th-item pztc-bulk-fill-label">' + esc( 'Set all →' ) + '</th>';
-				cols.forEach( function ( c, i ) {
-					var firstOfSize = ( i % fracs.length === 0 );
-					fillRow += '<td class="' + ( firstOfSize ? 'pztc-bulk-col-size' : '' ) + '">' +
-						'<input type="text" inputmode="decimal" class="pztc-bulk-fill-input" data-key="' + esc( cellKey( c.size, c.frac ) ) + '" placeholder="—" aria-label="' + esc( 'Set all ' + c.size + ' ' + c.frac ) + '" />' +
-						'</td>';
-				} );
-				fillRow += '<td></td></tr>';
-
-				// Body
-				var body = '';
-				t.items.forEach( function ( it ) {
-					body += renderRow( t, it, cols, fracs.length );
-				} );
-
-				sec.innerHTML = head + capNote +
-					'<div class="pztc-bulk-table-wrap"><table class="pztc-bulk-table"><thead>' +
-					sizeRow + fracRow + fillRow +
-					'</thead><tbody>' + body + '</tbody></table></div>';
-
-				wireSection( sec, t, cols );
-				return sec;
-			}
-
-			function renderRow( t, it, cols, fracCount ) {
-				var cells = ( it.cells && typeof it.cells === 'object' ) ? it.cells : {};
-				var globals = ( t.global_cells && typeof t.global_cells === 'object' ) ? t.global_cells : {};
-				var badge = it.has_grid
-					? '<span class="pztc-bulk-badge pztc-bulk-badge--custom" data-role="badge">' + esc( CFG.i18n.custom ) + '</span>'
-					: '<span class="pztc-bulk-badge pztc-bulk-badge--fallback" data-role="badge">' + esc( CFG.i18n.fallback ) + '</span>';
-
-				var row = '<tr data-id="' + it.id + '" data-hasgrid="' + ( it.has_grid ? '1' : '0' ) + '">' +
-					'<td class="pztc-bulk-td-item"><div class="pztc-bulk-itemcell">' +
-						'<input type="checkbox" class="pztc-bulk-check pztc-bulk-rowcheck" />' +
-						'<span class="pztc-bulk-itemcell__name">' + esc( it.title ) + '</span>' +
-						badge +
-						'<button type="button" class="pztc-bulk-rowclear" title="' + esc( CFG.i18n.confirmClear ) + '"><span class="dashicons dashicons-trash"></span></button>' +
-					'</div></td>';
-
-				cols.forEach( function ( c, i ) {
-					var key = cellKey( c.size, c.frac );
-					var val = ( cells[ key ] != null ) ? cells[ key ] : '';
-					var ph  = ( globals[ key ] != null ) ? globals[ key ] : '0.00';
-					var firstOfSize = ( i % fracCount === 0 );
-					row += '<td class="pztc-price-cell ' + ( firstOfSize ? 'pztc-bulk-col-size' : '' ) + '">' +
-						'<span class="pztc-price-cell__cur">' + esc( CFG.currency ) + '</span>' +
-						'<input type="text" inputmode="decimal" class="pztc-price-input" ' +
-							'data-key="' + esc( key ) + '" data-orig="' + esc( val ) + '" ' +
-							'value="' + esc( val ) + '" placeholder="' + esc( ph ) + '" ' +
-							'aria-label="' + esc( it.title + ' ' + c.size + ' ' + c.frac ) + '" />' +
-					'</td>';
-				} );
-				row += '<td></td></tr>';
-				return row;
-			}
-
-			// ── Wire interactions for a section ───────────────────────────
-			function wireSection( sec, t, cols ) {
-				// Price input edits
-				sec.querySelectorAll( '.pztc-price-input' ).forEach( function ( inp ) {
-					inp.addEventListener( 'input', function () { markInput( inp ); recount(); } );
-					inp.addEventListener( 'blur', function () { normalise( inp ); } );
-				} );
-
-				// Per-column "Set all"
-				sec.querySelectorAll( '.pztc-bulk-fill-input' ).forEach( function ( fill ) {
-					fill.addEventListener( 'change', function () { fillColumn( sec, fill.getAttribute( 'data-key' ), fill.value ); } );
-					fill.addEventListener( 'keydown', function ( e ) { if ( e.key === 'Enter' ) { fillColumn( sec, fill.getAttribute( 'data-key' ), fill.value ); } } );
-				} );
-
-				// Row clear buttons
-				sec.querySelectorAll( '.pztc-bulk-rowclear' ).forEach( function ( btn ) {
-					btn.addEventListener( 'click', function () { toggleClear( btn.closest( 'tr' ) ); } );
-				} );
-
-				// Tick-all in header + tools
-				var checkAll = sec.querySelector( '.pztc-bulk-checkall' );
-				var selAll   = sec.querySelector( '.pztc-bulk-selall' );
-				var clearAll = sec.querySelector( '.pztc-bulk-clearcol' );
-				function setAllChecks( on ) {
-					sec.querySelectorAll( '.pztc-bulk-rowcheck' ).forEach( function ( c ) {
-						if ( ! c.closest( 'tr' ).classList.contains( 'is-hidden' ) ) { c.checked = on; }
-					} );
-					if ( checkAll ) { checkAll.checked = on; }
-				}
-				if ( checkAll ) { checkAll.addEventListener( 'change', function () { setAllChecks( checkAll.checked ); } ); }
-				if ( selAll )   { selAll.addEventListener( 'click', function () { setAllChecks( true ); } ); }
-				if ( clearAll ) {
-					clearAll.addEventListener( 'click', function () {
-						sec.querySelectorAll( 'tbody tr' ).forEach( function ( tr ) {
-							if ( tr.classList.contains( 'is-hidden' ) ) { return; }
-							if ( selOnly.checked && ! tr.querySelector( '.pztc-bulk-rowcheck' ).checked ) { return; }
-							if ( tr.getAttribute( 'data-hasgrid' ) === '1' && ! tr.classList.contains( 'is-cleared' ) ) { toggleClear( tr ); }
-						} );
-						recount();
-					} );
-				}
-			}
-
-			// ── Editing helpers ───────────────────────────────────────────
-			function markInput( inp ) {
-				var tr = inp.closest( 'tr' );
-				if ( tr.classList.contains( 'is-cleared' ) ) { return; } // ignore edits on rows queued for revert
-				var changed = ( inp.value.trim() !== ( inp.getAttribute( 'data-orig' ) || '' ).trim() );
-				inp.classList.toggle( 'is-edited', changed );
-				refreshRowBadge( tr );
-			}
-
-			function normalise( inp ) {
-				var v = inp.value.trim().replace( /[^0-9.]/g, '' );
-				if ( v === '' ) { inp.value = ''; markInput( inp ); return; }
-				var n = parseFloat( v );
-				if ( isNaN( n ) || n < 0 ) { n = 0; }
-				inp.value = n.toFixed( 2 );
-				markInput( inp );
-			}
-
-			function fillColumn( sec, key, raw ) {
-				var v = String( raw ).trim().replace( /[^0-9.]/g, '' );
-				if ( v === '' ) { return; }
-				var val = parseFloat( v ); if ( isNaN( val ) || val < 0 ) { val = 0; }
-				val = val.toFixed( 2 );
-				sec.querySelectorAll( 'tbody tr' ).forEach( function ( tr ) {
-					if ( tr.classList.contains( 'is-hidden' ) || tr.classList.contains( 'is-cleared' ) ) { return; }
-					if ( selOnly.checked && ! tr.querySelector( '.pztc-bulk-rowcheck' ).checked ) { return; }
-					var inp = tr.querySelector( '.pztc-price-input[data-key="' + cssEsc( key ) + '"]' );
-					if ( inp ) { inp.value = val; markInput( inp ); }
-				} );
-				recount();
-			}
-
-			function toggleClear( tr ) {
-				var willClear = ! tr.classList.contains( 'is-cleared' );
-				// Only meaningful if the item currently has a saved grid.
-				if ( willClear && tr.getAttribute( 'data-hasgrid' ) !== '1' ) { return; }
-				tr.classList.toggle( 'is-cleared', willClear );
-				refreshRowBadge( tr );
-				recount();
-			}
-
-			function refreshRowBadge( tr ) {
-				var badge = tr.querySelector( '[data-role="badge"]' );
-				if ( ! badge ) { return; }
-				badge.className = 'pztc-bulk-badge';
-				badge.setAttribute( 'data-role', 'badge' );
-				if ( tr.classList.contains( 'is-cleared' ) ) {
-					badge.classList.add( 'pztc-bulk-badge--cleared' ); badge.textContent = CFG.i18n.cleared;
-				} else if ( rowEdited( tr ) ) {
-					badge.classList.add( 'pztc-bulk-badge--edited' ); badge.textContent = CFG.i18n.edited;
-				} else if ( tr.getAttribute( 'data-hasgrid' ) === '1' ) {
-					badge.classList.add( 'pztc-bulk-badge--custom' ); badge.textContent = CFG.i18n.custom;
-				} else {
-					badge.classList.add( 'pztc-bulk-badge--fallback' ); badge.textContent = CFG.i18n.fallback;
-				}
-			}
-
-			function rowEdited( tr ) {
-				return !! tr.querySelector( '.pztc-price-input.is-edited' );
-			}
-			function rowDirty( tr ) {
-				return tr.classList.contains( 'is-cleared' ) || rowEdited( tr );
-			}
-
-			function cssEsc( s ) { return String( s ).replace( /["\\]/g, '\\$&' ); }
-
-			// ── Dirty accounting + save enable ────────────────────────────
-			function dirtyRows() {
-				return Array.prototype.filter.call( document.querySelectorAll( '.pztc-bulk-table tbody tr' ), rowDirty );
-			}
-			function recount() {
-				var n = dirtyRows().length;
-				dirtyEl.textContent = n;
-				dirtyEl.classList.toggle( 'is-zero', n === 0 );
-				saveBtn.disabled = ( n === 0 );
-				resetBtn.disabled = ( n === 0 );
-			}
-
-			// ── Filtering ─────────────────────────────────────────────────
-			function applyFilter() {
-				var q = ( search.value || '' ).trim().toLowerCase();
-				document.querySelectorAll( '.pztc-bulk-table tbody tr' ).forEach( function ( tr ) {
-					var name = tr.querySelector( '.pztc-bulk-itemcell__name' );
-					var show = ! q || ( name && name.textContent.toLowerCase().indexOf( q ) !== -1 );
-					tr.classList.toggle( 'is-hidden', ! show );
-				} );
-			}
-
-			// ── Collect + save ────────────────────────────────────────────
-			function collect() {
-				var payload = [];
-				Object.keys( MODEL ).forEach( function ( type ) {
-					var t = MODEL[ type ];
-					var sec = mount.querySelector( '.pztc-bulk-section[data-type="' + cssEsc( type ) + '"]' );
-					if ( ! sec ) { return; }
-					sec.querySelectorAll( 'tbody tr' ).forEach( function ( tr ) {
-						if ( ! rowDirty( tr ) ) { return; }
-						var id = parseInt( tr.getAttribute( 'data-id' ), 10 );
-						if ( tr.classList.contains( 'is-cleared' ) ) {
-							payload.push( { post_id: id, clear: true } );
-							return;
-						}
-						var cells = {};
-						tr.querySelectorAll( '.pztc-price-input' ).forEach( function ( inp ) {
-							var key = inp.getAttribute( 'data-key' );
-							var v = inp.value.trim();
-							cells[ key ] = ( v === '' ) ? 0 : parseFloat( v );
-						} );
-						payload.push( { post_id: id, sizes: t.sizes, fractions: t.fractions, cells: cells } );
-					} );
-				} );
-				return payload;
-			}
-
-			function save() {
-				var payload = collect();
-				if ( ! payload.length ) { toast( CFG.i18n.nothing, 'warn' ); return; }
-				saveBtn.disabled = true; saveBtn.textContent = CFG.i18n.saving;
-				ajax( 'save', { items: JSON.stringify( payload ) } ).then( function ( res ) {
-					saveBtn.textContent = 'Save changes';
-					if ( ! res || ! res.success ) {
-						toast( ( res && res.data && res.data.message ) || 'Save failed', 'err' );
-						saveBtn.disabled = false;
-						return;
-					}
-					var d = res.data;
-					// Commit successfully-saved rows into the new baseline in place.
-					commitSaved();
-					var parts = [];
-					if ( d.saved )   { parts.push( sprintf1( CFG.i18n.savedN, d.saved ) ); }
-					if ( d.cleared ) { parts.push( sprintf1( CFG.i18n.clearedN, d.cleared ) ); }
-					var kind = 'ok';
-					var extra = '';
-					if ( d.failed ) {
-						parts.push( sprintf1( CFG.i18n.failedN, d.failed ) );
-						kind = d.saved || d.cleared ? 'warn' : 'err';
-						if ( d.errors && d.errors.length ) {
-							extra = '<ul class="pztc-bulk-errlist">' + d.errors.slice( 0, 6 ).map( function ( e ) {
-								return '<li>' + esc( e.title ) + ': ' + esc( e.message ) + '</li>';
-							} ).join( '' ) + '</ul>';
-						}
-					}
-					toast( ( parts.join( ' ' ) || 'Done' ) + extra, kind, !! extra );
-					recount();
-				} ).catch( function () {
-					saveBtn.textContent = 'Save changes';
-					saveBtn.disabled = false;
-					toast( 'Network error while saving.', 'err' );
-				} );
-			}
-
-			// After a save, treat current values as the saved baseline (no reload).
-			function commitSaved() {
-				document.querySelectorAll( '.pztc-bulk-table tbody tr' ).forEach( function ( tr ) {
-					if ( tr.classList.contains( 'is-cleared' ) ) {
-						// Reverted to fallback: clear values + baseline.
-						tr.classList.remove( 'is-cleared' );
-						tr.setAttribute( 'data-hasgrid', '0' );
-						tr.querySelectorAll( '.pztc-price-input' ).forEach( function ( inp ) {
-							inp.value = ''; inp.setAttribute( 'data-orig', '' ); inp.classList.remove( 'is-edited' );
-						} );
-						refreshRowBadge( tr );
-					} else if ( rowEdited( tr ) ) {
-						tr.setAttribute( 'data-hasgrid', '1' );
-						tr.querySelectorAll( '.pztc-price-input' ).forEach( function ( inp ) {
-							inp.setAttribute( 'data-orig', inp.value.trim() );
-							inp.classList.remove( 'is-edited' );
-						} );
-						refreshRowBadge( tr );
-					}
-				} );
-			}
-
-			function reset() {
-				document.querySelectorAll( '.pztc-bulk-table tbody tr' ).forEach( function ( tr ) {
-					tr.classList.remove( 'is-cleared' );
-					tr.querySelectorAll( '.pztc-price-input' ).forEach( function ( inp ) {
-						inp.value = inp.getAttribute( 'data-orig' ) || '';
-						inp.classList.remove( 'is-edited' );
-					} );
-					refreshRowBadge( tr );
-				} );
-				recount();
-			}
-
-			// ── Toast ─────────────────────────────────────────────────────
-			var toastEl;
-			function toast( html, kind, sticky ) {
-				if ( ! toastEl ) {
-					toastEl = document.createElement( 'div' );
-					toastEl.className = 'pztc-bulk-toast';
-					document.body.appendChild( toastEl );
-				}
-				toastEl.className = 'pztc-bulk-toast pztc-bulk-toast--' + ( kind || 'ok' );
-				toastEl.innerHTML = html;
-				requestAnimationFrame( function () { toastEl.classList.add( 'is-shown' ); } );
-				clearTimeout( toastEl._t );
-				toastEl._t = setTimeout( function () { toastEl.classList.remove( 'is-shown' ); }, sticky ? 9000 : 4000 );
-			}
-
-			// ── Events ────────────────────────────────────────────────────
-			typeSel.addEventListener( 'change', function () {
-				if ( dirtyRows().length && ! window.confirm( CFG.i18n.dirtyLeave ) ) {
-					return;
-				}
-				load();
-			} );
-			search.addEventListener( 'input', applyFilter );
-			saveBtn.addEventListener( 'click', save );
-			resetBtn.addEventListener( 'click', reset );
-
-			window.addEventListener( 'beforeunload', function ( e ) {
-				if ( dirtyRows().length ) { e.preventDefault(); e.returnValue = ''; }
-			} );
-
-			// Reflect collapsed admin menu for the sticky bar offset.
-			if ( document.body.classList.contains( 'folded' ) ) {
-				document.body.classList.add( 'folded-menu' );
-			}
-
-			// Initial load.
-			load();
-		} )();
-		</script>
-		<?php
+	/**
+	 * Enqueue the Bulk Pricing page stylesheet and editor script.
+	 * Both were inline <style>/<script> blocks before v2.3.0.
+	 *
+	 * @param string $hook Current admin page hook suffix.
+	 */
+	public function enqueue_assets( string $hook ): void {
+		if ( 'pizzatier_page_' . self::PAGE_SLUG !== $hook ) {
+			return;
+		}
+		$v = PIZZATIER_VERSION;
+		wp_enqueue_style(
+			'pizzatier-commerce-admin',
+			PIZZATIER_PLUGIN_URL . 'assets/css/admin.css',
+			[],
+			$v
+		);
+		wp_enqueue_style(
+			'pizzatier-commerce-bulk-pricing',
+			PIZZATIER_PLUGIN_URL . 'assets/css/admin/commerce-bulk-pricing.css',
+			[ 'pizzatier-commerce-admin' ],
+			$v
+		);
+		wp_enqueue_script(
+			'pizzatier-commerce-bulk-pricing',
+			PIZZATIER_PLUGIN_URL . 'assets/js/admin/commerce-bulk-pricing.js',
+			[],
+			$v,
+			true
+		);
+		wp_add_inline_script(
+			'pizzatier-commerce-bulk-pricing',
+			'window.PIZZATIER_COMMERCE_BULK = ' . wp_json_encode( $this->boot_data() ) . ';',
+			'before'
+		);
 	}
 }

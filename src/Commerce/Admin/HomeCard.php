@@ -29,7 +29,7 @@ class HomeCard {
 	}
 
 	/** Number of published WooCommerce products of type "pizza". */
-	private function pizza_product_count(): int {
+	private function count_pizza_products(): int {
 		if ( ! class_exists( 'WooCommerce' ) ) {
 			return 0;
 		}
@@ -66,7 +66,7 @@ class HomeCard {
 		}
 
 		$wc_active = class_exists( 'WooCommerce' );
-		$products  = $this->pizza_product_count();
+		$products  = $this->count_pizza_products();
 		$presets   = $this->preset_count();
 		?>
 		<div class="plh-features-row">

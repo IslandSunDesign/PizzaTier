@@ -330,7 +330,6 @@ class PricingPage {
 		?>
 		<div class="wrap pztc-page-wrap pztc-pricing-page">
 
-			<?php $this->render_styles(); ?>
 
 			<!-- ══ Header ═════════════════════════════════════════════════ -->
 			<div class="pztc-header">
@@ -487,7 +486,6 @@ class PricingPage {
 		<!-- ══ Confirmation modal (rendered once, used by JS) ════════════ -->
 		<?php $this->render_confirm_modal(); ?>
 
-		<?php $this->render_tab_script(); ?>
 		<?php
 	}
 
@@ -855,197 +853,6 @@ class PricingPage {
 	}
 
 	// -------------------------------------------------------------------------
-	// Tab switcher + grids JS (interactivity)
-	// -------------------------------------------------------------------------
-
-	private function render_tab_script(): void {
-		?>
-		<script>
-		( function () {
-			'use strict';
-
-			// ── Outer tab switcher (Engine / Defaults / Grids) ────────────
-			var tabs   = document.querySelectorAll( '#pztc-pricing-tabs .pztc-tab' );
-			var panels = document.querySelectorAll( '#pztc-pricing-tabs ~ .pztc-panels .pztc-panel' );
-			var saveRows = document.querySelectorAll( '.pztc-pricing-save-row' );
-
-			function setSaveRowVisibility( tabId ) {
-				saveRows.forEach( function ( row ) {
-					var formType = row.getAttribute( 'data-form' );
-					var visible = ( tabId === 'engine' || tabId === 'defaults' )
-						? ( formType === 'engine' )
-						: ( formType === 'grids' );
-					row.style.display = visible ? '' : 'none';
-				} );
-			}
-
-			function activate( targetId ) {
-				tabs.forEach( function ( t ) {
-					var active = t.dataset.tab === targetId;
-					t.classList.toggle( 'pztc-tab--active', active );
-					t.setAttribute( 'aria-selected', active ? 'true' : 'false' );
-				} );
-				panels.forEach( function ( p ) {
-					p.classList.toggle( 'pztc-panel--active', p.id === 'pztc-pricing-panel-' + targetId );
-				} );
-				setSaveRowVisibility( targetId );
-			}
-
-			if ( tabs.length ) {
-				var initial = window.location.hash
-					? window.location.hash.replace( '#', '' )
-					: tabs[ 0 ].dataset.tab;
-				if ( ! document.getElementById( 'pztc-pricing-panel-' + initial ) ) {
-					initial = tabs[ 0 ].dataset.tab;
-				}
-				activate( initial );
-
-				tabs.forEach( function ( tab ) {
-					tab.addEventListener( 'click', function () {
-						history.replaceState( null, '', '#' + tab.dataset.tab );
-						activate( tab.dataset.tab );
-					} );
-				} );
-			}
-
-			// ── Inner pill nav (per-layer-type grid switcher) ─────────────
-			var pills = document.querySelectorAll( '.pztc-grid-pill' );
-			var bodies = document.querySelectorAll( '.pztc-grid-body' );
-
-			pills.forEach( function ( pill ) {
-				pill.addEventListener( 'click', function () {
-					var type = pill.getAttribute( 'data-type' );
-					pills.forEach( function ( p ) {
-						p.classList.toggle( 'pztc-grid-pill--active', p === pill );
-					} );
-					bodies.forEach( function ( b ) {
-						b.classList.toggle( 'pztc-grid-body--active', b.getAttribute( 'data-type' ) === type );
-					} );
-				} );
-			} );
-
-			// ── Set All buttons ────────────────────────────────────────────
-			document.querySelectorAll( '.pztc-grid-set-all-btn' ).forEach( function ( btn ) {
-				btn.addEventListener( 'click', function () {
-					var type = btn.getAttribute( 'data-type' );
-					var val = window.prompt( '<?php echo esc_js( __( 'Set every cell in this grid to:', 'pizzatier' ) ); ?>', '' );
-					if ( null === val ) return;
-					var num = parseFloat( val );
-					if ( isNaN( num ) || num < 0 ) {
-						window.alert( '<?php echo esc_js( __( 'Please enter a number ≥ 0.', 'pizzatier' ) ); ?>' );
-						return;
-					}
-					var formatted = num.toFixed( 2 );
-					var body = document.getElementById( 'pztc-grid-body-' + type );
-					if ( ! body ) return;
-					body.querySelectorAll( '.pztc-grid-input' ).forEach( function ( inp ) {
-						inp.value = formatted;
-					} );
-				} );
-			} );
-
-			// ── Clear-grid buttons ────────────────────────────────────────
-			document.querySelectorAll( '.pztc-grid-clear-btn' ).forEach( function ( btn ) {
-				btn.addEventListener( 'click', function () {
-					var type = btn.getAttribute( 'data-type' );
-					if ( ! window.confirm( '<?php echo esc_js( __( 'Clear this global grid? Pricing for this layer type will fall through to per-product grids or no charge.', 'pizzatier' ) ); ?>' ) ) {
-						return;
-					}
-					document.getElementById( 'pztc-global-grids-clear-' + type ).value = '1';
-					// Visual feedback — fade the grid body so it's clear something changed.
-					var body = document.getElementById( 'pztc-grid-body-' + type );
-					if ( body ) {
-						body.style.opacity = '0.5';
-						body.querySelectorAll( '.pztc-grid-input' ).forEach( function ( inp ) {
-							inp.disabled = true;
-						} );
-					}
-				} );
-			} );
-
-			// ── Global grids confirmation modal ─────────────────────────────
-			var gridsForm = document.getElementById( 'pztc-global-grids-form' );
-			var modal     = document.getElementById( 'pztc-confirm-modal' );
-			var modalList = document.getElementById( 'pztc-confirm-modal-list' );
-
-			function findDirtyTypes() {
-				var dirty = {};
-				document.querySelectorAll( '.pztc-grid-input' ).forEach( function ( inp ) {
-					var current  = ( inp.value || '' ).trim();
-					var original = ( inp.getAttribute( 'data-original' ) || '' ).trim();
-					if ( current !== original ) {
-						dirty[ inp.getAttribute( 'data-type' ) ] = true;
-					}
-				} );
-				// Also count any pending clears.
-				document.querySelectorAll( '[id^="pztc-global-grids-clear-"]' ).forEach( function ( hid ) {
-					if ( '1' === hid.value ) {
-						var t = hid.id.replace( 'pztc-global-grids-clear-', '' );
-						dirty[ t ] = true;
-					}
-				} );
-				return Object.keys( dirty );
-			}
-
-			function typeLabel( slug ) {
-				var pill = document.querySelector( '.pztc-grid-pill[data-type="' + slug + '"]' );
-				return pill ? pill.textContent.trim() : slug;
-			}
-
-			function openModal( dirtyTypes ) {
-				if ( ! modal ) return;
-				modalList.innerHTML = '';
-				dirtyTypes.forEach( function ( t ) {
-					var li = document.createElement( 'li' );
-					li.textContent = typeLabel( t );
-					modalList.appendChild( li );
-				} );
-				modal.hidden = false;
-				// Focus the confirm button for keyboard users.
-				var confirmBtn = modal.querySelector( '[data-action="confirm"]' );
-				if ( confirmBtn ) confirmBtn.focus();
-			}
-
-			function closeModal() {
-				if ( modal ) modal.hidden = true;
-			}
-
-			if ( gridsForm ) {
-				var bypassConfirm = false;
-				gridsForm.addEventListener( 'submit', function ( e ) {
-					if ( bypassConfirm ) return; // second pass after user confirmed
-					var dirty = findDirtyTypes();
-					if ( 0 === dirty.length ) {
-						// Nothing changed — let the form submit (will show "nothing to save" notice).
-						return;
-					}
-					e.preventDefault();
-					openModal( dirty );
-				} );
-
-				modal.addEventListener( 'click', function ( e ) {
-					var action = e.target.getAttribute( 'data-action' );
-					if ( 'cancel' === action ) {
-						closeModal();
-					} else if ( 'confirm' === action ) {
-						bypassConfirm = true;
-						closeModal();
-						gridsForm.submit();
-					}
-				} );
-
-				document.addEventListener( 'keydown', function ( e ) {
-					if ( ! modal.hidden && 'Escape' === e.key ) {
-						closeModal();
-					}
-				} );
-			}
-		} () );
-		</script>
-		<?php
-	}
-
-	// -------------------------------------------------------------------------
 	// Assets
 	// -------------------------------------------------------------------------
 
@@ -1062,6 +869,29 @@ class PricingPage {
 			[],
 			$v
 		);
+		// Pricing-page styles — formerly an inline <style> block; moved to a
+		// file per WordPress.org guidelines.
+		wp_enqueue_style(
+			'pizzatier-commerce-pricing',
+			PIZZATIER_PLUGIN_URL . 'assets/css/admin/commerce-pricing.css',
+			[ 'pizzatier-commerce-admin' ],
+			$v
+		);
+		// Tab switcher + grid interactions — formerly an inline <script> block.
+		wp_enqueue_script(
+			'pizzatier-commerce-pricing-grid',
+			PIZZATIER_PLUGIN_URL . 'assets/js/admin/commerce-pricing-grid.js',
+			[],
+			$v,
+			true
+		);
+		wp_localize_script( 'pizzatier-commerce-pricing-grid', 'pizzatierCommercePricingGrid', [
+			'i18n' => [
+				'setAllPrompt'       => __( 'Set every cell in this grid to:', 'pizzatier' ),
+				'numberGteZero'      => __( 'Please enter a number ≥ 0.', 'pizzatier' ),
+				'confirmClearGlobal' => __( 'Clear this global grid? Pricing for this layer type will fall through to per-product grids or no charge.', 'pizzatier' ),
+			],
+		] );
 		// Reuse the existing pricing-engine JS (calculator + mode-card UI +
 		// conditional field visibility). They locate elements by ID, so they
 		// work transparently on this page once the same fields are rendered.
@@ -1095,185 +925,4 @@ class PricingPage {
 		] );
 	}
 
-	// -------------------------------------------------------------------------
-	// Inline styles — mirrors SettingsPage tokens, adds grids-specific CSS
-	// -------------------------------------------------------------------------
-
-	private function render_styles(): void {
-		?>
-		<style>
-		/* ── Reuse most of the SettingsPage tokens by referencing the same
-		 *    BEM classnames. Only the bits unique to the Pricing page (grids
-		 *    nav, modal, callouts) need declaring here. The shared design
-		 *    is duplicated below so the page is self-contained in case
-		 *    SettingsPage.render_styles never runs on this page load. */
-
-		.pztc-page-wrap { max-width: 1100px; }
-
-		.pztc-header {
-			display: flex; align-items: center; justify-content: space-between;
-			flex-wrap: wrap; gap: 16px;
-			background: linear-gradient(135deg, #1a1e23 0%, #2d3748 100%);
-			color: #fff; border-radius: 10px;
-			padding: 22px 28px; margin-bottom: 20px;
-		}
-		.pztc-header__brand { display: flex; align-items: center; gap: 16px; }
-		.pztc-header__icon { font-size: 38px !important; width: 38px !important; height: 38px !important; color: #ff6b35; }
-		.pztc-header__title  { margin: 0; font-size: 24px; font-weight: 700; color: #fff; }
-		.pztc-header__tagline { margin: 3px 0 0; color: #8d97a5; font-size: 13px; }
-		.pztc-header__actions { display: flex; gap: 8px; flex-wrap: wrap; }
-		.pztc-header__actions .button {
-			display: inline-flex; align-items: center; gap: 5px;
-			padding: 7px 16px; border-radius: 50px; font-size: 13px; font-weight: 600;
-			border: 2px solid rgba(255,255,255,.3); color: rgba(255,255,255,.8) !important;
-			background: transparent; text-decoration: none; transition: all .2s;
-		}
-		.pztc-header__actions .button:hover { border-color: #ff6b35; color: #fff !important; background: transparent; box-shadow: none; }
-		.pztc-header__actions .dashicons { font-size: 15px !important; width: 15px !important; height: 15px !important; margin: 0; }
-
-		.pztc-card { background: #fff; border: 1px solid #e0e3e7; border-radius: 10px; margin-bottom: 20px; overflow: hidden; }
-		.pztc-card__head { padding: 20px 24px 0; }
-		.pztc-card__title { margin: 0 0 4px; font-size: 16px; display: flex; align-items: center; gap: 8px; }
-		.pztc-card__title .dashicons { color: #646970; font-size: 18px !important; width: 18px !important; height: 18px !important; }
-		.pztc-card__subtitle { margin: 0; color: #646970; font-size: 13px; padding-bottom: 4px; }
-
-		.pztc-tabnav { display: flex; flex-wrap: wrap; border-bottom: 2px solid #e0e3e7; padding: 8px 12px 0; background: #f8f9fa; gap: 2px; }
-		.pztc-tab { display: inline-flex; flex-direction: column; align-items: center; gap: 3px; padding: 7px 14px 5px; border: none; border-bottom: 2px solid transparent; background: transparent; cursor: pointer; font-size: 12px; font-weight: 500; color: #646970; white-space: nowrap; margin-bottom: -2px; line-height: 1.2; transition: color .15s, border-color .15s; min-width: 84px; border-radius: 4px 4px 0 0; }
-		.pztc-tab:hover { color: #1d2023; background: #eef0f2; }
-		.pztc-tab--active { color: #ff6b35; border-bottom-color: #ff6b35; font-weight: 600; background: #fff; }
-		.pztc-tab .dashicons { font-size: 18px !important; width: 18px !important; height: 18px !important; line-height: 1 !important; flex-shrink: 0; }
-
-		.pztc-panels { padding: 0; }
-		.pztc-panel { display: none; }
-		.pztc-panel--active { display: block; }
-		.pztc-panel__body { padding: 20px 24px 24px; }
-		.pztc-section-desc { margin: 0 0 16px; color: #646970; font-size: 13px; }
-
-		.pztc-form-table th { width: 240px; padding: 14px 20px 14px 0; font-size: 13px; font-weight: 600; color: #1d2023; vertical-align: top; }
-		.pztc-form-table td { padding: 10px 0 14px; vertical-align: top; }
-		.pztc-form-table .description { margin-top: 6px !important; font-size: 12px !important; }
-		.pztc-text-input, .pztc-select-input { border: 1px solid #8c8f94 !important; border-radius: 4px !important; font-size: 13px !important; padding: 7px 10px !important; transition: border-color .15s !important; }
-		.pztc-text-input { width: 320px !important; }
-		.pztc-text-input:focus, .pztc-select-input:focus { border-color: #ff6b35 !important; outline: none !important; box-shadow: 0 0 0 2px rgba(255,107,53,.15) !important; }
-		.pztc-textarea-input { border: 1px solid #8c8f94 !important; border-radius: 4px !important; font-size: 13px !important; padding: 8px 10px !important; width: 280px !important; resize: vertical; line-height: 1.6; }
-		.pztc-toggle-label { display: inline-flex; align-items: center; gap: 10px; cursor: pointer; user-select: none; }
-		.pztc-toggle-input { position: absolute; opacity: 0; width: 0; height: 0; }
-		.pztc-toggle-track { position: relative; display: inline-block; width: 40px; height: 22px; background: #c3c4c7; border-radius: 11px; transition: background .2s; flex-shrink: 0; }
-		.pztc-toggle-track::after { content: ''; position: absolute; top: 3px; left: 3px; width: 16px; height: 16px; background: #fff; border-radius: 50%; box-shadow: 0 1px 3px rgba(0,0,0,.25); transition: transform .2s; }
-		.pztc-toggle-input:checked + .pztc-toggle-track { background: #ff6b35; }
-		.pztc-toggle-input:checked + .pztc-toggle-track::after { transform: translateX(18px); }
-		.pztc-field-desc { margin-top: 6px !important; color: #646970 !important; font-size: 12px !important; max-width: 500px; }
-
-		.pztc-save-row { display: flex; align-items: center; gap: 20px; margin: 0 0 20px; padding: 16px 24px; background: #f8f9fa; border-top: 1px solid #e0e3e7; }
-		.pztc-save-btn.button-primary { background: #ff6b35 !important; border-color: #cf5519 !important; color: #fff !important; padding: 0 22px !important; height: 36px !important; font-size: 14px !important; font-weight: 600 !important; border-radius: 4px !important; }
-		.pztc-save-btn.button-primary:hover, .pztc-save-btn.button-primary:focus { background: #cf5519 !important; }
-		.pztc-save-row__version { font-size: 12px; color: #9ca3af; }
-
-		.pztc-credits { padding: 4px 0 24px; font-size: 12px; color: #aaa; }
-		.pztc-credits a { color: #aaa; text-decoration: none; }
-		.pztc-credits a:hover { color: #ff6b35; }
-
-		/* Grouped table rows — subtle left border accent (mirrors SettingsPage) */
-		tr.pztc-row-grouped th { border-left: 3px solid #ff6b35; padding-left: 12px; }
-
-		/* ── Global Grids tab — intro + callout ─────────────────────── */
-		.pztc-grids-intro { margin-bottom: 18px; }
-		.pztc-grids-callout {
-			display: flex; align-items: flex-start; gap: 10px;
-			background: #fff7ed; border: 1px solid #fed7aa;
-			border-left: 4px solid #ff6b35;
-			padding: 12px 14px; border-radius: 6px;
-			margin-top: 12px;
-		}
-		.pztc-grids-callout .dashicons { color: #ff6b35; font-size: 20px !important; width: 20px !important; height: 20px !important; flex-shrink: 0; margin-top: 1px; }
-		.pztc-grids-callout strong { display: block; font-size: 13px; color: #1d2023; margin-bottom: 2px; }
-		.pztc-grids-callout span { font-size: 12px; color: #4b5563; line-height: 1.5; }
-
-		/* Pills nav (per-layer-type) */
-		.pztc-grids-nav { display: flex; flex-wrap: wrap; gap: 6px; margin: 14px 0 18px; border-bottom: 1px solid #e5e7eb; padding-bottom: 12px; }
-		.pztc-grid-pill {
-			position: relative;
-			display: inline-flex; align-items: center; gap: 6px;
-			padding: 7px 14px; background: #f3f4f6;
-			border: 1px solid #e5e7eb; border-radius: 50px;
-			font-size: 12px; font-weight: 600; color: #4b5563;
-			cursor: pointer; transition: all .15s;
-		}
-		.pztc-grid-pill:hover { background: #e5e7eb; border-color: #d1d5db; }
-		.pztc-grid-pill--active { background: #ff6b35; border-color: #ff6b35; color: #fff; }
-		.pztc-grid-pill__dot {
-			display: inline-block; width: 6px; height: 6px; border-radius: 50%;
-			background: #16a34a; box-shadow: 0 0 0 2px #fff;
-		}
-		.pztc-grid-pill--active .pztc-grid-pill__dot { background: #fff; box-shadow: 0 0 0 2px #ff6b35; }
-
-		/* Per-type grid body */
-		.pztc-grid-body { display: none; }
-		.pztc-grid-body--active { display: block; }
-		.pztc-grid-body__head { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; margin-bottom: 14px; flex-wrap: wrap; }
-		.pztc-grid-body__title { margin: 0; font-size: 16px; font-weight: 700; color: #1d2023; }
-		.pztc-grid-body__desc  { margin: 4px 0 0; font-size: 13px; color: #646970; max-width: 640px; }
-		.pztc-grid-body__actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 14px; }
-		.pztc-grid-body__actions .button { display: inline-flex; align-items: center; gap: 4px; }
-		.pztc-grid-body__actions .button .dashicons { font-size: 16px !important; width: 16px !important; height: 16px !important; }
-		.pztc-btn--danger { color: #b91c1c !important; border-color: #fecaca !important; background: #fff1f2 !important; }
-		.pztc-btn--danger:hover { background: #fee2e2 !important; }
-
-		/* Grid table — light-touch styles (admin.css carries the heavy lifting) */
-		.pztc-grid-table-container { overflow-x: auto; }
-		.pztc-global-grid-table { width: 100%; border-collapse: collapse; background: #fff; border: 1px solid #e5e7eb; }
-		.pztc-global-grid-table th, .pztc-global-grid-table td { border: 1px solid #e5e7eb; padding: 8px; vertical-align: middle; text-align: left; }
-		.pztc-global-grid-table thead th { background: #f9fafb; font-size: 12px; font-weight: 700; color: #374151; }
-		.pztc-global-grid-table tbody th { background: #f9fafb; }
-		.pztc-global-grid-table .pztc-cell-wrap { display: flex; align-items: center; gap: 4px; }
-		.pztc-global-grid-table .pztc-cell-currency { font-size: 13px; color: #6b7280; font-weight: 600; }
-		.pztc-global-grid-table .pztc-grid-input { width: 80px; padding: 4px 6px; border: 1px solid #d1d5db; border-radius: 4px; font-size: 13px; text-align: right; }
-		.pztc-global-grid-table .pztc-grid-input:focus { border-color: #ff6b35; outline: none; box-shadow: 0 0 0 2px rgba(255,107,53,.15); }
-		.pztc-global-grid-table .pztc-header-label { font-size: 12px; font-weight: 700; color: #1d2023; }
-		.pztc-global-grid-table .pztc-grid-corner { background: #f3f4f6; font-size: 11px; color: #6b7280; }
-		.pztc-global-grid-table .pztc-grid-corner-row, .pztc-global-grid-table .pztc-grid-corner-col { display: block; line-height: 1.3; }
-		.pztc-global-grid-table .pztc-grid-corner-sep { display: block; font-size: 10px; color: #9ca3af; margin: 2px 0; }
-
-		/* ── Confirmation modal ─────────────────────────────────────── */
-		.pztc-modal { position: fixed; inset: 0; z-index: 999999; display: flex; align-items: center; justify-content: center; }
-		.pztc-modal[hidden] { display: none; }
-		.pztc-modal__backdrop { position: absolute; inset: 0; background: rgba(15, 23, 42, .55); }
-		.pztc-modal__dialog {
-			position: relative; max-width: 460px; width: 92vw;
-			background: #fff; border-radius: 12px;
-			box-shadow: 0 20px 50px rgba(15, 23, 42, .25);
-			overflow: hidden; animation: pztc-modal-in .15s ease-out;
-		}
-		@keyframes pztc-modal-in { from { transform: translateY(8px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
-		.pztc-modal__head {
-			display: flex; align-items: center; gap: 10px;
-			padding: 18px 22px 12px; border-bottom: 1px solid #f3f4f6;
-		}
-		.pztc-modal__head .dashicons { color: #ff6b35; font-size: 22px !important; width: 22px !important; height: 22px !important; }
-		.pztc-modal__title { margin: 0; font-size: 16px; font-weight: 700; color: #1d2023; }
-		.pztc-modal__body { padding: 14px 22px 6px; font-size: 13px; color: #374151; line-height: 1.6; }
-		.pztc-modal__list { margin: 6px 0 12px 18px; padding: 0; }
-		.pztc-modal__list li { font-size: 13px; color: #1d2023; font-weight: 600; padding: 2px 0; }
-		.pztc-modal__warn { font-size: 12px; color: #6b7280; margin: 6px 0 0; }
-		.pztc-modal__foot {
-			display: flex; justify-content: flex-end; gap: 8px;
-			padding: 12px 22px 18px; background: #fafbfc; border-top: 1px solid #f3f4f6;
-		}
-		.pztc-modal__btn { min-width: 92px; }
-		.pztc-modal__btn.button-primary {
-			background: #ff6b35 !important; border-color: #cf5519 !important;
-			color: #fff !important;
-		}
-		.pztc-modal__btn.button-primary:hover { background: #cf5519 !important; }
-
-		/* ── Responsive ─────────────────────────────────────────────── */
-		@media ( max-width: 782px ) {
-			.pztc-header { flex-direction: column; align-items: flex-start; }
-			.pztc-text-input { width: 100% !important; max-width: 320px !important; }
-			.pztc-form-table th { width: auto; }
-			.pztc-grid-body__head { flex-direction: column; }
-		}
-		</style>
-		<?php
-	}
 }

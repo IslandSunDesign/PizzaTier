@@ -1,6 +1,6 @@
 <?php
 /**
- * Command Center Template — [pizza_builder] output.
+ * Command Center Template — [pizzatier_builder] output.
  *
  * Dark navy UI with numbered step wizard, persistent order summary sidebar,
  * and a bold red accent. Designed for large pizza chain ordering flows.

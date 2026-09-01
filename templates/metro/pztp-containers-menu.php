@@ -1,6 +1,6 @@
 <?php
 /**
- * Metro Template — [pizza_builder] output.
+ * Metro Template — [pizzatier_builder] output.
  *
  * Layout concept:
  *   - Full-width builder, single vertical scroll — no side-by-side panes.

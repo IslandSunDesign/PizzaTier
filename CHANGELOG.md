@@ -6,6 +6,46 @@ Versions follow [Semantic Versioning](https://semver.org/).
 
 ---
 
+## 2.3.0
+
+WordPress.org plugin review compliance release (review R pizzatier/islandsundesign/19Jul26).
+
+### Shortcode rename (breaking)
+
+The registered shortcode tags used the generic `pizza_` prefix, which the WordPress.org review flagged under the unique-prefix guideline. The canonical tags are now:
+
+| Old (2.2.x and earlier) | New (2.3.0+) |
+| --- | --- |
+| `[pizza_builder]` | `[pizzatier_builder]` |
+| `[pizza_static]` | `[pizzatier_static]` |
+| `[pizza_layer]` | `[pizzatier_layer]` |
+| `[pizza_layer_info]` | `[pizzatier_layer_info]` |
+| `[pizza_preset]` | `[pizzatier_preset]` |
+
+* Existing content with the old tags renders them as plain text until updated. For a transition period the old tags can be re-enabled with `add_filter( 'pizzatier_register_legacy_shortcodes', '__return_true' );` (functions.php or an mu-plugin). The filter defaults to off so the WordPress.org build registers only prefixed tags.
+* The `[pizzatier-menu]` / `[pizzatier-static]` deprecated aliases are unaffected.
+* Everything that emits shortcode text — the Shortcode Generator, product-page embed, preset copy buttons, Layer Builder Wizard, Help/Setup docs and readme examples — now emits the new tags.
+* The WooCommerce product-data tab key `pizza_configurator` is now `pizzatier_configurator` (with the matching CSS/JS selectors updated).
+
+### Inline CSS/JS moved to enqueued files
+
+All 19 remaining inline `<style>`/`<script>` blocks — every one in the Commerce (former Pro) code merged at 2.0.0; the base plugin was migrated in an earlier review round — now load through `wp_enqueue_style` / `wp_enqueue_script`:
+
+* Changed: extracted stylesheets under `assets/css/admin/` — `commerce-settings`, `commerce-pricing`, `commerce-bulk-pricing`, `commerce-presets`, `commerce-help`, `commerce-setup-guide`, `commerce-new-pizza-wizard`, `commerce-order-screen` (shared by the Order Pizza meta box and the order-item breakdown table, one deduplicated handle across legacy and HPOS order screens).
+* Changed: extracted scripts under `assets/js/admin/` — `commerce-pricing-grid` (page prompts via `wp_localize_script`), `commerce-bulk-pricing` (boot config via `wp_add_inline_script`, built by the new `BulkPricingPage::boot_data()`), `commerce-layer-grid-metabox` (per-post grid payload via `wp_add_inline_script`, built by the new `LayerGridMetaBox::boot_json()`); the checkout-bar layout-picker snippet joined `admin-settings-page.js` and now binds `.pztc-layout-picker` directly instead of relying on `document.currentScript`.
+* Removed: `src/Commerce/Admin/Dashboard.php` — the pre-merge Pro dashboard, unreferenced since the 2.0.0 menu consolidation; deleting it also removes one flagged inline block.
+
+### Escaping
+
+* Changed: `[pizzatier_layer]` / PizzaTier Image block output is passed through `wp_kses()` with an explicit `<img>` allowlist at return time, so markup supplied through the `pizzatier_layer_html` filter is escaped late. (`[pizzatier_static]` and `[pizzatier_preset]` already escaped at return; `[pizzatier_layer_info]` returns `esc_html()`.)
+* Changed: product JSON-LD is encoded without `JSON_UNESCAPED_SLASHES`, so `</script>` inside filtered schema values is emitted as `<\/script>` and cannot terminate the tag. `JSON_UNESCAPED_UNICODE` is kept for readable non-ASCII names.
+
+### Internal renames
+
+* Changed: `HomeCard::pizza_product_count()` → `count_pizza_products()`; orders list-table args `pizza_order`/`pizza_orders` → `pizzatier_order`/`pizzatier_orders`.
+
+---
+
 ## 2.2.1
 
 WordPress.org Plugin Check compliance release. No functional changes.
