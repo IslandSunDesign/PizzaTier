@@ -7,7 +7,7 @@
  * Author:      Island Sun Design
  * Author URI:  https://islandsundesign.com
  * Requires at least: 6.2
- * Tested up to:      7.0
+ * Tested up to:      7.1
  * Requires PHP:      7.4
  * License:     GPLv2 or later
  * Text Domain: pizzatier
@@ -60,6 +60,17 @@ define( 'PIZZATIER_TEMPLATES_URL', PIZZATIER_PLUGIN_URL . 'templates/' );
 define( 'PIZZATIER_ASSETS_URL',    PIZZATIER_PLUGIN_URL . 'assets/' );
 define( 'PIZZATIER_IMAGES_URL',    PIZZATIER_PLUGIN_URL . 'assets/images/' );
 define( 'PIZZATIER_BLOCKS_DIR',    PIZZATIER_PLUGIN_DIR . 'blocks/' );
+
+// WooCommerce High-Performance Order Storage (HPOS) compatibility.
+// All order reads/writes in src/Commerce and src/Orders go through the WC_Order
+// CRUD API rather than direct postmeta access, so the plugin is safe with
+// custom order tables. Without this explicit declaration WooCommerce lists the
+// plugin as "incompatible" on the HPOS settings screen and blocks enabling it.
+add_action( 'before_woocommerce_init', function () {
+	if ( class_exists( \Automattic\WooCommerce\Utilities\FeaturesUtil::class ) ) {
+		\Automattic\WooCommerce\Utilities\FeaturesUtil::declare_compatibility( 'custom_order_tables', __FILE__, true );
+	}
+} );
 
 
 /**

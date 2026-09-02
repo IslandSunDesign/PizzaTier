@@ -10,6 +10,16 @@ Versions follow [Semantic Versioning](https://semver.org/).
 
 WordPress.org plugin review compliance release (review R pizzatier/islandsundesign/19Jul26).
 
+### WooCommerce HPOS compatibility
+
+* Declared compatibility with High-Performance Order Storage via `FeaturesUtil::declare_compatibility( 'custom_order_tables', ... )` on `before_woocommerce_init`. All order reads/writes already go through the WC_Order CRUD API; the declaration was the only missing piece, and without it WooCommerce lists the plugin as incompatible on the HPOS settings screen.
+
+### Housekeeping
+
+* `Tested up to` bumped to WordPress 7.1.
+* Deleted `src/Commerce/Admin/Dashboard.php` (unused pre-merge Commerce dashboard, dead code since the 2.0.0 menu consolidation — its removal was listed in this release's notes but the file had been left in the tree; it also contained the last remaining inline `<style>` block).
+* Corrected stale comments in `Commerce/Plugin.php` and `BulkPricingPage.php` that still pointed at `Dashboard::register_menus()`; menu registration lives in `PizzaTier\Admin\AdminMenu`.
+
 ### Shortcode rename (breaking)
 
 The registered shortcode tags used the generic `pizza_` prefix, which the WordPress.org review flagged under the unique-prefix guideline. The canonical tags are now:

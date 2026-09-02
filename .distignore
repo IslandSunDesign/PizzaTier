@@ -3,6 +3,7 @@
 /.wordpress-org
 /.distignore
 /.gitignore
+/.gitattributes
 /tests
 /harness
 /node_modules
@@ -11,5 +12,6 @@
 /build3
 *.zip
 *.log
+phpcs.xml
 CHANGELOG.md
 README.md

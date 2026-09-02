@@ -68,8 +68,8 @@ class BulkPricingPage {
 
 	/**
 	 * Hook the AJAX handlers and the asset guard. The menu item itself is
-	 * registered by Dashboard::register_menus() (which owns the whole
-	 * PizzaTier menu), so this runs from Plugin::init() to make sure the
+	 * registered by PizzaTier\Admin\AdminMenu (which owns the whole
+	 * PizzaTier menu since 2.0.0), so this runs from Plugin::init() to make sure the
 	 * AJAX endpoints exist on admin-ajax.php requests too — those never fire
 	 * admin_menu.
 	 */

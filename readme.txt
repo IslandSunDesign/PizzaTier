@@ -2,7 +2,7 @@
 Contributors: islandsundesign
 Tags: pizza, restaurant, woocommerce, customizer, builder
 Requires at least: 6.2
-Tested up to: 7.0
+Tested up to: 7.1
 Requires PHP: 7.4
 Stable tag: 2.3.0
 License: GPLv2 or later
@@ -245,6 +245,7 @@ WordPress.org plugin review compliance release.
 * Changed: the `[pizzatier_layer]` shortcode / PizzaTier Image block output is now passed through `wp_kses()` with an explicit allowlist at return time, so markup supplied via the `pizzatier_layer_html` filter is escaped late.
 * Changed: product JSON-LD is now encoded without `JSON_UNESCAPED_SLASHES`, so a `</script>` sequence in filtered schema values can no longer terminate the script tag early.
 * Changed: the WooCommerce product-data tab key `pizza_configurator` renamed to `pizzatier_configurator`.
+* Added: WooCommerce High-Performance Order Storage (HPOS) compatibility declaration, so PizzaTier no longer shows as incompatible on the HPOS settings screen.
 * Removed: the unused pre-merge Commerce dashboard class (dead code since the 2.0.0 menu consolidation).
 
 = 2.2.1 =

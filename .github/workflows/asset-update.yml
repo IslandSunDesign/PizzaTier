@@ -1,0 +1,30 @@
+# Pushes readme.txt and .wordpress-org asset changes (banners, icons,
+# screenshots) straight to SVN trunk WITHOUT releasing a new version.
+#
+# Runs on every push to main, but it only acts when the changes are
+# limited to readme.txt and the .wordpress-org folder — any other
+# changed files and it safely does nothing.
+#
+# Uses the same SVN_USERNAME / SVN_PASSWORD secrets as deploy.yml.
+
+name: Readme and asset update
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  trunk:
+    name: Push readme/assets to trunk
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: WordPress.org plugin asset/readme update
+        uses: 10up/action-wordpress-plugin-asset-update@stable
+        env:
+          SVN_USERNAME: ${{ secrets.SVN_USERNAME }}
+          SVN_PASSWORD: ${{ secrets.SVN_PASSWORD }}
+          SLUG: pizzatier

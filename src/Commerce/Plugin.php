@@ -34,7 +34,7 @@ final class Plugin {
 		// ── Bulk Pricing page ─────────────────────────────────────────────
 		// No-refresh per-ingredient price-grid editor. register() only hooks
 		// the two AJAX endpoints (load items / save batch); the menu item and
-		// render callback are wired in Dashboard::register_menus(). Registered
+		// render callback are wired in PizzaTier\Admin\AdminMenu. Registered
 		// here so the AJAX actions exist on admin-ajax.php requests, which never
 		// fire admin_menu.
 		$bulk_pricing_page = new Admin\BulkPricingPage( new PriceGrid\Grid() );
