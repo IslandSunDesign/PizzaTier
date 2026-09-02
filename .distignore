@@ -1,0 +1,15 @@
+/.git
+/.github
+/.wordpress-org
+/.distignore
+/.gitignore
+/tests
+/harness
+/node_modules
+/build1
+/build2
+/build3
+*.zip
+*.log
+CHANGELOG.md
+README.md
