@@ -111,6 +111,12 @@ class CartIntegration {
 		// If on a WooCommerce single-product page, restrict to pizza products only.
 		// On non-product pages (demo, shortcode embeds) we always render —
 		// the checkout-bar.php file itself is guarded by class_exists(PizzaTier).
+		// The bar's Add to Cart needs the pricing/cart scripts, which only load
+		// on pizza product pages; on other pages it would be a dead button.
+		if ( ! wp_script_is( 'pizzatier-commerce-cart', 'enqueued' ) ) {
+			return;
+		}
+
 		if ( function_exists( 'is_product' ) && is_product() ) {
 			global $product;
 			if ( ! $product instanceof \WC_Product ) {
@@ -148,7 +154,7 @@ class CartIntegration {
 		if ( ! $bar_file || ! file_exists( $bar_file ) ) {
 			if ( class_exists( 'PizzaTier\\Template\\TemplateLoader' ) ) {
 				$loader   = new \PizzaTier\Template\TemplateLoader();
-				$bar_file = $loader->get_template_file( 'checkout-bar.php' );
+				$bar_file = $loader->get_template_file( 'checkout-bar.php', (string) $active_slug );
 			}
 		}
 
@@ -210,10 +216,29 @@ class CartIntegration {
 			return;
 		}
 
+		// "Allow guest pizza orders" (2.4.0: the setting was never enforced).
+		if ( ! is_user_logged_in() && ! CartRules::guests_allowed() ) {
+			wp_send_json_error( [ 'message' => __( 'Please log in to order pizza.', 'pizzatier' ), 'code' => 'login_required' ] );
+			return;
+		}
+
+		/** This endpoint is open to guests; see Core\RateLimiter (2.4.3). */
+		$rl_max = (int) apply_filters( 'pizzatier_cart_rate_limit', 60 );
+		if ( ! \PizzaTier\Core\RateLimiter::hit( 'cart', $rl_max, 60 ) ) {
+			wp_send_json_error( [ 'message' => __( 'Too many requests. Please slow down and try again shortly.', 'pizzatier' ), 'code' => 'rate_limited' ], 429 );
+			return;
+		}
+
+		// Bound the payload before decoding or resolving anything (2.4.3).
+		if ( is_string( $layers_raw ) && strlen( $layers_raw ) > 50000 ) {
+			wp_send_json_error( [ 'message' => __( 'Could not read layer configuration.', 'pizzatier' ), 'code' => 'invalid_layers' ] );
+			return;
+		}
+
 		// Decode layers — arrives as JSON string from cart.js.
 		$layers = is_string( $layers_raw ) ? json_decode( $layers_raw, true ) : (array) $layers_raw;
 
-		if ( json_last_error() !== JSON_ERROR_NONE || ! is_array( $layers ) ) {
+		if ( json_last_error() !== JSON_ERROR_NONE || ! is_array( $layers ) || count( $layers ) > 100 ) {
 			wp_send_json_error( [ 'message' => __( 'Could not read layer configuration.', 'pizzatier' ), 'code' => 'invalid_layers' ] );
 			return;
 		}
@@ -236,6 +261,11 @@ class CartIntegration {
 			];
 		}
 
+		// Resolve against the database (post IDs, types, names and coverage
+		// come from the server) so the stored configuration is exactly what
+		// was priced. Unknown and duplicate layers are dropped.
+		$sanitized_layers = \PizzaTier\Commerce\LayerResolver::resolve( $sanitized_layers, $product_id );
+
 		// ── Server-side price verification ────────────────────────────────
 		$result = $this->calculator->calculate( $product_id, $size, $sanitized_layers );
 
@@ -249,23 +279,12 @@ class CartIntegration {
 
 		$verified_price = (float) $result['total'];
 
-		// Build a layerName lookup from the sanitized layer data.
-		// layerName is display-only — the price always comes from the server grid.
-		$client_names = [];
-		foreach ( $sanitized_layers as $layer ) {
-			$lid   = $layer['layerId'];
-			$lname = $layer['layerName'];
-			if ( $lid !== '' ) {
-				$client_names[ $lid ] = $lname;
+		// Names now come from the server-side resolution (post titles), so
+		// they are already on the breakdown; only fill any gap.
+		$breakdown_with_names = array_map( function( $entry ) {
+			if ( '' === (string) ( $entry['layerName'] ?? '' ) ) {
+				$entry['layerName'] = ucwords( str_replace( [ '-', '_' ], ' ', (string) ( $entry['layerId'] ?? '' ) ) );
 			}
-		}
-
-		// Merge layerName into the server-calculated breakdown.
-		$breakdown_with_names = array_map( function( $entry ) use ( $client_names ) {
-			$lid = $entry['layerId'] ?? '';
-			$entry['layerName'] = isset( $client_names[ $lid ] ) && $client_names[ $lid ] !== ''
-				? $client_names[ $lid ]
-				: ucwords( str_replace( [ '-', '_' ], ' ', $lid ) );
 			return $entry;
 		}, $result['breakdown'] );
 

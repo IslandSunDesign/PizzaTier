@@ -10,6 +10,9 @@
  *   window.ClearPizza()
  *   window.RotatePizza( id, speed )
  *   window.StopPizza( id )
+ *
+ * It also defines window.PizzaTierAPI — a shared registry/facade that every
+ * template's custom.js registers with (see "Shared PizzaTierAPI registry").
  */
 ( function ( $ ) {
 	'use strict';
@@ -218,6 +221,9 @@
 	 */
 	function RotatePizza( divId, speed ) {
 		if ( speed === undefined ) { speed = 1; }
+		// Calling RotatePizza twice used to start a second rAF loop that
+		// StopPizza() could never cancel (only the latest id was tracked).
+		StopPizza( divId );
 		var el = document.getElementById( divId );
 		if ( ! el ) {
 			window.console && window.console.error( 'PizzaTier: RotatePizza — element not found:', divId );
@@ -238,6 +244,251 @@
 			delete rotationIntervals[ divId ];
 		}
 	}
+
+	// ── Shared PizzaTierAPI registry (facade) ─────────────────────────
+	//
+	// Every template's custom.js used to assign its own object to
+	// window.PizzaTierAPI, so two different templates on one page clobbered
+	// each other (the last one loaded won, and the other builder's state could
+	// no longer be read or restored). This file is a script dependency of every
+	// template's custom.js, so it defines a single facade here. Templates call
+	// PizzaTierAPI.register( theirApi ) (or registerInstance( id, inst ) for
+	// templates that register instance objects directly), and the facade routes
+	// getState(id) / setState(id, s) to whichever template owns that id.
+	//
+	// The methods are plain functions on the facade object so wrappers (e.g.
+	// topping-multiplier.js wrapping getState) keep working.
+	function isFn( f ) { return typeof f === 'function'; }
+
+	function hasOwn( o, k ) { return Object.prototype.hasOwnProperty.call( o, k ); }
+
+	function restBase() {
+		return ( window.wpApiSettings && window.wpApiSettings.root ) ? window.wpApiSettings.root : '/wp-json/';
+	}
+
+	function createFacade() {
+		var apis = [];
+		var own  = {};   // id → instance object (registerInstance)
+
+		function apiIds( api ) {
+			var ids = [];
+			try {
+				if ( isFn( api.getAllInstances ) ) {
+					ids = api.getAllInstances() || [];
+				} else if ( isFn( api.getInstances ) ) {
+					ids = Object.keys( api.getInstances() || {} );
+				}
+			} catch ( e ) { ids = []; }
+			return ids;
+		}
+
+		function apiOwns( api, id ) {
+			return apiIds( api ).indexOf( id ) !== -1;
+		}
+
+		function ownerApi( id ) {
+			for ( var i = 0; i < apis.length; i++ ) {
+				if ( apiOwns( apis[ i ], id ) ) { return apis[ i ]; }
+			}
+			return null;
+		}
+
+		var facade = {
+			__pztFacade: true,
+			_apis:       apis,
+			_instances:  own,
+
+			/** Register a template-level API object ({getState, setState, getAllInstances, …}). */
+			register: function ( api ) {
+				if ( ! api || api === facade || typeof api !== 'object' ) { return facade; }
+				if ( apis.indexOf( api ) === -1 ) { apis.push( api ); }
+				return facade;
+			},
+
+			/** Register a single builder instance object (must expose getState / setState). */
+			registerInstance: function ( id, inst ) {
+				if ( id && inst ) { own[ String( id ) ] = inst; }
+			},
+
+			getInstance: function ( id ) {
+				if ( ! id ) { return null; }
+				if ( hasOwn( own, id ) ) { return own[ id ]; }
+				for ( var i = 0; i < apis.length; i++ ) {
+					var api = apis[ i ], inst = null;
+					try {
+						if ( isFn( api.getInstance ) ) { inst = api.getInstance( id ); }
+						if ( ! inst && isFn( api.getInstances ) ) {
+							var map = api.getInstances() || {};
+							inst = hasOwn( map, id ) ? map[ id ] : null;
+						}
+					} catch ( e ) { inst = null; }
+					if ( inst ) { return inst; }
+				}
+				return null;
+			},
+
+			/** id → instance object map (only templates that expose instance objects). */
+			getInstances: function () {
+				var out = {}, k;
+				for ( var i = 0; i < apis.length; i++ ) {
+					if ( ! isFn( apis[ i ].getInstances ) ) { continue; }
+					var map = null;
+					try { map = apis[ i ].getInstances(); } catch ( e ) { map = null; }
+					if ( map && typeof map === 'object' ) {
+						for ( k in map ) { if ( hasOwn( map, k ) && ! hasOwn( out, k ) ) { out[ k ] = map[ k ]; } }
+					}
+				}
+				for ( k in own ) { if ( hasOwn( own, k ) ) { out[ k ] = own[ k ]; } }
+				return out;
+			},
+
+			/** Every registered instance id, across all templates on the page. */
+			getAllInstances: function () {
+				var ids = [], k;
+				for ( k in own ) { if ( hasOwn( own, k ) ) { ids.push( k ); } }
+				for ( var i = 0; i < apis.length; i++ ) {
+					var list = apiIds( apis[ i ] );
+					for ( var j = 0; j < list.length; j++ ) {
+						if ( ids.indexOf( list[ j ] ) === -1 ) { ids.push( list[ j ] ); }
+					}
+				}
+				return ids;
+			},
+
+			getState: function ( id ) {
+				var i, s = null;
+				if ( id === undefined || id === null || id === '' ) {
+					// Bare getState(): the single builder on the page, if there is exactly one.
+					var ids = facade.getAllInstances();
+					if ( ids.length === 1 ) { return facade.getState( ids[ 0 ] ); }
+					if ( ids.length === 0 && apis.length === 1 && isFn( apis[ 0 ].getState ) ) {
+						try { return apis[ 0 ].getState(); } catch ( e ) { return null; }
+					}
+					return null;
+				}
+				id = String( id );
+				if ( hasOwn( own, id ) ) {
+					return ( own[ id ] && isFn( own[ id ].getState ) ) ? own[ id ].getState() : null;
+				}
+				var owner = ownerApi( id );
+				if ( owner && isFn( owner.getState ) ) { return owner.getState( id ); }
+				for ( i = 0; i < apis.length; i++ ) {
+					if ( ! isFn( apis[ i ].getState ) ) { continue; }
+					try { s = apis[ i ].getState( id ); } catch ( e ) { s = null; }
+					if ( s ) { return s; }
+				}
+				// Legacy (Scaffold): getState( 'SC_varName' ) resolved window[ varName ].
+				var g = window[ id ];
+				if ( g && typeof g === 'object' && g !== facade && isFn( g.getState ) && ! g.nodeType ) {
+					try { return g.getState(); } catch ( e ) { return null; }
+				}
+				return null;
+			},
+
+			setState: function ( id, newState ) {
+				// Tolerate the single-argument form setState( state ).
+				if ( id && typeof id === 'object' && newState === undefined ) {
+					newState = id;
+					id = null;
+				}
+				if ( ! id ) {
+					var ids = facade.getAllInstances();
+					if ( ids.length !== 1 ) { return; }
+					id = ids[ 0 ];
+				}
+				id = String( id );
+				if ( hasOwn( own, id ) ) {
+					if ( own[ id ] && isFn( own[ id ].setState ) ) { own[ id ].setState( newState ); }
+					return;
+				}
+				var owner = ownerApi( id );
+				if ( owner && isFn( owner.setState ) ) { owner.setState( id, newState ); return; }
+				var inst = facade.getInstance( id );
+				if ( inst && isFn( inst.setState ) ) { inst.setState( newState ); return; }
+				var g = window[ id ];
+				if ( g && typeof g === 'object' && g !== facade && isFn( g.setState ) && ! g.nodeType ) {
+					g.setState( newState );
+				}
+			},
+
+			renderPizza: function ( layers ) {
+				for ( var i = 0; i < apis.length; i++ ) {
+					if ( isFn( apis[ i ].renderPizza ) ) { return apis[ i ].renderPizza( layers ); }
+				}
+				var nonce = ( window.wpApiSettings && window.wpApiSettings.nonce ) ? window.wpApiSettings.nonce : '';
+				return fetch( restBase() + 'pizzatier/v1/render', {
+					method: 'POST',
+					headers: { 'Content-Type': 'application/json', 'X-WP-Nonce': nonce },
+					body: JSON.stringify( layers || {} )
+				} ).then( function ( r ) { return r.json(); } )
+				   .then( function ( d ) { return d.html || ''; } );
+			},
+
+			getLayerUrl: function ( type, slug ) {
+				for ( var i = 0; i < apis.length; i++ ) {
+					if ( isFn( apis[ i ].getLayerUrl ) ) { return apis[ i ].getLayerUrl( type, slug ); }
+				}
+				return fetch( restBase() + 'pizzatier/v1/layer-url?type=' + encodeURIComponent( type ) + '&slug=' + encodeURIComponent( slug ) )
+					.then( function ( r ) { return r.json(); } )
+					.then( function ( d ) { return d.url || ''; } );
+			},
+
+			renderStatic: function ( selectorOrEl, pizzaState ) {
+				for ( var i = 0; i < apis.length; i++ ) {
+					if ( isFn( apis[ i ].renderStatic ) ) { return apis[ i ].renderStatic( selectorOrEl, pizzaState ); }
+				}
+				return undefined;
+			}
+		};
+
+		return facade;
+	}
+
+	if ( ! ( window.PizzaTierAPI && window.PizzaTierAPI.__pztFacade ) ) {
+		var pztPrevApi = window.PizzaTierAPI;
+		var pztFacade  = createFacade();
+		// Something defined an API before us — keep it reachable through the facade.
+		if ( pztPrevApi && typeof pztPrevApi === 'object' ) {
+			if ( isFn( pztPrevApi.getAllInstances ) || isFn( pztPrevApi.getInstances ) ) {
+				pztFacade.register( pztPrevApi );
+			}
+		}
+		window.PizzaTierAPI = pztFacade;
+	}
+
+	// ── Shared notice helper (aria-live toast) ────────────────────────
+	// Used by templates that previously only fired events nobody listened for
+	// (e.g. "maximum toppings reached"). Styled by .pzt-notice in each
+	// template's template.css; falls back to sensible defaults.
+	window.PizzaTierNotice = window.PizzaTierNotice || {
+		show: function ( rootEl, msg, duration ) {
+			if ( ! rootEl || ! msg ) { return; }
+			var settings = window.pizzatierSettings || {};
+			if ( ( settings.toastStyle || '' ) === 'none' ) { return; }
+			var dur = parseInt( duration || settings.toastDuration, 10 ) || 3000;
+			var el  = rootEl.querySelector( '.pzt-notice' );
+			if ( ! el ) {
+				el = document.createElement( 'div' );
+				el.className = 'pzt-notice';
+				el.setAttribute( 'role', 'status' );
+				el.setAttribute( 'aria-live', 'polite' );
+				rootEl.appendChild( el );
+			}
+			el.textContent = String( msg );
+			el.hidden = false;
+			el.classList.add( 'pzt-notice--visible' );
+			if ( el._pztTimer ) { clearTimeout( el._pztTimer ); }
+			el._pztTimer = setTimeout( function () {
+				el.classList.remove( 'pzt-notice--visible' );
+				el.hidden = true;
+			}, dur );
+		},
+		maxToppings: function ( rootEl, max ) {
+			var settings = window.pizzatierSettings || {};
+			var msg = settings.textMaxToppings || ( 'Maximum ' + max + ' toppings reached!' );
+			this.show( rootEl, String( msg ).replace( '{max}', String( max ) ) );
+		}
+	};
 
 	// ── Global exports ────────────────────────────────────────────────
 	// Only these three are exposed because template PHP renders them in onclick= attributes.

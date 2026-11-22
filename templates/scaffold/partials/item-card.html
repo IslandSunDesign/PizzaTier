@@ -52,12 +52,14 @@
   <!-- Selected indicator — shown/hidden via JS -->
   <span class="sc-card__selected-mark" aria-hidden="true">&#10003;</span>
 
-  <!-- Select / deselect button -->
+  <!-- Select / deselect button (clicking a selected optional layer — anything
+       but crust — deselects it; see swapBase() in custom.js) -->
   <button
     type="button"
     class="sc-card__btn sc-card__btn--select"
+    aria-pressed="false"
     aria-label="<?php echo esc_attr( sprintf( __( 'Select %s', 'pizzatier' ), $title ) ); ?>"
-    onclick="<?php echo esc_attr( "window['{$sc_var}']&&window['{$sc_var}'].swapBase('{$layer_type}','{$slug}','{$title}','" . esc_js( (string) $layer_url ) . "',this)" ); ?>"
+    onclick="<?php echo esc_attr( "window['" . esc_js( $sc_var ) . "']&&window['" . esc_js( $sc_var ) . "'].swapBase('" . esc_js( $layer_type ) . "','" . esc_js( $slug ) . "','" . esc_js( $title ) . "','" . esc_js( (string) $layer_url ) . "',this)" ); ?>"
   >
     <?php esc_html_e( 'Select', 'pizzatier' ); ?>
   </button>

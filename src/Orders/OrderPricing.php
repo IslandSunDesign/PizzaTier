@@ -152,6 +152,24 @@ final class OrderPricing {
 			}
 		}
 
+		// The customer chose a size the grid has no column for. Pricing it as
+		// the first column charged a Large as a Small (2.4.3); leave it
+		// unpriced instead, which holds the order for review.
+		$explicit = '' !== trim( (string) ( $size_data['label'] ?? '' ) ) || '' !== trim( (string) ( $size_data['slug'] ?? '' ) );
+		if ( $explicit ) {
+			/**
+			 * Filter the grid size for an explicitly chosen size that did not map.
+			 *
+			 * @since 2.4.3
+			 *
+			 * @param string   $size  '' (leave unpriced).
+			 * @param array    $item  The resolved line item.
+			 * @param string[] $sizes Grid sizes available on the product.
+			 */
+			$mapped = (string) apply_filters( 'pizzatier_order_unmapped_size', '', $item, $sizes );
+			return in_array( $mapped, $sizes, true ) ? $mapped : '';
+		}
+
 		$fallback = (string) $sizes[0];
 
 		/**

@@ -60,6 +60,11 @@ class PriceCalculator {
 			return new \WP_Error( 'pizzatier_commerce_invalid_product', __( 'Product not found.', 'pizzatier' ), [ 'status' => 404 ] );
 		}
 
+		// Unpublished products are not for sale and their prices are not public.
+		if ( 'publish' !== $product->get_status() && ! current_user_can( 'read_post', $product_id ) ) {
+			return new \WP_Error( 'pizzatier_commerce_invalid_product', __( 'Product not found.', 'pizzatier' ), [ 'status' => 404 ] );
+		}
+
 		// Accept pizza type OR any product with a PizzaTier builder template configured.
 		$has_template = '' !== (string) $product->get_meta( '_pizzatier_builder_template', true );
 		if ( 'pizza' !== $product->get_type() && ! $has_template ) {
@@ -85,7 +90,20 @@ class PriceCalculator {
 			return new \WP_Error( 'pizzatier_commerce_invalid_layers', __( 'Layer data is invalid.', 'pizzatier' ), [ 'status' => 400 ] );
 		}
 
-		$enabled_layer_ids = $this->get_enabled_layer_ids( $product_id );
+		// Pricing engine: per-product override, else the global setting.
+		$product_mode = (string) get_post_meta( $product_id, '_pizzatier_pricing_mode', true );
+		$mode         = ( '' !== $product_mode ) ? $product_mode : (string) pizzatier_get_option( 'pricing_mode', 'addon_per_layer' );
+
+		// Resolve every layer against the database: post ID, type, name and
+		// coverage come from the server, not the request (2.4.0).
+		$layers = LayerResolver::resolve( $layers, $product_id );
+
+		$limit_error = LayerResolver::topping_limit_error( $layers );
+		if ( null !== $limit_error ) {
+			return new \WP_Error( 'pizzatier_commerce_topping_limit', $limit_error, [ 'status' => 400 ] );
+		}
+
+		$allow             = $this->get_enabled_layers( $product_id );
 		$valid_fractions   = $this->grid->get_fractions( $product_id );
 
 		// Sanitise and validate each layer entry
@@ -105,7 +123,15 @@ class PriceCalculator {
 					[ 'status' => 400 ] );
 			}
 
-			if ( ! empty( $enabled_layer_ids ) && ! in_array( $layer_id, $enabled_layer_ids, true ) ) {
+			// Allowlist by the ingredient's post ID: two ingredients of
+			// different types can share a slug, so a slug match let a "bbq"
+			// drizzle through on a product that only offers the "bbq" sauce
+			// (2.4.3). Legacy slug entries still match by slug.
+			$base_id   = (int) ( $layer['layerBaseId'] ?? $layer_post_id );
+			$permitted = ( empty( $allow['ids'] ) && empty( $allow['slugs'] ) )
+				|| in_array( $base_id, $allow['ids'], true )
+				|| in_array( $layer_id, $allow['slugs'], true );
+			if ( ! $permitted ) {
 				return new \WP_Error( 'pizzatier_commerce_layer_not_permitted',
 					/* translators: %s: value inserted into the message. */
 					sprintf( __( 'Layer "%s" is not available on this product.', 'pizzatier' ), esc_html( $layer_id ) ),
@@ -124,7 +150,13 @@ class PriceCalculator {
 			// 'HalfLeft', 'whole', etc.) that must map to canonical labels
 			// ('Whole', 'Half', 'Quarter').  normalise_fraction() handles this;
 			// after normalisation the strict in_array check is safe.
-			if ( ! empty( $valid_fractions ) ) {
+			// Coverage columns only apply to toppings, and not at all in
+			// tiered mode, whose columns are Tier1/Tier2/… (2.4.0: sauce,
+			// cheese and drizzle were being forced into "Tier1").
+			$applies = ! $this->is_non_topping( $layer_type ) && 'tiered_by_count' !== $mode;
+			if ( ! $applies ) {
+				$fraction = $this->normalise_fraction( $fraction, [ 'Whole', 'Half', 'Quarter' ] ) ?? 'Whole';
+			} elseif ( ! empty( $valid_fractions ) ) {
 				$normalised = $this->normalise_fraction( $fraction, $valid_fractions );
 				if ( null !== $normalised ) {
 					$fraction = $normalised;
@@ -145,15 +177,13 @@ class PriceCalculator {
 				'fraction'     => $fraction,
 				'portion'      => \PizzaTier\Commerce\WooCommerce\OrderMeta::canonical_portion( (string) ( $layer['portion'] ?? '' ) ),
 				'portionLabel' => sanitize_text_field( (string) ( $layer['portionLabel'] ?? '' ) ),
+				'layerName'    => sanitize_text_field( (string) ( $layer['layerName'] ?? '' ) ),
 				'layerType'    => $layer_type,
 				'layerPostId'  => $layer_post_id,
 			];
 		}
 
 		// ── Route to pricing engine ────────────────────────────────────────
-		// Per-product override takes precedence over global setting.
-		$product_mode = (string) get_post_meta( $product_id, '_pizzatier_pricing_mode', true );
-		$mode         = ( '' !== $product_mode ) ? $product_mode : (string) pizzatier_get_option( 'pricing_mode', 'addon_per_layer' );
 		$base_price   = (float) $product->get_price();
 
 		$result = $this->run_engine( $mode, $product_id, $size, $sanitised_layers, $base_price );
@@ -259,6 +289,10 @@ class PriceCalculator {
 				} else {
 					$price = $this->grid->get_layer_price( $layer_post_id, $product_id, $size, $layer['fraction'], (string) $layer['layerType'] );
 					if ( null === $price ) {
+						// Flat per-size 'topping' row — the live price uses it too.
+						$price = $this->grid->get_flat_price( $product_id, 'topping', $size );
+					}
+					if ( null === $price ) {
 						// No grid cell found. If no grid is configured at all, use $0
 						// so the order stores with base price only. Otherwise error.
 						if ( ! $has_any_grid ) {
@@ -283,11 +317,16 @@ class PriceCalculator {
 	 * Non-toppings handled separately by their own pricing rule.
 	 */
 	private function engine_flat_per_size( int $product_id, string $size, array $layers ) {
-		$flat_price = $this->grid->get_price( $product_id, $size, 'Whole' );
-		if ( null === $flat_price && ! empty( $layers ) ) {
+		// Same lookup chain as any topping: global topping grid, then the
+		// product grid (2.4.0 — previously the product grid only).
+		$flat_price   = $this->grid->get_layer_price( 0, $product_id, $size, 'Whole', 'topping' );
+		$has_toppings = ! empty( array_filter( $layers, function ( $l ) {
+			return ! $this->is_non_topping( (string) $l['layerType'] );
+		} ) );
+		if ( null === $flat_price && $has_toppings && $this->has_any_grid( $product_id ) ) {
 			return $this->missing_cell_error( $size, 'Whole' );
 		}
-		$flat_price = $flat_price ?? 0.0;
+		$flat_price = $has_toppings ? ( $flat_price ?? 0.0 ) : 0.0;
 
 		$add_on    = $flat_price;
 		$breakdown = [];
@@ -373,7 +412,9 @@ class PriceCalculator {
 
 		// Determine tier
 		$raw_thresholds = pizzatier_get_option( 'tiered_topping_thresholds', '3,6' );
-		$thresholds     = array_map( 'intval', explode( ',', (string) $raw_thresholds ) );
+		$thresholds     = array_values( array_filter( array_map( 'intval', explode( ',', (string) $raw_thresholds ) ), function ( $t ) {
+			return $t > 0;
+		} ) );
 		sort( $thresholds );
 
 		$tier_num = 1;
@@ -393,8 +434,8 @@ class PriceCalculator {
 		}
 
 		// One tier price for all toppings
-		$tier_price = $this->grid->get_price( $product_id, $size, $fraction );
-		if ( null === $tier_price && $count > 0 ) {
+		$tier_price = $count > 0 ? $this->grid->get_layer_price( 0, $product_id, $size, $fraction, 'topping' ) : 0.0;
+		if ( null === $tier_price && $this->has_any_grid( $product_id ) ) {
 			return $this->missing_cell_error( $size, $fraction );
 		}
 		$tier_price = $tier_price ?? 0.0;
@@ -444,6 +485,9 @@ class PriceCalculator {
 					$note = __( 'Free topping included', 'pizzatier' );
 				} else {
 					$price = $this->grid->get_layer_price( $layer_post_id, $product_id, $size, $layer['fraction'], (string) $layer['layerType'] );
+					if ( null === $price ) {
+						$price = $this->grid->get_flat_price( $product_id, 'topping', $size );
+					}
 					if ( null === $price ) {
 						if ( ! $has_any_grid ) { $price = 0.0; } else { return $this->missing_cell_error( $size, $layer['fraction'] ); }
 					}
@@ -552,13 +596,15 @@ class PriceCalculator {
 
 		switch ( $mode ) {
 			case 'up':
-				return ceil( $total * 100 ) / 100;
+				// round() first: 16.10 * 100 is 1610.0000000000002 in floating
+				// point, which ceil() turned into 16.11.
+				return ceil( round( $total * 100, 6 ) ) / 100;
 			case 'nearest5':
-				return round( $total / 0.05 ) * 0.05;
+				return round( round( $total / 0.05 ) * 0.05, 2 );
 			case 'nearest25':
-				return round( $total / 0.25 ) * 0.25;
+				return round( round( $total / 0.25 ) * 0.25, 2 );
 			case 'nearest50':
-				return round( $total / 0.50 ) * 0.50;
+				return round( round( $total / 0.50 ) * 0.50, 2 );
 			case 'nearest1':
 				return round( $total );
 			default:
@@ -569,6 +615,13 @@ class PriceCalculator {
 	// -------------------------------------------------------------------------
 	// Helpers
 	// -------------------------------------------------------------------------
+
+	/** Whether any price grid (product, flat or global) exists at all. */
+	private function has_any_grid( int $product_id ): bool {
+		return null !== $this->grid->get( $product_id )
+			|| null !== $this->grid->get_flat( $product_id )
+			|| ! empty( $this->grid->get_all_global_grids() );
+	}
 
 	private function is_non_topping( string $layer_type ): bool {
 		return in_array( strtolower( $layer_type ), self::NON_TOPPING_TYPES, true );
@@ -615,45 +668,36 @@ class PriceCalculator {
 		return null; // Caller should return missing_cell_error().
 	}
 
-	private function get_enabled_layer_ids( int $product_id ): array {
+	/**
+	 * The product's ingredient allowlist.
+	 *
+	 * _pizzatier_enabled_layers stores post IDs (as strings); very old or
+	 * hand-entered values may be slugs. Both empty means "everything allowed".
+	 *
+	 * @return array{ids:int[],slugs:string[]}
+	 */
+	private function get_enabled_layers( int $product_id ): array {
+		$out = [ 'ids' => [], 'slugs' => [] ];
 		$raw = get_post_meta( $product_id, '_pizzatier_enabled_layers', true );
 		if ( ! is_array( $raw ) || empty( $raw ) ) {
-			return [];
+			return $out;
 		}
 
-		$slugs = [];
 		foreach ( $raw as $entry ) {
 			$entry = sanitize_text_field( (string) $entry );
 			if ( $entry === '' ) {
 				continue;
 			}
-
-			// _pizzatier_commerce_enabled_layers stores post IDs (integers as strings).
-			// The layerId coming from templates is always the post slug
-			// (e.g. 'pepperoni', 'thin-crispy').  Resolve post ID → slug so
-			// the whitelist comparison works correctly.
 			if ( ctype_digit( $entry ) ) {
-				$pid = (int) $entry;
-
-				// post_name (canonical WordPress slug).
-				$slug = get_post_field( 'post_name', $pid );
-				if ( $slug ) {
-					$slugs[] = (string) $slug;
-				}
-
-				// Colorbox templates compute slugs via sanitize_title(title)
-				// rather than post_name.  Add that form too so both match.
-				$title_slug = sanitize_title( (string) get_the_title( $pid ) );
-				if ( $title_slug && $title_slug !== $slug ) {
-					$slugs[] = $title_slug;
-				}
+				$out['ids'][] = (int) $entry;
 			} else {
-				// Already a slug (legacy or manually-entered value).
-				$slugs[] = $entry;
+				$out['slugs'][] = sanitize_title( $entry );
 			}
 		}
 
-		return array_values( array_unique( $slugs ) );
+		$out['ids']   = array_values( array_unique( $out['ids'] ) );
+		$out['slugs'] = array_values( array_unique( $out['slugs'] ) );
+		return $out;
 	}
 
 	private function format_price( float $price ): string {
@@ -708,19 +752,26 @@ class PriceCalculator {
 		if ( empty( $valid_fractions ) ) {
 			return null;
 		}
-		$lower = strtolower( $fraction );
-		// Try prefix matching: 'half*' → first grid fraction containing 'half' or 'Half'
-		foreach ( [ 'half', 'quarter', 'whole', 'third' ] as $prefix ) {
-			if ( strpos( $lower, $prefix ) !== false ) {
+		$lower = strtolower( trim( $fraction ) );
+		// 1. Exact (case-insensitive) label match.
+		foreach ( $valid_fractions as $vf ) {
+			if ( strtolower( (string) $vf ) === $lower ) {
+				return (string) $vf;
+			}
+		}
+		// 2. Same coverage word at the START of the label, so 'half-left' →
+		//    'Half' but 'quarter' never matches 'Three-Quarter'.
+		foreach ( [ 'whole', 'half', 'quarter', 'third' ] as $prefix ) {
+			if ( 0 === strpos( $lower, $prefix ) ) {
 				foreach ( $valid_fractions as $vf ) {
-					if ( stripos( $vf, $prefix ) !== false ) {
-						return $vf;
+					if ( 0 === stripos( (string) $vf, $prefix ) ) {
+						return (string) $vf;
 					}
 				}
 			}
 		}
-		// Default to the first fraction in the grid (usually 'Whole').
-		return $valid_fractions[0];
+		// 3. Fallback: the first column (usually 'Whole').
+		return (string) $valid_fractions[0];
 	}
 
 }

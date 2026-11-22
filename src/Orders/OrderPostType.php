@@ -32,6 +32,25 @@ class OrderPostType {
 	}
 
 	/**
+	 * Capability map for the order post type: every entry is the orders
+	 * capability, so whoever may use PizzaTier's order screens may do
+	 * everything to an order there, and nobody else can through core.
+	 *
+	 * @return array<string,string>
+	 */
+	private static function capabilities(): array {
+		$cap  = self::capability();
+		$keys = [
+			'edit_post', 'read_post', 'delete_post',
+			'edit_posts', 'edit_others_posts', 'edit_private_posts', 'edit_published_posts',
+			'publish_posts', 'read_private_posts', 'read',
+			'delete_posts', 'delete_private_posts', 'delete_published_posts', 'delete_others_posts',
+			'create_posts',
+		];
+		return array_fill_keys( $keys, $cap );
+	}
+
+	/**
 	 * Register the post type. Hooked to `init` at priority 0, alongside the
 	 * other PizzaTier CPTs, so statuses and the type land together.
 	 */
@@ -70,13 +89,24 @@ class OrderPostType {
 			'menu_icon'           => 'dashicons-clipboard',
 			'show_in_admin_bar'   => false,
 			'show_in_nav_menus'   => false,
-			'can_export'          => true,
+			// Orders hold customer PII. Keep them out of Tools → Export (WXR);
+			// PizzaTier's own Site Migration exports them only on explicit opt-in.
+			'can_export'          => false,
 			'has_archive'         => false,
 			'exclude_from_search' => true,
 			'publicly_queryable'  => false,
 			'rewrite'             => false,
 			'query_var'           => false,
-			'capability_type'     => 'page',
+			// Every primitive and meta capability resolves to the single orders
+			// capability (manage_options unless filtered). With
+			// capability_type 'page', editors and shop managers could reach
+			// orders through core screens such as Quick Edit regardless of
+			// 'pizzatier_orders_capability'. map_meta_cap is off, so core's
+			// map_meta_cap() maps edit_post / delete_post / read_post for this
+			// type straight to the values below.
+			'capability_type'     => 'pizzatier_order',
+			'capabilities'        => self::capabilities(),
+			'map_meta_cap'        => false,
 			// Orders can contain customer PII — keep them off the REST API.
 			'show_in_rest'        => false,
 			'delete_with_user'    => false,

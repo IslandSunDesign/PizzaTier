@@ -401,6 +401,14 @@ class LayerBuilderWizard {
 			if ( $att_post && $att_post->post_type === 'attachment' && strpos( (string) get_post_mime_type( $image_id ), 'image/' ) === 0 ) {
 				update_post_meta( $post_id, '_pizzatier_layer_image_id', $image_id );
 				set_post_thumbnail( $post_id, $image_id );
+				// The builder reads {singular}_layer_image (as written by the
+				// Layer Image meta box), so store the attachment ID there too.
+				$singular  = preg_replace( '/s$/', '', str_replace( 'pizzatier_', '', $cpt ) );
+				$image_key = $singular . '_layer_image';
+				update_post_meta( $post_id, $image_key, $image_id );
+				if ( function_exists( 'update_field' ) ) {
+					update_field( $image_key, $image_id, $post_id );
+				}
 			}
 		}
 

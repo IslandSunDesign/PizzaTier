@@ -101,6 +101,10 @@ class Order {
 				'post_title'  => $number,
 				'post_status' => $status,
 				'post_name'   => sanitize_title( $number ),
+				// The customer is linked through META_USER_ID. Leaving the
+				// author to default made the customer the post author, which
+				// anonymisation then had to remember to clear (2.4.3).
+				'post_author' => 0,
 			],
 			true
 		);
@@ -166,8 +170,7 @@ class Order {
 	 * when orders are deleted. The prefix and pad width are filterable.
 	 */
 	public static function next_order_number(): string {
-		$next = (int) get_option( self::OPTION_SEQUENCE, 0 ) + 1;
-		update_option( self::OPTION_SEQUENCE, $next, false );
+		$next = self::next_sequence();
 
 		$prefix = (string) apply_filters( 'pizzatier_order_number_prefix', 'PZT-' );
 		$pad    = (int) apply_filters( 'pizzatier_order_number_pad', 4 );
@@ -180,6 +183,68 @@ class Order {
 		 * @param int    $sequence The raw sequence value.
 		 */
 		return (string) apply_filters( 'pizzatier_order_number', $number, $next );
+	}
+
+	/**
+	 * Claim the next value of the order sequence atomically.
+	 *
+	 * A read-then-write through get_option()/update_option() lets two orders
+	 * submitted at the same moment read the same value and receive the same
+	 * order number. Instead the increment happens inside a single UPDATE, and
+	 * MySQL's per-connection LAST_INSERT_ID( expr ) hands back the value this
+	 * request wrote, so concurrent requests can never observe each other's.
+	 */
+	private static function next_sequence(): int {
+		global $wpdb;
+
+		// Make sure the row exists without ever overwriting an existing value
+		// (add_option() upserts, which could reset a live counter in a race).
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Atomic counter; the options cache is cleared below.
+		$wpdb->query(
+			$wpdb->prepare(
+				"INSERT IGNORE INTO {$wpdb->options} (option_name, option_value, autoload) VALUES (%s, %s, %s)",
+				self::OPTION_SEQUENCE,
+				'0',
+				'no'
+			)
+		);
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Atomic counter; the options cache is cleared below.
+		$updated = $wpdb->query(
+			$wpdb->prepare(
+				"UPDATE {$wpdb->options} SET option_value = LAST_INSERT_ID( CAST( option_value AS UNSIGNED ) + 1 ) WHERE option_name = %s",
+				self::OPTION_SEQUENCE
+			)
+		);
+
+		$next = 0;
+		if ( $updated ) {
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Connection-scoped value just written above.
+			$next = (int) $wpdb->get_var( 'SELECT LAST_INSERT_ID()' );
+		}
+
+		// The value changed underneath the options API, so drop any cached copy.
+		wp_cache_delete( self::OPTION_SEQUENCE, 'options' );
+		$alloptions = wp_cache_get( 'alloptions', 'options' );
+		if ( is_array( $alloptions ) && isset( $alloptions[ self::OPTION_SEQUENCE ] ) ) {
+			wp_cache_delete( 'alloptions', 'options' );
+		}
+		$notoptions = wp_cache_get( 'notoptions', 'options' );
+		if ( is_array( $notoptions ) && isset( $notoptions[ self::OPTION_SEQUENCE ] ) ) {
+			unset( $notoptions[ self::OPTION_SEQUENCE ] );
+			wp_cache_set( 'notoptions', $notoptions, 'options' );
+		}
+
+		if ( $next > 0 ) {
+			return $next;
+		}
+
+		// Fallback for a database that refused the atomic path (e.g. a
+		// drop-in that does not support LAST_INSERT_ID): the previous,
+		// non-atomic behaviour is better than failing to take the order.
+		$next = (int) get_option( self::OPTION_SEQUENCE, 0 ) + 1;
+		update_option( self::OPTION_SEQUENCE, $next, false );
+		return $next;
 	}
 
 	// -------------------------------------------------------------------------
@@ -624,6 +689,31 @@ class Order {
 	 *
 	 * @return array<int,array{time:string,user_id:int,note:string}>
 	 */
+	/**
+	 * Who made a history entry or staff note, for display.
+	 *
+	 * Orders imported by Site Migration (2.4.3+) carry no user ID — a source
+	 * site's IDs belong to different people here — but keep the actor's
+	 * display name under 'by_name'.
+	 *
+	 * @param array $entry A status-history entry or staff note.
+	 */
+	public static function actor_label( array $entry ): string {
+		$user_id = (int) ( $entry['user_id'] ?? 0 );
+		if ( $user_id > 0 ) {
+			$user = get_userdata( $user_id );
+			return $user ? (string) $user->display_name : __( 'Unknown user', 'pizzatier' );
+		}
+		if ( ! empty( $entry['imported'] ) ) {
+			$name = trim( (string) ( $entry['by_name'] ?? '' ) );
+			return '' !== $name
+				/* translators: %s: name of the person on the site the order was imported from. */
+				? sprintf( __( '%s (imported)', 'pizzatier' ), $name )
+				: __( 'Imported', 'pizzatier' );
+		}
+		return __( 'Customer', 'pizzatier' );
+	}
+
 	public function get_staff_notes(): array {
 		$notes = get_post_meta( $this->id, self::META_STAFF_NOTES, true );
 		return is_array( $notes ) ? $notes : [];

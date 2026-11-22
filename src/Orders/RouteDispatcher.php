@@ -39,8 +39,12 @@ final class RouteDispatcher {
 	 *
 	 * @return array{
 	 *     cart_added:bool, cart_count:int, cart_url:string, redirect:string,
-	 *     webhook_sent:bool, discard:bool, errors:string[]
+	 *     webhook_sent:bool, discard:bool, errors:string[], admin_errors:string[]
 	 * }
+	 *
+	 * 'errors' are safe and useful to show the customer (cart problems);
+	 * 'admin_errors' are store-side delivery problems (the webhook) that the
+	 * customer can do nothing about and must not be shown.
 	 */
 	public function dispatch( Order $order, int $product_id = 0, bool $emailed = false ): array {
 		$result = [
@@ -51,6 +55,7 @@ final class RouteDispatcher {
 			'webhook_sent' => false,
 			'discard'      => false,
 			'errors'       => [],
+			'admin_errors' => [],
 		];
 
 		// ── WooCommerce cart ──────────────────────────────────────────────
@@ -61,7 +66,9 @@ final class RouteDispatcher {
 			$result['cart_count'] = $cart['count'];
 			$result['cart_url']   = $cart['cart_url'];
 
-			if ( ! $cart['added'] && '' !== $cart['error'] ) {
+			// Reported for partial failures too: when some pizzas made it into
+			// the cart and others did not, the customer needs to know.
+			if ( '' !== $cart['error'] ) {
 				$result['errors'][] = $cart['error'];
 			}
 
@@ -78,7 +85,13 @@ final class RouteDispatcher {
 		if ( '' !== $this->webhook_url() ) {
 			$result['webhook_sent'] = $this->send_webhook( $order );
 			if ( ! $result['webhook_sent'] ) {
-				$result['errors'][] = __( 'The order webhook could not be reached.', 'pizzatier' );
+				// Store-side problem: recorded for staff, never shown to the
+				// customer, whose order has been taken either way.
+				$message                  = __( 'The order webhook could not be reached.', 'pizzatier' );
+				$result['admin_errors'][] = $message;
+				if ( OrderRoute::stores_record() ) {
+					$order->add_staff_note( $message );
+				}
 			}
 		}
 
@@ -139,6 +152,7 @@ final class RouteDispatcher {
 		$calculator = new PriceCalculator( $grid );
 		$sizes      = $grid->get_sizes( $product_id );
 		$added_any  = false;
+		$failed     = 0;
 
 		foreach ( $order->get_items() as $item ) {
 			if ( ! is_array( $item ) || empty( $item['layers'] ) ) {
@@ -149,6 +163,7 @@ final class RouteDispatcher {
 			$layers = OrderPricing::map_layers( $item['layers'] );
 
 			if ( '' === $size || empty( $layers ) ) {
+				$failed++;
 				continue;
 			}
 
@@ -156,6 +171,7 @@ final class RouteDispatcher {
 
 			if ( is_wp_error( $priced ) ) {
 				$out['error'] = $priced->get_error_message();
+				$failed++;
 				continue;
 			}
 
@@ -186,6 +202,7 @@ final class RouteDispatcher {
 				} elseif ( '' === $out['error'] ) {
 					$out['error'] = __( 'Could not add the pizza to your cart.', 'pizzatier' );
 				}
+				$failed++;
 				continue;
 			}
 
@@ -196,8 +213,23 @@ final class RouteDispatcher {
 		$out['count']    = $added_any ? (int) WC()->cart->get_cart_contents_count() : 0;
 		$out['cart_url'] = function_exists( 'wc_get_cart_url' ) ? (string) wc_get_cart_url() : '';
 
-		if ( $added_any ) {
+		if ( $added_any && $failed > 0 ) {
+			// Partial success — keep the reason, but say that the rest did go in.
+			$reason       = '' !== $out['error'] ? ' ' . $out['error'] : '';
+			$out['error'] = sprintf(
+				/* translators: %d: number of pizzas that could not be added to the cart. */
+				_n(
+					'%d pizza could not be added to your cart; the rest were added.',
+					'%d pizzas could not be added to your cart; the rest were added.',
+					$failed,
+					'pizzatier'
+				),
+				$failed
+			) . $reason;
+		} elseif ( $added_any ) {
 			$out['error'] = '';
+		} elseif ( $failed > 0 && '' === $out['error'] ) {
+			$out['error'] = __( 'Could not add the pizza to your cart.', 'pizzatier' );
 		}
 
 		return $out;
@@ -274,7 +306,71 @@ final class RouteDispatcher {
 
 	private function webhook_url(): string {
 		$url = trim( (string) OrderSettings::get( 'webhook_url' ) );
-		return ( '' !== $url && wp_http_validate_url( $url ) ) ? $url : '';
+		if ( '' === $url ) {
+			return '';
+		}
+		$scheme = strtolower( (string) wp_parse_url( $url, PHP_URL_SCHEME ) );
+		$host   = (string) wp_parse_url( $url, PHP_URL_HOST );
+		if ( ! in_array( $scheme, [ 'http', 'https' ], true ) || '' === $host ) {
+			return '';
+		}
+		return self::scheme_allowed( $url ) ? $url : '';
+	}
+
+	/**
+	 * Whether a webhook URL's scheme is acceptable for order data.
+	 *
+	 * https always is. Plain http is accepted only for an explicitly allowed
+	 * local/LAN endpoint (the data never leaves the network), or when a
+	 * developer opts in with 'pizzatier_order_webhook_allow_http' (2.4.3).
+	 */
+	public static function scheme_allowed( string $url ): bool {
+		$scheme = strtolower( (string) wp_parse_url( $url, PHP_URL_SCHEME ) );
+		if ( 'https' === $scheme ) {
+			return true;
+		}
+		if ( 'http' !== $scheme ) {
+			return false;
+		}
+		if ( ! wp_http_validate_url( $url ) && self::local_webhooks_allowed( $url ) ) {
+			return true;
+		}
+		/**
+		 * Filter whether a public plain-http webhook may receive orders.
+		 *
+		 * @since 2.4.3
+		 *
+		 * @param bool   $allow Default false.
+		 * @param string $url   The configured webhook URL.
+		 */
+		return (bool) apply_filters( 'pizzatier_order_webhook_allow_http', false, $url );
+	}
+
+	/**
+	 * Whether a webhook URL may be sent to without WordPress's "safe URL"
+	 * checks — i.e. to a local / private-network host or a non-standard port.
+	 *
+	 * Off by default: a webhook URL is entered in the admin, and letting it
+	 * reach the server's own network (cloud metadata endpoints, internal admin
+	 * panels) turns a settings field into a request-forgery tool. A store with
+	 * a kitchen display on its LAN opts in explicitly:
+	 *
+	 *     add_filter( 'pizzatier_order_webhook_allow_local', '__return_true' );
+	 *
+	 * @since 2.4.0
+	 *
+	 * @param string $url The configured webhook URL.
+	 */
+	public static function local_webhooks_allowed( string $url ): bool {
+		/**
+		 * Filter whether the order webhook may target local/private hosts.
+		 *
+		 * @since 2.4.0
+		 *
+		 * @param bool   $allow Default false.
+		 * @param string $url   The configured webhook URL.
+		 */
+		return (bool) apply_filters( 'pizzatier_order_webhook_allow_local', false, $url );
 	}
 
 	/**
@@ -308,17 +404,25 @@ final class RouteDispatcher {
 			$headers[ self::SIGNATURE_HEADER ] = 'sha256=' . hash_hmac( 'sha256', $body, $secret );
 		}
 
-		$response = wp_remote_post(
-			$url,
-			[
-				'timeout'     => 8,
-				'redirection' => 2,
-				'blocking'    => true,
-				'headers'     => $headers,
-				'body'        => $body,
-				'user-agent'  => 'PizzaTier/' . PIZZATIER_VERSION . '; ' . home_url(),
-			]
-		);
+		$args = [
+			'timeout'     => 8,
+			'redirection' => 2,
+			'blocking'    => true,
+			'headers'     => $headers,
+			'body'        => $body,
+			'user-agent'  => 'PizzaTier/' . PIZZATIER_VERSION . '; ' . home_url(),
+		];
+
+		if ( ! wp_http_validate_url( $url ) && self::local_webhooks_allowed( $url ) ) {
+			// Explicitly allowed local endpoint. Redirects are not followed, so
+			// the opt-in covers this one URL and nothing it points onward to.
+			$args['redirection'] = 0;
+			$response            = wp_remote_post( $url, $args );
+		} else {
+			// reject_unsafe_urls: refuses internal hosts, and re-validates
+			// every redirect hop.
+			$response = wp_safe_remote_post( $url, $args );
+		}
 
 		if ( is_wp_error( $response ) ) {
 			/**

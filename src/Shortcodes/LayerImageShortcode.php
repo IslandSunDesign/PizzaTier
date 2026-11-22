@@ -30,12 +30,18 @@ class LayerImageShortcode {
 			return '<!-- [pizzatier_layer] missing type or slug -->';
 		}
 
-		$post = get_page_by_path( $slug, OBJECT, 'pizzatier_' . $type . 's' );
-		if ( ! $post ) {
-			// Try without the plural 's' (e.g. 'cut' → 'pizzatier_cuts' above, singular fallback)
-			$post = get_page_by_path( $slug, OBJECT, 'pizzatier_' . $type );
-		}
+		// Only the layer post types, and only published layers: the type used
+		// to be concatenated into 'pizzatier_' . $type, so any plugin post type
+		// (orders included) could be probed, and get_page_by_path() ignores
+		// post status.
+		$post_type = LayerInfoShortcode::post_type_for( $type );
+		if ( '' === $post_type ) { return '<!-- [pizzatier_layer] unknown type -->'; }
+
+		$post = LayerInfoShortcode::find_public_post( $type, $slug );
 		if ( ! $post ) { return '<!-- [pizzatier_layer] not found -->' ; }
+
+		// Field names use the singular form (topping_image, cheese_layer_image).
+		$type = LayerInfoShortcode::singular_for( $post_type );
 
 		if ( $atts['image'] === 'layer' ) {
 			$url = \PizzaTier\Template\TemplateAPI::get_layer_image( $post->ID, $type );

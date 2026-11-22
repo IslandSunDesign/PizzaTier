@@ -61,6 +61,8 @@ class LayerGridMetaBox {
 
 	public function register(): void {
 		add_action( 'add_meta_boxes',        [ $this, 'add_meta_box' ] );
+		// Surface a rejected grid save (2.4.0: the error was stored and never shown).
+		add_action( 'admin_notices',         [ $this, 'show_save_error' ] );
 		add_action( 'save_post',             [ $this, 'save_meta' ], 10, 2 );
 		add_action( 'admin_enqueue_scripts', [ $this, 'enqueue_assets' ] );
 	}
@@ -68,6 +70,25 @@ class LayerGridMetaBox {
 	// -------------------------------------------------------------------------
 	// Meta box registration
 	// -------------------------------------------------------------------------
+
+	public function show_save_error(): void {
+		$screen = function_exists( 'get_current_screen' ) ? get_current_screen() : null;
+		$post_id = isset( $_GET['post'] ) ? absint( $_GET['post'] ) : 0; // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only notice lookup.
+		if ( ! $screen || 'post' !== $screen->base || ! $post_id || ! current_user_can( 'edit_post', $post_id ) ) {
+			return;
+		}
+		$key   = 'pizzatier_commerce_layer_grid_error_' . $post_id;
+		$error = get_transient( $key );
+		if ( ! $error ) {
+			return;
+		}
+		delete_transient( $key );
+		?>
+		<div class="notice notice-error is-dismissible">
+			<p><strong><?php esc_html_e( 'Layer prices were not saved:', 'pizzatier' ); ?></strong> <?php echo esc_html( (string) $error ); ?></p>
+		</div>
+		<?php
+	}
 
 	public function add_meta_box(): void {
 		foreach ( self::APPLICABLE_TYPES as $post_type ) {

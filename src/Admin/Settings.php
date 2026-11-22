@@ -179,11 +179,11 @@ class Settings {
 		if ( isset( $_POST['pizzatier_import_settings'], $_POST['_wpnonce'] )
 		     && wp_verify_nonce( sanitize_key( $_POST['_wpnonce'] ), 'pizzatier_settings_save' ) ) {
 			$import_msg = $this->import_settings();
-		}
-
-		// Save
-		if ( isset( $_POST['pizzatier_settings_save'], $_POST['_wpnonce'] )
+		} elseif ( isset( $_POST['pizzatier_settings_save'], $_POST['_wpnonce'] )
 		     && wp_verify_nonce( sanitize_key( $_POST['_wpnonce'] ), 'pizzatier_settings_save' ) ) {
+			// Save. Skipped when the request is an import: the import button
+			// sits inside the same form, so the request also carries
+			// pizzatier_settings_save and saving would overwrite the import.
 			$this->save_settings();
 			echo '<div class="notice notice-success is-dismissible"><p><strong>' . esc_html__( 'Settings saved.', 'pizzatier' ) . '</strong></p></div>';
 		}
@@ -205,22 +205,8 @@ class Settings {
 		// Active template
 		$active_template = sanitize_key( (string) get_option( 'pizzatier_setting_global_template', '' ) ); // sanitize_key() prevents path traversal in the template-options include below.
 
-		// Load template settings if available
-		$template_settings = [];
-		if ( $active_template ) {
-			$tpl_dirs = [
-				get_stylesheet_directory() . '/pzttemplates/' . $active_template . '/',
-				PIZZATIER_TEMPLATES_DIR . $active_template . '/',
-			];
-			foreach ( $tpl_dirs as $dir ) {
-				$options_file = $dir . 'pztp-template-options.php';
-				if ( file_exists( $options_file ) ) {
-					$template_settings = include $options_file;
-					if ( ! is_array( $template_settings ) ) { $template_settings = []; }
-					break;
-				}
-			}
-		}
+		// Template settings are rendered and saved on the Template page
+		// (TemplateChoice), not on this screen.
 
 		?>
 		<div class="wrap pset-wrap">
@@ -1116,7 +1102,22 @@ class Settings {
 
 		foreach ( $data as $key => $value ) {
 			if ( ! isset( $allowed[ $key ] ) ) { continue; }
+			// An option that was unset on the source site is exported as null.
+			// Importing it as '' would shadow the destination's default (and
+			// turn default-on features off), so leave it unset.
+			if ( null === $value ) { continue; }
 			$key_safe = sanitize_key( $key );
+
+			if ( ! in_array( $key, $array_options, true )
+			     && class_exists( '\\PizzaTier\\Core\\OptionRegistry' )
+			     && method_exists( '\\PizzaTier\\Core\\OptionRegistry', 'sanitize_value' ) ) {
+				$clean = \PizzaTier\Core\OptionRegistry::sanitize_value( $key, $value );
+				if ( null !== $clean ) {
+					update_option( $key_safe, $clean );
+					$count++;
+				}
+				continue;
+			}
 
 			if ( in_array( $key, $array_options, true ) ) {
 				// Sanitise as an array of fraction keys
@@ -1242,53 +1243,10 @@ class Settings {
 				update_option( $key, sanitize_textarea_field( wp_unslash( $_POST[ $key ] ) ) );
 			}
 		}
-		// Save template-specific settings dynamically
-		$active_template = sanitize_key( (string) get_option( 'pizzatier_setting_global_template', '' ) ); // sanitize_key() prevents path traversal in the template-options include below.
-		if ( $active_template ) {
-			$tpl_dirs = [
-				get_stylesheet_directory() . '/pzttemplates/' . $active_template . '/',
-				PIZZATIER_TEMPLATES_DIR . $active_template . '/',
-			];
-			foreach ( $tpl_dirs as $dir ) {
-				$options_file = $dir . 'pztp-template-options.php';
-				if ( file_exists( $options_file ) ) {
-					$tpl_settings = include $options_file;
-					if ( is_array( $tpl_settings ) ) {
-						foreach ( $tpl_settings as $field ) {
-							if ( empty( $field['key'] ) || empty( $field['type'] ) ) { continue; }
-							$key = sanitize_key( (string) $field['key'] );
-							// Namespace guard: only allow writing to recognised setting keys.
-							if ( $key === '' || strpos( $key, '_setting_' ) === false ) { continue; }
-							if ( ! isset( $_POST[ $key ] ) && $field['type'] === 'toggle' ) {
-								update_option( $key, 'no' );
-								continue;
-							}
-							if ( ! isset( $_POST[ $key ] ) ) { continue; }
-							switch ( $field['type'] ) {
-								case 'color':
-									$v = sanitize_hex_color( wp_unslash( $_POST[ $key ] ) );
-									if ( $v ) { update_option( $key, $v ); }
-									break;
-								case 'number':
-								case 'range':
-									update_option( $key, (float) $_POST[ $key ] );
-									break;
-								case 'textarea':
-									update_option( $key, sanitize_textarea_field( wp_unslash( $_POST[ $key ] ) ) );
-									break;
-								case 'toggle':
-									update_option( $key, sanitize_key( $_POST[ $key ] ) === 'yes' ? 'yes' : 'no' );
-									break;
-								default:
-									update_option( $key, sanitize_text_field( wp_unslash( $_POST[ $key ] ) ) );
-									break;
-							}
-						}
-					}
-					break;
-				}
-			}
-		}
+		// Template-specific settings are not saved here. They are rendered and
+		// saved on the Template page (TemplateChoice::save_template_settings()).
+		// This form no longer contains them, so walking the template's option
+		// file here wrote 'no' to every template toggle on each Settings save.
 	}
 
 	private function render_select( string $label, string $key, array $posts, string $current ): void {
@@ -1298,7 +1256,7 @@ class Settings {
 			<select name="<?php echo esc_attr( $key ); ?>" class="pset-select">
 				<option value=""><?php esc_html_e( '— None / Plugin default —', 'pizzatier' ); ?></option>
 				<?php foreach ( $posts as $p ) :
-					$slug = sanitize_title( $p->post_title );
+					$slug = $p->post_name;
 				?>
 				<option value="<?php echo esc_attr( $slug ); ?>"<?php selected( $current, $slug ); ?>><?php echo esc_html( $p->post_title ); ?></option>
 				<?php endforeach; ?>
@@ -1311,7 +1269,7 @@ class Settings {
 		// Build items array with thumbnail URLs
 		$items = [];
 		foreach ( $posts as $p ) {
-			$slug  = sanitize_title( $p->post_title );
+			$slug  = $p->post_name;
 			$thumb = get_the_post_thumbnail_url( $p->ID, 'thumbnail' );
 			$items[] = [
 				'slug'  => $slug,

@@ -36,6 +36,8 @@ class NewPizzaWizard {
 
 	public function register(): void {
 		add_action( 'admin_post_pizzatier_commerce_wizard_step', [ $this, 'handle_step_post' ] );
+		// "Start over" must redirect before the admin header is printed.
+		add_action( 'admin_init', [ $this, 'maybe_reset' ] );
 		add_action( 'admin_enqueue_scripts', [ $this, 'enqueue_assets' ] );
 	}
 
@@ -203,6 +205,15 @@ class NewPizzaWizard {
 			return new \WP_Error( 'no_title', __( 'Product title is required.', 'pizzatier' ) );
 		}
 
+		// Validate the price grid before creating anything, so an invalid grid
+		// doesn't leave a product without prices behind.
+		if ( ! empty( $data['price_grid'] ) ) {
+			$checked = ( new \PizzaTier\Commerce\PriceGrid\Grid() )->validate( (array) $data['price_grid'] );
+			if ( is_wp_error( $checked ) ) {
+				return $checked;
+			}
+		}
+
 		// Create the WC product.
 		$product = new \WC_Product_Simple();
 		$product->set_name( $data['title'] );
@@ -263,24 +274,31 @@ class NewPizzaWizard {
 	// Render
 	// -------------------------------------------------------------------------
 
+	/**
+	 * "Start over" (GET, nonce-verified). Runs on admin_init: redirecting from
+	 * render() happened after output and left a blank page.
+	 */
+	public function maybe_reset(): void {
+		if (
+			empty( $_GET['page'] ) || self::PAGE_SLUG !== sanitize_key( wp_unslash( $_GET['page'] ) ) ||
+			empty( $_GET['wiz_reset'] ) || empty( $_GET['_wpnonce'] ) ||
+			! current_user_can( 'manage_options' ) ||
+			! wp_verify_nonce( sanitize_key( $_GET['_wpnonce'] ), 'pizzatier_commerce_wizard_reset' )
+		) {
+			return;
+		}
+		$this->clear_wizard_data();
+		wp_safe_redirect( $this->wizard_url( 1 ) );
+		exit;
+	}
+
 	public function render(): void {
 		if ( ! current_user_can( 'manage_options' ) ) { return; }
 
-		// Handle "Start over" GET-based reset (nonce-verified).
-		if (
-			! empty( $_GET['wiz_reset'] ) &&
-			! empty( $_GET['_wpnonce'] ) &&
-			wp_verify_nonce( sanitize_key( $_GET['_wpnonce'] ), 'pizzatier_commerce_wizard_reset' )
-		) {
-			$this->clear_wizard_data();
-			wp_safe_redirect( $this->wizard_url( 1 ) );
-			exit;
-		}
-
-		$step  = absint( $_GET['wiz_step'] ?? 1 );
+		$step  = absint( $_GET['wiz_step'] ?? 1 ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only navigation parameter.
 		$step  = max( 1, min( 5, $step ) );
 		$data  = $this->get_wizard_data();
-		$error = sanitize_text_field( wp_unslash( $_GET['error'] ?? '' ) );
+		$error = sanitize_text_field( wp_unslash( $_GET['error'] ?? '' ) ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only navigation parameter.
 
 		// Pull layer data from PizzaTier CPTs.
 		$layer_data    = $this->get_all_layer_data();
@@ -304,6 +322,9 @@ class NewPizzaWizard {
 					'cut'     => $preset_layers['cut_id']     ?? 0,
 				] );
 				$data['topping_ids'] = $preset_layers['topping_ids'] ?? [];
+				// Persist the seed so create_product() sees the preset's
+				// toppings even if step 3 is submitted unchanged.
+				$this->save_wizard_data( $data );
 			}
 		}
 

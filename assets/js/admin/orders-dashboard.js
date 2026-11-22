@@ -24,6 +24,27 @@
 	var cfg = PizzaTierOrdersDash;
 	var i18n = cfg.i18n;
 
+	// ── Per-browser preferences ──────────────────────────────────────────
+	// localStorage can be missing or throw (blocked site data, some private
+	// modes). A preference is a convenience, so a failure must never stop
+	// the dashboard from loading.
+
+	function readPref( key ) {
+		try {
+			return window.localStorage ? window.localStorage.getItem( key ) : null;
+		} catch ( e ) {
+			return null;
+		}
+	}
+
+	function writePref( key, value ) {
+		try {
+			if ( window.localStorage ) { window.localStorage.setItem( key, value ); }
+		} catch ( e ) {
+			// Ignore — the setting simply will not persist.
+		}
+	}
+
 	// ── State ────────────────────────────────────────────────────────────
 
 	var state = {
@@ -38,7 +59,7 @@
 		pages: 1,
 		selected: {},          // id => true
 		live: true,
-		sound: window.localStorage.getItem( 'pztDashSound' ) === '1',
+		sound: readPref( 'pztDashSound' ) === '1',
 		latestId: 0,
 		openCount: 0,
 		firstSnapshot: true,
@@ -831,7 +852,7 @@
 			paintSound();
 			sound.addEventListener( 'click', function () {
 				state.sound = ! state.sound;
-				window.localStorage.setItem( 'pztDashSound', state.sound ? '1' : '0' );
+				writePref( 'pztDashSound', state.sound ? '1' : '0' );
 				paintSound();
 				if ( state.sound ) { chime(); } // Confirm audibly that it works.
 			} );

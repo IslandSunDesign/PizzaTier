@@ -254,7 +254,7 @@
 	function fetchViaRest( payload ) {
 		// Pro's own admin-only render route. Self-contained so the preview
 		// works even when the base plugin's opt-in REST API is disabled.
-		const url   = ( D.restRoot || '/wp-json/' ) + 'pizzatier/v1/render';
+		const url   = ( D.restRoot || '/wp-json/' ) + 'pizzatier/v1/admin-render';
 		const nonce = D.restNonce || '';
 
 		return window.fetch( url, {

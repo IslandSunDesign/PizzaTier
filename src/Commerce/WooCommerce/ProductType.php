@@ -156,8 +156,10 @@ namespace {
 		public function supports( $feature ): bool {
 			// Explicitly support everything WC checks before rendering the
 			// single-product add-to-cart form and template.
+			// 'ajax_add_to_cart' is deliberately absent (2.4.0): a pizza has
+			// to be configured in the builder, so shop/archive buttons must
+			// link to the product rather than add an empty pizza.
 			$supported = [
-				'ajax_add_to_cart',
 				'prices_include_tax',
 				'add_to_cart_form',   // required for WC to render the ATC form
 				'purchasable',
@@ -167,11 +169,16 @@ namespace {
 		}
 
 		public function is_purchasable(): bool {
-			return 'publish' === $this->get_status() && $this->get_id() > 0;
+			// WC_Product::is_purchasable() also requires a price; a pizza is
+			// purchasable with a $0 base. Store-hours / catalogue-mode plugins
+			// still apply through the standard filter.
+			return (bool) apply_filters( 'woocommerce_is_purchasable', 'publish' === $this->get_status() && $this->get_id() > 0, $this );
 		}
 
 		public function is_in_stock(): bool {
-			return true;
+			// Honour "Out of stock" set on the product (pizzas don't manage
+			// stock levels, so the stored status defaults to in stock).
+			return parent::is_in_stock();
 		}
 
 		public function get_pizza_builder_template(): string {

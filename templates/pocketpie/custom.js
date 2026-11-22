@@ -45,9 +45,19 @@
             return clips[fraction] || clips['whole'];
         },
 
+        /** Live (not fading-out) layer div for an id. */
+        findLayer: function ($stage, layerId) {
+            if (!$stage || !$stage.length) { return $(); }
+            return $stage.find('.pp-layer-div').filter(function () {
+                return this.getAttribute('data-layer-id') === layerId && !$(this).hasClass('is-removing');
+            });
+        },
+
         setLayer: function ($stage, layerId, src, zIndex, cls, coverage) {
             if (!src) { this.removeLayer($stage, layerId); return; }
-            var $layer = $stage.find('[data-layer-id="' + layerId + '"]');
+            /* Skip nodes that are fading out: updating one in place left the new
+               image inside a div that was deleted 200ms later. */
+            var $layer = this.findLayer($stage, layerId);
             if (!$layer.length) {
                 $layer = $('<div class="pp-layer-div"></div>');
                 $layer.attr('data-layer-id', layerId);
@@ -74,9 +84,19 @@
         },
 
         removeLayer: function ($stage, layerId) {
-            $stage.find('[data-layer-id="' + layerId + '"]').fadeOut(200, function () { $(this).remove(); });
+            this.findLayer($stage, layerId).addClass('is-removing').fadeOut(200, function () { $(this).remove(); });
+        },
+
+        /** Remove every layer of one stage immediately. */
+        clear: function ($stage) {
+            if ($stage && $stage.length) { $stage.find('.pp-layer-div').stop(true).remove(); }
         }
     };
+
+    /* Markup keys the cut layer as 'slicing' (tabs, summary rows, dots, badges). */
+    function uiKey(layerType) { return layerType === 'cut' ? 'slicing' : layerType; }
+    /* …and the reverse, for tab → state lookups. */
+    function stateKey(tab) { return tab === 'slicing' ? 'cut' : tab; }
 
     /* ════════════════════════════════════════════════════════════════
        STATE OBJECT per instance
@@ -140,6 +160,53 @@
                     // Close modal on overlay click — handled via onclick in PHP
                     // Swipe-down to close drawers / sheets
                     self._initSwipeClose();
+
+                    // Default layers rendered by PizzaBuilder::build_dynamic()
+                    self._initDefaultLayers();
+                },
+
+                /* ── Defaults from .np-pizza-stage-wrap[data-default-*] ── */
+                _initDefaultLayers: function () {
+                    var self  = this;
+                    var $wrap = self.$root.find('#' + instanceId + '-canvas .np-pizza-stage-wrap').first();
+                    if (!$wrap.length) { return; }
+
+                    ['crust', 'sauce', 'cheese', 'drizzle', 'cut'].forEach(function (lt) {
+                        var url  = $wrap.attr('data-default-' + lt) || '';
+                        var slug = $wrap.attr('data-default-' + lt + '-slug') || '';
+                        if (!url) { return; }
+                        var $chip = self._findChip(lt, slug, url);
+                        if ($chip.length) { slug = $chip.attr('data-slug') || slug; }
+                        var title = ($chip.length && $chip.attr('data-title')) || slug;
+                        self._selectBase(lt, slug, title, url);
+                    });
+
+                    try {
+                        var tops = JSON.parse($wrap.attr('data-default-toppings') || '[]');
+                        if (Array.isArray(tops)) {
+                            tops.forEach(function (t) {
+                                if (!t || !t.slug || !t.layerImg) { return; }
+                                var $chip = self._findChip('toppings', t.slug, t.layerImg);
+                                var slug  = $chip.length ? ($chip.attr('data-slug') || t.slug) : t.slug;
+                                var title = ($chip.length && $chip.attr('data-title')) || slug;
+                                self.addTopping(t.zindex || 400, slug, t.layerImg, title, 'pizzatier-topping-' + slug, 'pizzatier-topping-' + slug, null);
+                                if (t.coverage) { self.setCoverage(slug, t.coverage, null); }
+                            });
+                        }
+                    } catch (e) { /* malformed JSON — ignore */ }
+                },
+
+                /* Chip lookup: by slug, else by matching layer image URL. */
+                _findChip: function (layerType, slug, url) {
+                    var $all  = this.$root.find('.pp-chip[data-layer="' + layerType + '"]');
+                    var $chip = $();
+                    if (slug) {
+                        $chip = $all.filter(function () { return this.getAttribute('data-slug') === String(slug); });
+                    }
+                    if (!$chip.length && url) {
+                        $chip = $all.filter(function () { return this.getAttribute('data-layer-img') === url; });
+                    }
+                    return $chip.first();
                 },
 
                 /* ── swipe to close overlays ──────────── */
@@ -180,9 +247,6 @@
                 /* Exclusive base layer (crust / sauce / cheese / drizzle / cut) */
                 swapBase: function (layerType, slug, title, imgSrc, triggerEl) {
                     var self   = this;
-                    var $stage = self._getStage();
-                    var zMap   = { crust:100, sauce:150, cheese:200, drizzle:900, cut:950 };
-                    var z      = zMap[layerType] || 200;
 
                     // Toggle: if already selected, remove it
                     var existing = self.state[layerType];
@@ -191,23 +255,34 @@
                         return;
                     }
 
+                    self._selectBase(layerType, slug, title, imgSrc);
+                },
+
+                /* Select a base layer without the click-again-to-remove toggle
+                   (used by setState and default layers). */
+                _selectBase: function (layerType, slug, title, imgSrc) {
+                    var self   = this;
+                    var $stage = self._getStage();
+                    var zMap   = { crust:100, sauce:150, cheese:200, drizzle:900, cut:950 };
+                    var z      = zMap[layerType] || 200;
+
                     self.state[layerType] = { slug: slug, title: title, layerImg: imgSrc };
                     PizzaStack.setLayer($stage, 'layer-' + layerType, imgSrc, z, 'pp-l-' + layerType);
 
                     // UI feedback on chips
                     self.$root.find('.pp-chip[data-layer="' + layerType + '"]').each(function () {
                         var $c = $(this);
-                        var isThis = ($c.data('slug') === slug);
+                        var isThis = ($c.attr('data-slug') === String(slug));
                         $c.toggleClass('pp-chip--selected', isThis);
                         $c.find('.pp-chip__add-btn').toggle(!isThis);
                         $c.find('.pp-chip__remove-btn').toggle(isThis);
                         $c.find('.pp-chip__check').toggle(isThis);
                     });
 
-                    self._updateSummary(layerType, title);
-                    self._updateBadge(layerType, title);
-                    self._updateLayerDeckSel(layerType, title);
-                    self._updateDot(layerType, true);
+                    self._updateSummary(uiKey(layerType), title);
+                    self._updateBadge(uiKey(layerType), title);
+                    self._updateLayerDeckSel(uiKey(layerType), title);
+                    self._updateDot(uiKey(layerType), true);
 
                     // Layer-deck preview image: show the selected layer image large
                     if (self.layout === 'layer-deck') {
@@ -234,10 +309,10 @@
                         $(this).find('.pp-chip__check').hide();
                     });
 
-                    self._updateSummary(layerType, null);
-                    self._updateBadge(layerType, null);
-                    self._updateLayerDeckSel(layerType, null);
-                    self._updateDot(layerType, false);
+                    self._updateSummary(uiKey(layerType), null);
+                    self._updateBadge(uiKey(layerType), null);
+                    self._updateLayerDeckSel(uiKey(layerType), null);
+                    self._updateDot(uiKey(layerType), false);
                 },
 
                 /* Toppings — multi-select */
@@ -257,6 +332,8 @@
                     $chip.find('.pp-chip__remove-btn').show();
                     $chip.find('.pp-chip__check').show();
                     $chip.find('.pp-coverage').show();
+                    $chip.find('.pp-cov-btn').removeClass('pp-cov-btn--active')
+                         .filter('[data-fraction="whole"]').addClass('pp-cov-btn--active');
 
                     self._updateToppingCount();
                     self._updateDot('toppings', true);
@@ -274,6 +351,8 @@
                     $chip.find('.pp-chip__remove-btn').hide();
                     $chip.find('.pp-chip__check').hide();
                     $chip.find('.pp-coverage').hide();
+                    // Coverage UI back to "whole" so a re-added topping matches state.
+                    $chip.find('.pp-cov-btn').removeClass('pp-cov-btn--active');
 
                     self._updateToppingCount();
                     self._updateDot('toppings', Object.keys(self.state.toppings).length > 0);
@@ -284,7 +363,9 @@
                     var $stage = self._getStage();
                     if (!self.state.toppings[slug]) { return; }
                     self.state.toppings[slug].coverage = fraction;
-                    var $layer = $stage.find('[data-layer-id="layer-topping-' + slug + '"] img');
+                    var $layer = PizzaStack.findLayer
+                        ? PizzaStack.findLayer($stage, 'layer-topping-' + slug).find('img')
+                        : $stage.find('[data-layer-id="layer-topping-' + slug + '"] img');
                     if ($layer.length) {
                         $layer.css('clip-path', PizzaStack.getCoverageClip(fraction));
                     }
@@ -294,7 +375,7 @@
                     $chip.find('.pp-cov-btn[data-fraction="' + fraction + '"]').addClass('pp-cov-btn--active');
                 },
 
-                resetAll: function () {
+                resetAll: function (skipDefaults) {
                     var self   = this;
                     self.state = makeState();
                     self.$root.find('.pp-chip').each(function () {
@@ -303,12 +384,22 @@
                         $(this).find('.pp-chip__remove-btn').hide();
                         $(this).find('.pp-chip__check').hide();
                         $(this).find('.pp-coverage').hide();
+                        $(this).find('.pp-cov-btn').removeClass('pp-cov-btn--active');
                     });
                     self.$root.find('.pp-cq-trigger__badge').text('');
-                    self.$root.find('.pp-sd-pill__dot, .pp-sp-step__dot').removeClass('pp-dot--active');
+                    self.$root.find('.pp-sd-pill__dot, .pp-sp-step__dot, [data-step]').removeClass('pp-dot--active');
                     self.$root.find('.pp-ld-deck-thumb__sel').text('');
+
+                    // Clear only THIS builder's pizza (the global ClearPizza()
+                    // the Reset buttons used to call wiped every builder).
+                    PizzaStack.clear(self._getStage());
+
                     self._updateToppingCount();
                     self._updateAllSummaryRows();
+
+                    // Back to the configured default pizza, like the other templates
+                    // (setState skips this so it restores exactly the given state).
+                    if (skipDefaults !== true) { self._initDefaultLayers(); }
                 },
 
                 /* ── UI helper: topping counter ───────── */
@@ -343,7 +434,7 @@
                     var self = this;
                     ['crust','sauce','cheese','drizzle','cut'].forEach(function (k) {
                         var v = self.state[k];
-                        self._updateSummary(k, v ? v.title : null);
+                        self._updateSummary(uiKey(k), v ? v.title : null);
                     });
                     // toppings row
                     var tops = Object.values(self.state.toppings).map(function (t) { return t.title; }).join(', ');
@@ -413,7 +504,7 @@
                     $title.text(labelMap[tab] || tab);
 
                     // Reset preview to empty or show current selection
-                    var current = (tab !== 'toppings') ? self.state[tab] : null;
+                    var current = (tab !== 'toppings') ? self.state[stateKey(tab)] : null;
                     if (current && current.layerImg) {
                         $prevImg.attr('src', current.layerImg).show();
                         $empty.hide();
@@ -549,21 +640,35 @@
                 getState: function () { return this.state; },
                 setState: function (newState) {
                     var self = this;
+                    // Start from a clean pizza (no defaults), and select base layers
+                    // without swapBase's toggle — re-applying an already-selected
+                    // crust used to switch it OFF.
+                    self.resetAll(true);
+                    if (!newState || typeof newState !== 'object') { return; }
                     // Apply crust/sauce/cheese/drizzle/cut
                     ['crust','sauce','cheese','drizzle','cut'].forEach(function (k) {
-                        if (newState[k]) {
-                            var slug = newState[k].slug || '';
-                            var img  = newState[k].layerImg || self.$root.find('.pp-chip[data-layer="' + k + '"][data-slug="' + slug + '"]').data('layer-img') || '';
-                            self.swapBase(k, slug, newState[k].title || slug, img, null);
-                        }
+                        var sel = newState[k];
+                        if (!sel) { return; }
+                        if (typeof sel !== 'object') { sel = { slug: String(sel) }; }
+                        var $chip = self._findChip(k, sel.slug || '', sel.layerImg || '');
+                        var slug  = sel.slug || ($chip.length ? ($chip.attr('data-slug') || '') : '');
+                        var img   = sel.layerImg || ($chip.length ? ($chip.attr('data-layer-img') || '') : '');
+                        if (!slug && !img) { return; }
+                        var title = sel.title || ($chip.length && $chip.attr('data-title')) || slug;
+                        self._selectBase(k, slug, title, img);
                     });
                     // Apply toppings
-                    if (newState.toppings) {
-                        $.each(newState.toppings, function (slug, t) {
+                    if (newState.toppings && typeof newState.toppings === 'object') {
+                        $.each(newState.toppings, function (key, t) {
+                            if (!t || typeof t !== 'object') { t = { slug: String(t || key) }; }
+                            var slug = t.slug || String(key);
+                            if (self.state.toppings[slug]) { self.removeTopping('pizzatier-topping-' + slug, slug, null); }
                             // Resolve layerImg from DOM chip if not supplied (e.g. Pro default-layer path)
-                            var img = t.layerImg || self.$root.find('.pp-chip[data-layer="toppings"][data-slug="' + slug + '"]').data('layer-img') || '';
-                            var title = t.title || slug;
-                            self.addTopping(t.zindex||400, slug, img, title, 'pizzatier-topping-'+slug, 'pizzatier-topping-'+slug, null);
+                            var $chip = self._findChip('toppings', slug, t.layerImg || '');
+                            var img   = t.layerImg || ($chip.length ? ($chip.attr('data-layer-img') || '') : '');
+                            var title = t.title || ($chip.length && $chip.attr('data-title')) || slug;
+                            var z     = t.zindex || ($chip.length ? parseInt($chip.attr('data-zindex'), 10) : 0) || 400;
+                            self.addTopping(z, slug, img, title, 'pizzatier-topping-'+slug, 'pizzatier-topping-'+slug, null);
                             if (t.coverage) { self.setCoverage(slug, t.coverage, null); }
                         });
                     }
@@ -606,11 +711,17 @@
        EXPOSE GLOBAL API (PizzaTier compatibility)
        ════════════════════════════════════════════════════════════════ */
     window.PizzaTierPP  = PP;
-    window.PizzaTierAPI = window.PizzaTierAPI || {
+    PP.API = {
         getState:       function (id) { var i = PP.getInstance(id); return i ? i.getState() : null; },
         setState:       function (id, s) { var i = PP.getInstance(id); if (i) { i.setState(s); } },
         getAllInstances: function () { return Object.keys(PP._instances); }
     };
+    /* Register with the shared facade from pizzatier-main.js. */
+    if (window.PizzaTierAPI && typeof window.PizzaTierAPI.register === 'function') {
+        window.PizzaTierAPI.register(PP.API);
+    } else {
+        window.PizzaTierAPI = window.PizzaTierAPI || PP.API;
+    }
 
     /* ════════════════════════════════════════════════════════════════
        LEGACY GLOBAL FUNCTIONS (D62 compatibility)
@@ -641,9 +752,15 @@
         if ($layer.length) { $layer.find('img').css('clip-path', PizzaStack.getCoverageClip(fraction)); }
     };
 
+    /* Legacy only — the template's own Reset buttons call resetAll(), which
+       clears just that builder. Chains to any previously defined ClearPizza. */
+    var _prevClearPizza = window.ClearPizza;
     window.ClearPizza = function () {
+        if (typeof _prevClearPizza === 'function') {
+            try { _prevClearPizza.apply(this, arguments); } catch (e) { /* ignore */ }
+        }
         $('.pp-pizza-stage').each(function () {
-            $(this).find('.pp-layer-div').fadeOut(300, function () { $(this).remove(); });
+            $(this).find('.pp-layer-div').addClass('is-removing').fadeOut(300, function () { $(this).remove(); });
         });
     };
 

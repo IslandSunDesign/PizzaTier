@@ -35,16 +35,13 @@ class PizzaRestApi {
 			// Public by design (see class docblock); gated by a per-IP rate limit.
 			'permission_callback' => [ $this, 'check_public_access' ],
 			'args'                => [
-				'crust'    => [ 'type' => 'string',              'default' => '', 'sanitize_callback' => 'sanitize_text_field' ],
-				'sauce'    => [ 'type' => 'string',              'default' => '', 'sanitize_callback' => 'sanitize_text_field' ],
-				'cheese'   => [ 'type' => 'string',              'default' => '', 'sanitize_callback' => 'sanitize_text_field' ],
-				'drizzle'  => [ 'type' => 'string',              'default' => '', 'sanitize_callback' => 'sanitize_text_field' ],
-				'cut'      => [ 'type' => 'string',              'default' => '', 'sanitize_callback' => 'sanitize_text_field' ],
-				'preset'   => [ 'type' => 'string',              'default' => '', 'sanitize_callback' => 'sanitize_text_field' ],
-				'toppings' => [ 'type' => [ 'array', 'string' ], 'default' => [], 'sanitize_callback' => static function( $val ) {
-					if ( is_array( $val ) ) { return array_map( 'sanitize_text_field', $val ); }
-					return sanitize_text_field( (string) $val );
-				} ],
+				'crust'    => [ 'type' => 'string',              'default' => '', 'maxLength' => 200, 'validate_callback' => 'rest_validate_request_arg', 'sanitize_callback' => 'sanitize_text_field' ],
+				'sauce'    => [ 'type' => 'string',              'default' => '', 'maxLength' => 200, 'validate_callback' => 'rest_validate_request_arg', 'sanitize_callback' => 'sanitize_text_field' ],
+				'cheese'   => [ 'type' => 'string',              'default' => '', 'maxLength' => 200, 'validate_callback' => 'rest_validate_request_arg', 'sanitize_callback' => 'sanitize_text_field' ],
+				'drizzle'  => [ 'type' => 'string',              'default' => '', 'maxLength' => 200, 'validate_callback' => 'rest_validate_request_arg', 'sanitize_callback' => 'sanitize_text_field' ],
+				'cut'      => [ 'type' => 'string',              'default' => '', 'maxLength' => 200, 'validate_callback' => 'rest_validate_request_arg', 'sanitize_callback' => 'sanitize_text_field' ],
+				'preset'   => [ 'type' => 'string',              'default' => '', 'maxLength' => 200, 'validate_callback' => 'rest_validate_request_arg', 'sanitize_callback' => 'sanitize_text_field' ],
+				'toppings' => [ 'type' => [ 'array', 'string' ], 'default' => [], 'sanitize_callback' => [ __CLASS__, 'sanitize_toppings' ] ],
 			],
 		] );
 
@@ -54,8 +51,8 @@ class PizzaRestApi {
 			// Public by design (see class docblock); gated by a per-IP rate limit.
 			'permission_callback' => [ $this, 'check_public_access' ],
 			'args'                => [
-				'type' => [ 'type' => 'string', 'required' => true, 'sanitize_callback' => 'sanitize_text_field' ],
-				'slug' => [ 'type' => 'string', 'required' => true, 'sanitize_callback' => 'sanitize_text_field' ],
+				'type' => [ 'type' => 'string', 'required' => true, 'maxLength' => 40, 'validate_callback' => 'rest_validate_request_arg', 'sanitize_callback' => 'sanitize_text_field' ],
+				'slug' => [ 'type' => 'string', 'required' => true, 'maxLength' => 200, 'validate_callback' => 'rest_validate_request_arg', 'sanitize_callback' => 'sanitize_text_field' ],
 			],
 		] );
 	}
@@ -86,23 +83,9 @@ class PizzaRestApi {
 			return true;
 		}
 
-		$ip = $this->client_ip();
-		// If we can't identify the caller, don't block legitimate traffic.
-		if ( '' === $ip ) {
-			return true;
-		}
-
-		$key   = 'pizzatier_rl_' . md5( $ip );
-		$now   = time();
-		$entry = get_transient( $key );
-
-		// New (or expired) window — start a fresh count.
-		if ( ! is_array( $entry ) || ! isset( $entry['start'], $entry['count'] ) || ( $now - (int) $entry['start'] ) >= $window ) {
-			set_transient( $key, [ 'start' => $now, 'count' => 1 ], $window );
-			return true;
-		}
-
-		if ( (int) $entry['count'] >= $max ) {
+		// Atomic per-client counter (2.4.3). The previous read-compare-write
+		// on a transient let a parallel burst through.
+		if ( ! \PizzaTier\Core\RateLimiter::hit( 'render', $max, $window ) ) {
 			return new \WP_Error(
 				'pizzatier_rate_limited',
 				__( 'Too many requests. Please slow down and try again shortly.', 'pizzatier' ),
@@ -110,28 +93,26 @@ class PizzaRestApi {
 			);
 		}
 
-		// Increment within the current window. We anchor the window with the
-		// stored 'start' timestamp, so resetting the transient TTL here to the
-		// remaining window time keeps the window boundary fixed.
-		$entry['count'] = (int) $entry['count'] + 1;
-		$remaining      = max( 1, $window - ( $now - (int) $entry['start'] ) );
-		set_transient( $key, $entry, $remaining );
-
 		return true;
 	}
 
+
+	/** Most toppings one /render request may ask for. */
+	const MAX_TOPPINGS = 50;
+
 	/**
-	 * Resolve the caller's IP for rate limiting.
+	 * Toppings as a bounded list of short slugs. Each slug costs a lookup, and
+	 * the route is public, so the list is capped before any work is done.
 	 *
-	 * Uses REMOTE_ADDR only. X-Forwarded-For and friends are client-supplied
-	 * and trivially spoofable, so they must not be trusted for a security
-	 * control. Sites behind a trusted proxy can adjust REMOTE_ADDR upstream
-	 * or short-circuit the limiter via the rate-limit filters.
+	 * @param mixed $val Array or comma-separated string.
+	 * @return string[]
 	 */
-	private function client_ip(): string {
-		$raw = isset( $_SERVER['REMOTE_ADDR'] ) ? sanitize_text_field( wp_unslash( $_SERVER['REMOTE_ADDR'] ) ) : '';
-		$ip  = filter_var( (string) $raw, FILTER_VALIDATE_IP );
-		return $ip ? (string) $ip : '';
+	public static function sanitize_toppings( $val ): array {
+		$list = is_array( $val ) ? $val : explode( ',', (string) $val );
+		$list = array_slice( array_values( array_filter( array_map( static function ( $t ) {
+			return substr( sanitize_title( is_scalar( $t ) ? (string) $t : '' ), 0, 200 );
+		}, $list ) ) ), 0, self::MAX_TOPPINGS );
+		return array_values( array_unique( $list ) );
 	}
 
 	public function render_pizza( \WP_REST_Request $request ): \WP_REST_Response {

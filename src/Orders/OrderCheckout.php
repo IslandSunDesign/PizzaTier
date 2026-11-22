@@ -81,6 +81,15 @@ class OrderCheckout {
 	public static function visitor_can_order(): bool {
 		$can = ! ( OrderSettings::is_on( 'login_required' ) && ! is_user_logged_in() );
 
+		// A route that pushes the pizza into the WooCommerce cart must also
+		// honour Cart & Pricing → "Allow guest pizza orders". Until 2.4.3 the
+		// native order endpoint added to the cart without checking it.
+		if ( $can && ! is_user_logged_in() && OrderRoute::adds_to_cart()
+			&& class_exists( \PizzaTier\Commerce\WooCommerce\CartRules::class )
+			&& ! \PizzaTier\Commerce\WooCommerce\CartRules::guests_allowed() ) {
+			$can = false;
+		}
+
 		/**
 		 * Filter whether the current visitor may place an order.
 		 *
@@ -168,7 +177,8 @@ class OrderCheckout {
 		$candidates = [
 			trailingslashit( get_stylesheet_directory() ) . 'pizzatier/' . $filename,
 			trailingslashit( get_template_directory() ) . 'pizzatier/' . $filename,
-			PIZZATIER_TEMPLATES_DIR . $slug . '/' . $filename,
+			// Through the loader so theme pzttemplates/ folders are honoured.
+			( new \PizzaTier\Template\TemplateLoader() )->get_template_file( $filename, $slug ),
 			PIZZATIER_PLUGIN_DIR . 'partials/' . $filename,
 		];
 

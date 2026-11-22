@@ -89,10 +89,13 @@
                 animMode = $root.length ? $root.data('layer-anim') : 'fade';
             }
 
-            var $existing = $stage.find('[data-layer-id="' + layerId + '"]');
+            /* Ignore nodes that are fading out — updating one in place would
+               leave the new image inside a div that is about to be deleted
+               (blank pizza after Reset / remove-then-re-add). */
+            var $existing = PizzaStack.findLayer($stage, layerId);
 
             if (!src) {
-                $existing.fadeOut(200, function () { $(this).remove(); });
+                $existing.addClass('is-removing').fadeOut(200, function () { $(this).remove(); });
                 return;
             }
 
@@ -102,7 +105,7 @@
                 $existing.css('z-index', zIndex);
                 $existing.find('img').attr('src', src).css('clip-path', clipStyle);
             } else {
-                var $layer = $('<div class="np-layer-div" data-layer-id="' + layerId + '"></div>').css({
+                var $layer = $('<div class="np-layer-div"></div>').attr('data-layer-id', layerId).css({
                     position: 'absolute', inset: 0, 'z-index': zIndex, 'pointer-events': 'none', overflow: 'hidden'
                 });
                 if (cls) { $layer.addClass(cls); }
@@ -121,6 +124,19 @@
 
         removeLayer: function ($stage, layerId) {
             PizzaStack.setLayer($stage, layerId, '', 0);
+        },
+
+        /** Live (not fading-out) layer div for an id. */
+        findLayer: function ($stage, layerId) {
+            if (!$stage || !$stage.length) { return $(); }
+            return $stage.find('.np-layer-div').filter(function () {
+                return this.getAttribute('data-layer-id') === layerId && !$(this).hasClass('is-removing');
+            });
+        },
+
+        /** Remove every layer immediately (no fade, so re-applied layers survive). */
+        clear: function ($stage) {
+            if ($stage && $stage.length) { $stage.find('.np-layer-div').stop(true).remove(); }
         },
 
         applyShape: function ($canvas, shape, customRatio, customRadius) {
@@ -187,7 +203,7 @@
             init: function () {
                 this._initStage();
                 this._bindTabs();
-                this.goTab('crust');
+                this.goTab(this._firstTab());
                 this._updateCounter();
                 this._initDefaultLayers();
             },
@@ -213,52 +229,99 @@
 
             _initDefaultLayers: function () {
                 var $wrap = getStage().closest('.np-pizza-stage-wrap');
+                var zMap  = { crust: 100, sauce: 200, cheese: 300, drizzle: 900, cut: 950 };
 
-                var applyBase = function (layerType, urlAttr, slugAttr, zIndex, cssClass) {
-                    var url  = $wrap.data(urlAttr)  || '';
-                    var slug = $wrap.data(slugAttr) || '';
+                // Every base type (drizzle / cut included) goes through the same
+                // path so the default is in state (priced) and its card selected.
+                // crust/sauce/cheese fall back to the first card when no default.
+                var applyBase = function (layerType, useFirstFallback) {
+                    var url   = $wrap.attr('data-default-' + layerType) || '';
+                    var slug  = $wrap.attr('data-default-' + layerType + '-slug') || '';
+                    var $card = instance._findCard(layerType, slug, url);
 
-                    if (url) {
-                        PizzaStack.setLayer(getStage(), 'layer-' + layerType, url, zIndex, cssClass);
-                        state[layerType] = { slug: slug, title: slug, layerImg: url, thumb: '' };
-                        if (slug) {
-                            $find('.rp-card[data-layer="' + layerType + '"][data-slug="' + slug + '"]').addClass('rp-card--selected');
-                        }
-                    } else {
-                        var $first = $find('.rp-card[data-layer="' + layerType + '"]').first();
-                        if ($first.length) {
-                            var fSlug  = $first.data('slug')      || '';
-                            var fImg   = $first.data('layer-img') || '';
-                            var fThumb = $first.data('thumb')     || '';
-                            if (fImg) {
-                                PizzaStack.setLayer(getStage(), 'layer-' + layerType, fImg, zIndex, cssClass);
-                                state[layerType] = { slug: fSlug, title: fSlug, layerImg: fImg, thumb: fThumb };
-                                $first.addClass('rp-card--selected');
-                            }
-                        }
+                    if (!url && useFirstFallback) {
+                        $card = $find('.rp-card[data-layer="' + layerType + '"]').first();
+                        url   = $card.length ? ($card.attr('data-layer-img') || '') : '';
                     }
+                    if (!url) { return; }
+
+                    if ($card.length) { slug = $card.attr('data-slug') || slug; }
+                    var title = ($card.length && $card.attr('data-title')) || slug;
+                    var thumb = $card.length ? ($card.attr('data-thumb') || '') : '';
+
+                    PizzaStack.setLayer(getStage(), 'layer-' + layerType, url, zMap[layerType], 'nl-' + layerType);
+                    state[layerType] = { slug: slug, title: title, layerImg: url, thumb: thumb };
+                    if ($card.length) { instance._markCard($card, true); }
                 };
 
-                applyBase('crust',  'default-crust',  'default-crust-slug',  100, 'nl-crust');
-                applyBase('sauce',  'default-sauce',  'default-sauce-slug',  200, 'nl-sauce');
-                applyBase('cheese', 'default-cheese', 'default-cheese-slug', 300, 'nl-cheese');
-
-                var drUrl = $wrap.data('default-drizzle') || '';
-                if (drUrl) { PizzaStack.setLayer(getStage(), 'layer-drizzle', drUrl, 900, 'nl-drizzle'); }
-                var cuUrl = $wrap.data('default-cut') || '';
-                if (cuUrl) { PizzaStack.setLayer(getStage(), 'layer-cut', cuUrl, 950, 'nl-cut'); }
+                applyBase('crust',   true);
+                applyBase('sauce',   true);
+                applyBase('cheese',  true);
+                applyBase('drizzle', false);
+                applyBase('cut',     false);
 
                 try {
                     var defaultTops = JSON.parse($wrap.attr('data-default-toppings') || '[]');
                     if (Array.isArray(defaultTops)) {
                         defaultTops.forEach(function (t) {
-                            PizzaStack.setLayer(getStage(), 'layer-topping-' + t.slug, t.layerImg, t.zindex || 400, 'nl-topping', t.coverage || 'whole');
-                            state.toppings[t.slug] = { slug: t.slug, title: t.slug, layerImg: t.layerImg, zindex: t.zindex || 400, coverage: t.coverage || 'whole' };
-                            $find('.rp-card[data-layer="toppings"][data-slug="' + t.slug + '"]').addClass('rp-card--selected');
+                            if (!t || !t.slug || !t.layerImg) { return; }
+                            var cov   = t.coverage || 'whole';
+                            var $card = instance._findCard('toppings', t.slug, t.layerImg);
+                            PizzaStack.setLayer(getStage(), 'layer-topping-' + t.slug, t.layerImg, t.zindex || 400, 'nl-topping', cov);
+                            state.toppings[t.slug] = {
+                                slug: t.slug,
+                                title: ($card.length && $card.attr('data-title')) || t.slug,
+                                thumb: $card.length ? ($card.attr('data-thumb') || '') : '',
+                                layerImg: t.layerImg, zindex: t.zindex || 400, coverage: cov
+                            };
+                            if ($card.length) {
+                                instance._markCard($card, true);
+                                $card.find('.rp-cov-btn').removeClass('active')
+                                     .filter('[data-fraction="' + cov + '"]').addClass('active');
+                            }
                         });
-                        $find('#' + instanceId + '-count').text(Object.keys(state.toppings).length);
+                        instance._updateCounter();
                     }
                 } catch (e) { /* ignore */ }
+            },
+
+            /* ── Card lookup: by slug, else by matching layer image URL ── */
+            _findCard: function (layerType, slug, url) {
+                var $all  = $find('.rp-card[data-layer="' + layerType + '"]');
+                var $card = $();
+                if (slug) {
+                    $card = $all.filter(function () { return this.getAttribute('data-slug') === String(slug); });
+                }
+                if (!$card.length && url) {
+                    $card = $all.filter(function () { return this.getAttribute('data-layer-img') === url; });
+                }
+                return $card.first();
+            },
+
+            /* ── Card lookup for a remove call (own card, else by slug) ── */
+            _cardFor: function (layerType, slug, triggerEl) {
+                var $card = triggerEl ? $(triggerEl).closest('.rp-card') : $();
+                if (!$card.length) { $card = instance._findCard(layerType, slug, ''); }
+                return $card;
+            },
+
+            /* ── Selected / unselected card UI ── */
+            _markCard: function ($card, selected) {
+                if (!$card || !$card.length) { return; }
+                $card.toggleClass('rp-card--selected', !!selected);
+                $card.find('.rp-btn--add').toggle(!selected);
+                $card.find('.rp-btn--remove').toggle(!!selected);
+                if ($card.find('.rp-coverage').length) { $card.find('.rp-coverage').toggle(!!selected); }
+            },
+
+            /* ── First tab actually rendered (crust may be hidden) ── */
+            _firstTab: function () {
+                var t = $find('.rp-step').first().data('tab');
+                if (!t) {
+                    var $p = $find('.rp-panel').first();
+                    t = $p.length ? String($p.attr('id') || '').replace(instanceId + '-panel-', '') : '';
+                }
+                return t || 'crust';
             },
 
             /* ── Tab switching ── */
@@ -313,7 +376,8 @@
 
             /* ── Remove exclusive base layer ── */
             removeBase: function (layerType, slug, triggerEl) {
-                var $card = $(triggerEl).closest('.rp-card');
+                /* From the summary panel the trigger is not inside a card. */
+                var $card = instance._cardFor(layerType, slug, triggerEl);
                 $card.removeClass('rp-card--selected');
                 $card.find('.rp-btn--add').show();
                 $card.find('.rp-btn--remove').hide();
@@ -351,7 +415,8 @@
 
             /* ── Remove topping ── */
             removeTopping: function (layerId, slug, triggerEl) {
-                var $card = $(triggerEl).closest('.rp-card');
+                /* From the summary panel the trigger is not inside a card. */
+                var $card = instance._cardFor('toppings', slug, triggerEl);
                 $card.removeClass('rp-card--selected');
                 $card.find('.rp-btn--add').show();
                 $card.find('.rp-btn--remove').hide();
@@ -367,13 +432,14 @@
             /* ── Set coverage ── */
             setCoverage: function (slug, fraction, triggerEl) {
                 if (!state.toppings[slug]) { return; }
+                if (['whole','half-left','half-right','quarter-top-left','quarter-top-right','quarter-bottom-left','quarter-bottom-right'].indexOf(fraction) === -1) { return; }
                 state.toppings[slug].coverage = fraction;
 
-                var $card = $(triggerEl).closest('.rp-card');
-                $card.find('.rp-cov-btn').removeClass('active');
-                $(triggerEl).addClass('active');
+                var $card = instance._cardFor('toppings', slug, triggerEl);
+                $card.find('.rp-cov-btn').removeClass('active')
+                     .filter('[data-fraction="' + fraction + '"]').addClass('active');
 
-                var $layer = getStage().find('[data-layer-id="layer-topping-' + slug + '"]');
+                var $layer = PizzaStack.findLayer(getStage(), 'layer-topping-' + slug);
                 if ($layer.length) {
                     $layer.find('img').css('clip-path', PizzaStack.getCoverageClip(fraction));
                 }
@@ -391,11 +457,14 @@
                 $find('.rp-cov-btn').removeClass('active');
                 $find('.rp-step').removeClass('rp-step--done');
 
-                getStage().find('.np-layer-div').fadeOut(300, function () { $(this).remove(); });
+                // Clear only THIS builder's stage, immediately: a fade-then-remove
+                // here deleted the layers _initDefaultLayers / setState re-apply
+                // straight after (they update the fading div in place).
+                PizzaStack.clear(getStage());
 
                 instance._updateCounter();
                 instance._renderSummary();
-                instance.goTab('crust');
+                instance.goTab(instance._firstTab());
                 instance._initDefaultLayers();
             },
 
@@ -414,7 +483,13 @@
                         var $card = $find('.rp-card[data-layer="toppings"][data-slug="' + slug + '"]');
                         if ($card.length) {
                             $card.find('.rp-btn--add').trigger('click');
+                            /* Restore the saved coverage (cart edit / Pro defaults). */
+                            if (t && t.coverage && t.coverage !== 'whole') {
+                                instance.setCoverage(slug, t.coverage);
+                            }
                         } else {
+                            /* Coverage is rendered from state: reject unknown values. */
+                            if (t && ['whole','half-left','half-right','quarter-top-left','quarter-top-right','quarter-bottom-left','quarter-bottom-right'].indexOf(t.coverage) === -1) { t.coverage = 'whole'; }
                             state.toppings[slug] = t;
                             PizzaStack.setLayer(getStage(), 'layer-topping-' + slug, t.layerImg, t.zindex || 400, 'nl-topping', t.coverage || 'whole');
                         }
@@ -528,14 +603,20 @@
             _selBubble: function (thumb, title, coverage, toppingSlug, layerType, slug) {
                 var rpVar  = $root.data('rp-var');
                 var imgHtml = thumb ? '<img src="' + instance._esc(thumb) + '" alt="' + instance._esc(title) + '" />' : '';
-                var covHtml = coverage ? '<span class="rp-yp-coverage"> · ' + coverage.replace('quarter-', 'Q').replace('half-', '½') + '</span>' : '';
+                var covHtml = coverage ? '<span class="rp-yp-coverage"> · ' + instance._esc(coverage.replace('quarter-', 'Q').replace('half-', '½')) + '</span>' : '';
                 var remHtml = '';
                 if (layerType === 'toppings' && toppingSlug) {
-                    remHtml = '<button class="rp-yp-remove" onclick="' + rpVar + '.removeTopping(\'pizzatier-topping-' + toppingSlug + '\',\'' + toppingSlug + '\',this);" title="Remove"><i class="fa fa-times"></i></button>';
+                    remHtml = '<button class="rp-yp-remove" onclick="' + instance._jsq(rpVar) + '.removeTopping(\'pizzatier-topping-' + instance._jsq(toppingSlug) + '\',\'' + instance._jsq(toppingSlug) + '\',this);" title="Remove"><i class="fa fa-times"></i></button>';
                 } else if (layerType && slug) {
-                    remHtml = '<button class="rp-yp-remove" onclick="' + rpVar + '.removeBase(\'' + layerType + '\',\'' + slug + '\',this);" title="Remove"><i class="fa fa-times"></i></button>';
+                    remHtml = '<button class="rp-yp-remove" onclick="' + instance._jsq(rpVar) + '.removeBase(\'' + instance._jsq(layerType) + '\',\'' + instance._jsq(slug) + '\',this);" title="Remove"><i class="fa fa-times"></i></button>';
                 }
                 return '<div class="rp-yp-bubble">' + imgHtml + '<span class="rp-yp-name">' + instance._esc(title) + covHtml + '</span>' + remHtml + '</div>';
+            },
+
+            /* Escape a value for a single-quoted JS string inside a double-quoted
+               HTML attribute (onclick="…('VALUE')"): JS-escape first, then HTML-escape. */
+            _jsq: function (str) {
+                return instance._esc(String(str).replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/[\r\n\u2028\u2029]/g, ''));
             },
 
             _esc: function (str) {
@@ -595,16 +676,26 @@
        ════════════════════════════════════════════════════════════════ */
     window.PizzaTierRP = RP;
 
-    /* PizzaTierAPI — standard surface consumed by PizzaTier */
-    window.PizzaTierAPI = window.PizzaTierAPI || {
+    /* PizzaTierAPI — standard surface consumed by PizzaTier. setState is what
+       frontend-builder's default layers and cart-edit restore call. */
+    RP.API = {
         getState: function (instanceId) {
             var inst = RP.getInstance(instanceId);
             return inst ? inst.getState() : null;
+        },
+        setState: function (instanceId, newState) {
+            var inst = RP.getInstance(instanceId);
+            if (inst && newState && typeof newState === 'object') { inst.setState(newState); }
         },
         getAllInstances: function () {
             return Object.keys(RP._instances);
         }
     };
+    if (window.PizzaTierAPI && typeof window.PizzaTierAPI.register === 'function') {
+        window.PizzaTierAPI.register(RP.API);
+    } else {
+        window.PizzaTierAPI = window.PizzaTierAPI || RP.API;
+    }
 
     /* Legacy global functions — delegate to stack API */
     window.ClearPizza = window.ClearPizza || function () {

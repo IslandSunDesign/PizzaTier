@@ -13,6 +13,19 @@ function scEscHtml( s ) {
     .replace( /'/g, '&#39;' );
 }
 
+/** Coverage → CSS clip-path (same map as the Colorbox PizzaStack). */
+var SC_COVERAGE_CLIPS = {
+  'half-left':            'polygon(0 0, 50% 0, 50% 100%, 0 100%)',
+  'half-right':           'polygon(50% 0, 100% 0, 100% 100%, 50% 100%)',
+  'quarter-top-left':     'polygon(0 0, 50% 0, 50% 50%, 0 50%)',
+  'quarter-top-right':    'polygon(50% 0, 100% 0, 100% 50%, 50% 50%)',
+  'quarter-bottom-left':  'polygon(0 50%, 50% 50%, 50% 100%, 0 100%)',
+  'quarter-bottom-right': 'polygon(50% 50%, 100% 50%, 100% 100%, 50% 100%)'
+};
+function scCoverageClip( coverage ) {
+  return SC_COVERAGE_CLIPS[ coverage ] || 'none'; // 'whole' / unknown → no clip
+}
+
 /* initScaffoldInstance — run once per .sc-root on this page. */
 function initScaffoldInstance( ROOT, cfg ) {
   'use strict';
@@ -38,15 +51,55 @@ function initScaffoldInstance( ROOT, cfg ) {
     } );
   }
 
+  /** Card for a layer type + slug (when a call has no trigger element). */
+  function findCard( layerType, slug ) {
+    var found = null;
+    ROOT.querySelectorAll( '.sc-card[data-layer="' + layerType + '"]' ).forEach( function( c ) {
+      if ( ! found && c.getAttribute( 'data-slug' ) === String( slug ) ) { found = c; }
+    } );
+    return found;
+  }
+
+  function cardFor( layerType, slug, triggerEl ) {
+    var card = ( triggerEl && triggerEl.closest ) ? triggerEl.closest( '.sc-card' ) : null;
+    return card || findCard( layerType, slug );
+  }
+
+  /** Coverage UI + data-coverage back to a given fraction (default whole). */
+  function setCoverageUI( card, fraction ) {
+    if ( ! card ) { return; }
+    fraction = fraction || 'whole';
+    card.setAttribute( 'data-coverage', fraction );
+    card.querySelectorAll( '.sc-cov-btn' ).forEach( function( b ) {
+      b.classList.toggle( 'sc-cov-btn--active', b.getAttribute( 'data-fraction' ) === fraction );
+    } );
+  }
+
+  /** Base layers a customer may deselect by clicking Select again. */
+  function isOptionalBase( layerType ) { return layerType !== 'crust'; }
+
   /** Swap an exclusive base layer (crust/sauce/cheese/drizzle/slicing). */
   function swapBase( layerType, slug, title, layerImg, triggerEl ) {
+    var card = cardFor( layerType, slug, triggerEl );
+
+    // Clicking an already-selected optional layer deselects it.
+    if ( card && card.classList.contains( 'sc-card--selected' ) && isOptionalBase( layerType ) ) {
+      removeBase( layerType, slug, card );
+      return;
+    }
+
     // Deselect previous card
     ROOT.querySelectorAll( '.sc-card--exclusive[data-layer="' + layerType + '"]' ).forEach( function( c ) {
       c.classList.remove( 'sc-card--selected' );
+      var b = c.querySelector( '.sc-card__btn--select' );
+      if ( b ) { b.setAttribute( 'aria-pressed', 'false' ); }
     } );
     // Select this card
-    var card = ( triggerEl && triggerEl.closest ) ? triggerEl.closest( '.sc-card' ) : null;
-    if ( card ) { card.classList.add( 'sc-card--selected' ); }
+    if ( card ) {
+      card.classList.add( 'sc-card--selected' );
+      var selBtn = card.querySelector( '.sc-card__btn--select' );
+      if ( selBtn ) { selBtn.setAttribute( 'aria-pressed', 'true' ); }
+    }
 
     // Update layer image in pizza stage
     var img = document.getElementById( ROOT.id + '-layer-' + layerType );
@@ -61,11 +114,16 @@ function initScaffoldInstance( ROOT, cfg ) {
 
   /** Remove an exclusive base layer. */
   function removeBase( layerType, slug, triggerEl ) {
-    var card = ( triggerEl && triggerEl.closest ) ? triggerEl.closest( '.sc-card' ) : null;
-    if ( card ) { card.classList.remove( 'sc-card--selected' ); }
+    var card = cardFor( layerType, slug, triggerEl );
+    if ( card ) {
+      card.classList.remove( 'sc-card--selected' );
+      var selBtn = card.querySelector( '.sc-card__btn--select' );
+      if ( selBtn ) { selBtn.setAttribute( 'aria-pressed', 'false' ); }
+    }
     var img = document.getElementById( ROOT.id + '-layer-' + layerType );
     if ( img ) { img.src = ''; img.style.display = 'none'; }
     updateSummary();
+    ROOT.dispatchEvent( new CustomEvent( 'pizzatier:layerChanged', { detail: { layerType: layerType, slug: '', title: '', layerImg: '' }, bubbles: true } ) );
   }
 
   /** Add a topping. */
@@ -73,10 +131,13 @@ function initScaffoldInstance( ROOT, cfg ) {
     var selected = ROOT.querySelectorAll( '.sc-card--topping.sc-card--selected' ).length;
     if ( selected >= MAX_TOP ) {
       ROOT.dispatchEvent( new CustomEvent( 'pizzatier:maxToppings', { detail: { max: MAX_TOP }, bubbles: true } ) );
+      /* Visible / announced feedback (nothing listened for the event). */
+      if ( window.PizzaTierNotice ) { window.PizzaTierNotice.maxToppings( ROOT, MAX_TOP ); }
       return;
     }
-    var card = ( triggerEl && triggerEl.closest ) ? triggerEl.closest( '.sc-card' ) : null;
+    var card = cardFor( 'toppings', slug, triggerEl );
     if ( card ) {
+      setCoverageUI( card, 'whole' );
       card.classList.add( 'sc-card--selected' );
       var addBtn = card.querySelector( '.sc-card__btn--add' );
       var remBtn = card.querySelector( '.sc-card__btn--remove' );
@@ -97,6 +158,7 @@ function initScaffoldInstance( ROOT, cfg ) {
         el.alt                       = title;
         el.setAttribute( 'data-topping-slug', slug );
         el.style.zIndex              = String( zindex );
+        el.style.clipPath            = 'none';
         stage.appendChild( el );
       }
     }
@@ -106,8 +168,10 @@ function initScaffoldInstance( ROOT, cfg ) {
 
   /** Remove a topping. */
   function removeTopping( layerId, slug, triggerEl ) {
-    var card = ( triggerEl && triggerEl.closest ) ? triggerEl.closest( '.sc-card' ) : null;
+    var card = cardFor( 'toppings', slug, triggerEl );
     if ( card ) {
+      // Back to whole so a re-added topping does not keep the old half.
+      setCoverageUI( card, 'whole' );
       card.classList.remove( 'sc-card--selected' );
       var addBtn = card.querySelector( '.sc-card__btn--add' );
       var remBtn = card.querySelector( '.sc-card__btn--remove' );
@@ -124,14 +188,16 @@ function initScaffoldInstance( ROOT, cfg ) {
 
   /** Set coverage fraction on a selected topping. */
   function setCoverage( slug, fraction, triggerEl ) {
-    var card = ( triggerEl && triggerEl.closest ) ? triggerEl.closest( '.sc-card' ) : null;
-    if ( card ) {
-      card.setAttribute( 'data-coverage', fraction );
-      card.querySelectorAll( '.sc-cov-btn' ).forEach( function( b ) {
-        b.classList.toggle( 'sc-cov-btn--active', b.getAttribute( 'data-fraction' ) === fraction );
-      } );
+    var card = cardFor( 'toppings', slug, triggerEl );
+    setCoverageUI( card, fraction );
+    // Clip the topping's layer image to the chosen portion.
+    var layerEl = document.getElementById( ROOT.id + '-tslot-' + slug );
+    if ( layerEl ) {
+      var clip = scCoverageClip( fraction );
+      layerEl.style.clipPath       = clip;
+      layerEl.style.webkitClipPath = clip;
     }
-    // TODO: pass fraction through to layer clip-path for visual coverage
+    updateSummary();
     ROOT.dispatchEvent( new CustomEvent( 'pizzatier:coverageSet', { detail: { slug: slug, fraction: fraction }, bubbles: true } ) );
   }
 
@@ -188,11 +254,22 @@ function initScaffoldInstance( ROOT, cfg ) {
       });
     } );
     var sizeEl = ROOT.querySelector( '.pztc-size-radio:checked' );
+    /* Top-level single-choice layers too: pizzatier-orders.js normaliseState()
+       reads crust/sauce/cheese/drizzle/cut directly off the state object. */
+    function top( key ) {
+      var b = baseLayers[ key ];
+      return b ? { slug: b.slug, title: b.title || b.slug } : null;
+    }
     return {
       instanceId: ROOT.id,
       layers:     layers,
       toppings:   layers.filter( function( l ) { return l.layerType === 'topping'; } ),
       baseLayers: baseLayers,
+      crust:      top( 'crust' ),
+      sauce:      top( 'sauce' ),
+      cheese:     top( 'cheese' ),
+      drizzle:    top( 'drizzle' ),
+      cut:        top( 'slicing' ) || top( 'cut' ),
       size:       sizeEl ? sizeEl.value : null
     };
   }
@@ -229,6 +306,8 @@ function initScaffoldInstance( ROOT, cfg ) {
     ROOT.querySelectorAll( '.sc-card__btn--add'    ).forEach( function( b ) { b.style.display = ''; } );
     ROOT.querySelectorAll( '.sc-card__btn--remove' ).forEach( function( b ) { b.style.display = 'none'; } );
     ROOT.querySelectorAll( '.sc-coverage'          ).forEach( function( c ) { c.style.display = 'none'; } );
+    ROOT.querySelectorAll( '.sc-card--topping'     ).forEach( function( c ) { setCoverageUI( c, 'whole' ); } );
+    ROOT.querySelectorAll( '.sc-card__btn--select' ).forEach( function( b ) { b.setAttribute( 'aria-pressed', 'false' ); } );
     ROOT.querySelectorAll( '.sc-layer' ).forEach( function( img ) { img.src = ''; img.style.display = 'none'; } );
     // Remove injected topping layers
     ROOT.querySelectorAll( '.sc-layer--topping' ).forEach( function( el ) { el.remove(); } );
@@ -265,11 +344,17 @@ function initScaffoldInstance( ROOT, cfg ) {
     } );
 
     if ( newState.toppings && typeof newState.toppings === 'object' ) {
-      Object.keys( newState.toppings ).forEach( function( slug ) {
+      Object.keys( newState.toppings ).forEach( function( key ) {
+        var t    = newState.toppings[ key ];
+        var slug = ( t && typeof t === 'object' && t.slug ) ? t.slug : key;
         var card = ROOT.querySelector( '.sc-card--topping[data-slug="' + slug + '"]' );
         if ( card && ! card.classList.contains( 'sc-card--selected' ) ) {
           var addBtn = card.querySelector( '.sc-card__btn--add' );
           if ( addBtn ) { addBtn.click(); }
+        }
+        /* Restore the saved coverage (cart edit / Pro defaults). */
+        if ( card && card.classList.contains( 'sc-card--selected' ) && t && typeof t === 'object' && t.coverage ) {
+          setCoverage( slug, t.coverage, card );
         }
       } );
     }
@@ -321,16 +406,36 @@ function initScaffoldInstance( ROOT, cfg ) {
  * three strategies. Previously scaffold exposed only a thin getState/setState
  * surface and returned layers as an object, which Pro could not read — leaving
  * the checkout bar stuck on "The pizza builder is not ready yet." */
+/* The shared facade in pizzatier-main.js (a script dependency of this file)
+ * already provides registerInstance(), so normally nothing is defined here.
+ * Fallback only when it is missing: build Scaffold's own registry, delegating
+ * ids it does not own to any API that was already on the page instead of
+ * replacing it (replacing it broke the other template's builder). */
 if ( ! window.PizzaTierAPI || typeof window.PizzaTierAPI.registerInstance !== 'function' ) {
   ( function () {
-    var _instances = ( window.PizzaTierAPI && window.PizzaTierAPI._instances ) || {};
+    var _prev      = window.PizzaTierAPI || null;
+    var _instances = ( _prev && _prev._instances ) || {};
+    function prevOwns( id ) {
+      try {
+        return !! ( _prev && typeof _prev.getAllInstances === 'function' && _prev.getAllInstances().indexOf( id ) !== -1 );
+      } catch ( e ) { return false; }
+    }
     window.PizzaTierAPI = {
       _instances:       _instances,
       registerInstance: function ( id, inst ) { _instances[ id ] = inst; },
       getInstance:      function ( id ) { return _instances[ id ] || null; },
       getInstances:     function () { return _instances; },
-      getAllInstances:  function () { return Object.keys( _instances ); },
+      getAllInstances:  function () {
+        var ids = Object.keys( _instances );
+        if ( _prev && typeof _prev.getAllInstances === 'function' ) {
+          try {
+            _prev.getAllInstances().forEach( function ( k ) { if ( ids.indexOf( k ) === -1 ) { ids.push( k ); } } );
+          } catch ( e ) {}
+        }
+        return ids;
+      },
       getState: function ( id ) {
+        if ( id && ! _instances[ id ] && prevOwns( id ) ) { return _prev.getState( id ); }
         var inst = ( id && _instances[ id ] ) || ( id && window[ id ] );
         if ( ! inst ) {
           /* bare getState(): return the only instance if there is exactly one */
@@ -340,6 +445,10 @@ if ( ! window.PizzaTierAPI || typeof window.PizzaTierAPI.registerInstance !== 'f
         return ( inst && typeof inst.getState === 'function' ) ? inst.getState() : null;
       },
       setState: function ( id, newState ) {
+        if ( id && ! _instances[ id ] && prevOwns( id ) && typeof _prev.setState === 'function' ) {
+          _prev.setState( id, newState );
+          return;
+        }
         var inst = _instances[ id ] || window[ id ];
         if ( inst && typeof inst.setState === 'function' ) { inst.setState( newState ); }
       }

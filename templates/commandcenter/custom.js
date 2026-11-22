@@ -391,6 +391,8 @@
             function addTopping(zIndex, slug, layerUrl, title, layerId, domId, cardEl) {
                 if (state.toppingCount >= maxToppings) {
                     $(document).trigger('pizzatier_max_toppings_reached', [instanceId, maxToppings]);
+                    /* Visible / announced feedback (nothing listened for the event). */
+                    if (window.PizzaTierNotice) { window.PizzaTierNotice.maxToppings($root[0], maxToppings); }
                     return;
                 }
 
@@ -403,6 +405,7 @@
 
                 var $card = cardEl ? $(cardEl).closest('.cc-card') : $root.find('.cc-card[data-slug="' + slug + '"][data-layer="toppings"]');
                 setCardSelected($card, true);
+                resetCoverageUI($card);
 
                 PizzaStack.set($stage(), layerId, layerUrl, zIndex, 'cc-layer--topping', 'whole');
                 updateCounter();
@@ -419,6 +422,8 @@
 
                 var $card = cardEl ? $(cardEl).closest('.cc-card') : $root.find('.cc-card[data-slug="' + slug + '"][data-layer="toppings"]');
                 setCardSelected($card, false);
+                /* Coverage UI back to "whole" so a re-added topping matches state. */
+                resetCoverageUI($card);
 
                 PizzaStack.remove($stage(), layerId);
                 updateCounter();
@@ -440,18 +445,24 @@
                 var $layerDiv = $stage().find('[data-layer-id="' + topping.layerId + '"]');
                 PizzaStack.setCoverageClip($layerDiv.find('img'), fraction);
 
-                /* Highlight active coverage button */
-                if (btnEl) {
-                    $(btnEl).closest('.cc-coverage__btns').find('.cc-cov-btn').removeClass('cc-cov-btn--active');
-                    $(btnEl).addClass('cc-cov-btn--active');
-                }
+                /* Highlight active coverage button (also when called without one,
+                   e.g. from setState restoring a saved coverage). */
+                var $btns = btnEl
+                    ? $(btnEl).closest('.cc-coverage__btns').find('.cc-cov-btn')
+                    : $root.find('.cc-card--topping[data-slug="' + slug + '"] .cc-cov-btn');
+                $btns.removeClass('cc-cov-btn--active')
+                     .filter('[data-fraction="' + fraction + '"]').addClass('cc-cov-btn--active');
                 $(document).trigger('pizzatier_coverage_changed', [instanceId, slug, fraction]);
             }
 
             /**
              * Reset all selections.
              */
-            function resetAll() {
+            function resetAll() { resetCore(true); }
+
+            /* withDefaults=false is used by setState so the restored pizza is
+               exactly the given state (no configured defaults mixed in). */
+            function resetCore(withDefaults) {
                 state.selections = { crust: null, sauce: null, cheese: null, toppings: [], drizzle: null, slicing: null, size: null };
                 state.toppingCount = 0;
                 state.doneSet = {};
@@ -459,6 +470,7 @@
                 $root.find('.cc-card').each(function () {
                     setCardSelected($(this), false);
                     $(this).find('.cc-coverage').hide();
+                    resetCoverageUI($(this));
                 });
 
                 PizzaStack.clear($stage());
@@ -476,7 +488,73 @@
                     goTab(firstTab);
                 }
 
+                /* Back to the configured default pizza. */
+                if (withDefaults) { initDefaultLayers(); }
+
                 $(document).trigger('pizzatier_reset', [instanceId]);
+            }
+
+            /* Coverage buttons → "whole" active. */
+            function resetCoverageUI($card) {
+                if (!$card || !$card.length) { return; }
+                $card.find('.cc-cov-btn').removeClass('cc-cov-btn--active')
+                     .filter('[data-fraction="whole"]').addClass('cc-cov-btn--active');
+            }
+
+            /* Card lookup: by slug, else by matching layer image URL. */
+            function findCard(layerType, slug, url) {
+                var sel  = layerType === 'cut'
+                    ? '.cc-card[data-layer="cut"], .cc-card[data-layer="slicing"]'
+                    : '.cc-card[data-layer="' + layerType + '"]';
+                var $all  = $root.find(sel);
+                var $card = $();
+                if (slug) {
+                    $card = $all.filter(function () { return this.getAttribute('data-slug') === String(slug); });
+                }
+                if (!$card.length && url) {
+                    $card = $all.filter(function () { return this.getAttribute('data-layer-img') === url; });
+                }
+                return $card.first();
+            }
+
+            /**
+             * Apply the default layers PizzaBuilder::build_dynamic() rendered as
+             * data-default-* attributes on .np-pizza-stage-wrap (configured
+             * default crust / sauce / cheese / drizzle / cut / toppings).
+             */
+            function initDefaultLayers() {
+                var $wrap = $root.find('#' + instanceId + '-canvas .np-pizza-stage-wrap').first();
+                if (!$wrap.length) { return; }
+
+                ['crust', 'sauce', 'cheese', 'drizzle', 'cut'].forEach(function (type) {
+                    var url  = $wrap.attr('data-default-' + type) || '';
+                    var slug = $wrap.attr('data-default-' + type + '-slug') || '';
+                    if (!url) { return; }
+                    var $card = findCard(type, slug, url);
+                    if ($card.length) {
+                        slug = $card.attr('data-slug') || slug;
+                        if ($card.hasClass('cc-card--selected')) { return; }
+                    }
+                    if (!slug) { return; }
+                    var title = ($card.length && $card.attr('data-title')) || slug;
+                    var img   = ($card.length && $card.attr('data-layer-img')) || url;
+                    swapBase(type, slug, title, img, $card.length ? $card[0] : null);
+                });
+
+                try {
+                    var tops = JSON.parse($wrap.attr('data-default-toppings') || '[]');
+                    if (Array.isArray(tops)) {
+                        tops.forEach(function (t) {
+                            if (!t || !t.slug || !t.layerImg) { return; }
+                            var $card = findCard('toppings', t.slug, t.layerImg);
+                            var slug  = $card.length ? ($card.attr('data-slug') || t.slug) : t.slug;
+                            var title = ($card.length && $card.attr('data-title')) || slug;
+                            var z     = t.zindex || ($card.length ? parseInt($card.attr('data-zindex'), 10) : 0) || 400;
+                            addTopping(z, slug, t.layerImg, title, 'pizzatier-topping-' + slug, 'pizzatier-topping-' + slug, $card.length ? $card[0] : null);
+                            if (t.coverage && t.coverage !== 'whole') { setCoverage(slug, t.coverage); }
+                        });
+                    }
+                } catch (e) { /* malformed JSON — ignore */ }
             }
 
             /**
@@ -487,7 +565,7 @@
              *                            toppings: { slug: {…} } }
              */
             function setState(newState) {
-                resetAll();
+                resetCore(false);
                 if (!newState || typeof newState !== 'object') { return; }
 
                 var baseTypes = ['crust', 'sauce', 'cheese', 'drizzle', 'cut'];
@@ -506,10 +584,16 @@
                 });
 
                 if (newState.toppings && typeof newState.toppings === 'object') {
-                    Object.keys(newState.toppings).forEach(function (slug) {
+                    Object.keys(newState.toppings).forEach(function (key) {
+                        var t    = newState.toppings[key];
+                        var slug = (t && typeof t === 'object' && t.slug) ? t.slug : key;
                         var $card = $root.find('.cc-card--topping[data-slug="' + slug + '"]');
                         if ($card.length && !$card.hasClass('cc-card--selected')) {
                             $card.find('.cc-btn--add').first().trigger('click');
+                        }
+                        /* Restore the saved coverage (cart edit / Pro defaults). */
+                        if (t && typeof t === 'object' && t.coverage) {
+                            setCoverage(slug, t.coverage);
                         }
                     });
                 }
@@ -592,6 +676,9 @@
 
                 updateSidebar();
                 updateCounter();
+
+                /* Configured default layers (build_dynamic data-default-* attrs). */
+                initDefaultLayers();
 
                 /* Expose on window for PHP-generated onclick handlers */
                 window[ccVar] = instance;

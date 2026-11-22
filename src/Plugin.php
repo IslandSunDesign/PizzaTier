@@ -41,6 +41,9 @@ final class Plugin {
 		// so a step runs ahead of the code that assumes it has.
 		( new Core\Upgrade() )->register();
 
+		// Keep the cached ingredient index used for pricing in step with edits.
+		Commerce\LayerResolver::register_cache_invalidation();
+
 		// CPTs
 		$cpt = new PostTypes\PostTypeRegistrar();
 		$this->loader->add_action( 'init', $cpt, 'register', 0 );
@@ -236,6 +239,9 @@ final class Plugin {
 		// Pricing, presets, nutrition and the WooCommerce integration.
 		// Commerce\Plugin gates its own WooCommerce-dependent parts internally.
 		\PizzaTier\Commerce\Plugin::init();
+
+		// Topping Multiplier — double / triple portions of a topping (2.4.0).
+		\PizzaTier\Multiplier\Module::boot();
 	}
 
 	/**

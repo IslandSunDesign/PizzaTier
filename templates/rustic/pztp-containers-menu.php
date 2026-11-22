@@ -135,6 +135,7 @@ $rp_order_tagline = $rp_opt( 'rustic_setting_order_tagline', 'Crafted by your ha
 $query_base = [
     'posts_per_page' => -1,
     'post_status'    => 'publish',
+    'has_password'   => false, // Password-protected layers are not on the public menu (2.4.3).
     'orderby'        => 'menu_order title',
     'order'          => 'ASC',
 ];
@@ -375,7 +376,7 @@ $initial_pizza = $builder->build_dynamic(
                     <!-- Topping counter -->
                     <div class="rp-pizza-footer">
                         <button type="button" class="rp-btn rp-btn--ghost rp-btn--sm"
-                                onclick="ClearPizza(); window['<?php echo esc_js( $rp_var ); ?>']&&window['<?php echo esc_js( $rp_var ); ?>'].resetAll();">
+                                onclick="window['<?php echo esc_js( $rp_var ); ?>']&&window['<?php echo esc_js( $rp_var ); ?>'].resetAll();">
                             <i class="fa fa-rotate-left"></i> <?php echo esc_html( $rp_label_reset ); ?>
                         </button>
                         <span class="rp-topping-counter">
@@ -620,7 +621,7 @@ $initial_pizza = $builder->build_dynamic(
                             </div>
                             <div class="rp-panel__nav">
                                 <button class="rp-btn rp-btn--prev" onclick="<?php echo esc_js( $rp_var ); ?>.goTab('slicing')"><i class="fa fa-arrow-left"></i> <?php esc_html_e( 'Back', 'pizzatier' ); ?></button>
-                                <button class="rp-btn rp-btn--ghost" onclick="ClearPizza(); window['<?php echo esc_js( $rp_var ); ?>']&&window['<?php echo esc_js( $rp_var ); ?>'].resetAll();"><i class="fa fa-rotate-left"></i> <?php esc_html_e( 'Start Over', 'pizzatier' ); ?></button>
+                                <button class="rp-btn rp-btn--ghost" onclick="window['<?php echo esc_js( $rp_var ); ?>']&&window['<?php echo esc_js( $rp_var ); ?>'].resetAll();"><i class="fa fa-rotate-left"></i> <?php esc_html_e( 'Start Over', 'pizzatier' ); ?></button>
                             </div>
                         </section>
                         <?php do_action( 'pizzatier_after_tab_yourpizza', $instance_id ); ?>

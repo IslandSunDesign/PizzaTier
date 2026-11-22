@@ -21,7 +21,58 @@ class AssetManager {
 	public static function require_template( string $slug ): void {
 		if ( $slug && ! in_array( $slug, self::$required_templates, true ) ) {
 			self::$required_templates[] = $slug;
+
+			// A shortcode/block rendered during the content runs after
+			// wp_enqueue_scripts. Enqueue its template now: footer scripts and
+			// late styles are still printed. Before 2.4.0 a builder using a
+			// template other than the site default never got its script.
+			if ( did_action( 'wp_enqueue_scripts' ) && ! is_admin() ) {
+				self::enqueue_template( $slug );
+			}
 		}
+	}
+
+	/**
+	 * Enqueue one template's stylesheet, script and PHP helpers.
+	 */
+	private static function enqueue_template( string $slug ): void {
+		$v      = PIZZATIER_VERSION;
+		$loader = new \PizzaTier\Template\TemplateLoader();
+		$loader->load_template_custom( $slug );
+		if ( ! wp_style_is( 'pizzatier-css', 'enqueued' ) ) {
+			wp_enqueue_style( 'pizzatier-css', PIZZATIER_ASSETS_URL . 'css/pizzatier.css', [], $v );
+		}
+		if ( ! wp_script_is( 'pizzatier-js', 'enqueued' ) ) {
+			wp_enqueue_script( 'pizzatier-js', PIZZATIER_ASSETS_URL . 'js/pizzatier-main.js', [ 'jquery' ], $v, true );
+		}
+		if ( file_exists( $loader->get_template_file( 'template.css', $slug ) ) ) {
+			wp_enqueue_style( 'pizzatier-template-' . $slug, $loader->get_template_url( 'template.css', $slug ), [ 'pizzatier-css' ], $v );
+		}
+		if ( file_exists( $loader->get_template_file( 'custom.js', $slug ) ) ) {
+			wp_enqueue_script( 'pizzatier-template-' . $slug, $loader->get_template_url( 'custom.js', $slug ), [ 'jquery', 'pizzatier-js' ], $v, true );
+		}
+	}
+
+	/**
+	 * Whether the site-default template is needed on this request.
+	 *
+	 * Every template defines window.PizzaTierAPI, so loading the default
+	 * template's script on a page that only renders a different one (a pizza
+	 * product with its own template) lets the unused template's API shadow the
+	 * real one — the live price then cannot read the builder at all.
+	 */
+	private static function global_template_needed( string $global_slug ): bool {
+		if ( ! function_exists( 'is_singular' ) || ! is_singular( 'product' ) ) {
+			return true;
+		}
+		$post_id = (int) get_queried_object_id();
+		$product = sanitize_key( (string) get_post_meta( $post_id, '_pizzatier_builder_template', true ) );
+		if ( '' === $product || $product === $global_slug ) {
+			return true;
+		}
+		// The product description may still embed a default-template builder.
+		$content = (string) get_post_field( 'post_content', $post_id );
+		return has_shortcode( $content, 'pizzatier_builder' ) || false !== strpos( $content, '<!-- wp:pizzatier/' );
 	}
 
 	public function enqueue_frontend(): void {
@@ -33,9 +84,10 @@ class AssetManager {
 
 		$loader = new \PizzaTier\Template\TemplateLoader();
 
-		// Always enqueue the globally active template.
-		$active_slug = $loader->get_active_slug();
-		$slugs_to_load = array_unique( array_merge( [ $active_slug ], self::$required_templates ) );
+		// The globally active template, unless this page renders only another.
+		$active_slug   = $loader->get_active_slug();
+		$base          = self::global_template_needed( $active_slug ) ? [ $active_slug ] : [];
+		$slugs_to_load = array_unique( array_merge( $base, self::$required_templates ) );
 
 		foreach ( $slugs_to_load as $slug ) {
 			// Load the template's custom PHP file (hooks, helpers) exactly once per page load.
@@ -265,7 +317,8 @@ class AssetManager {
 			foreach ( [ 'topping', 'crust', 'sauce', 'cheese', 'drizzle', 'cut' ] as $type ) {
 				$posts = get_posts( array_merge( $q, [ 'post_type' => 'pizzatier_' . $type . 's' ] ) );
 				$cpt_items[ $type ] = array_map( fn( $p ) => [
-					'slug'  => sanitize_title( $p->post_title ),
+					// post_name: what [pizzatier_layer] looks the layer up by.
+					'slug'  => $p->post_name,
 					'title' => $p->post_title,
 				], $posts );
 			}

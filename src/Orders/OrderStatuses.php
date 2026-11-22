@@ -22,6 +22,12 @@ class OrderStatuses {
 	const DEFAULT_STATUS = 'pzt-new';
 
 	/**
+	 * Orders whose price could not be confirmed from the price grid wait here
+	 * for staff to price them before the kitchen starts (2.4.3).
+	 */
+	const REVIEW_STATUS = 'pzt-review';
+
+	/**
 	 * Status definitions.
 	 *
 	 * name => [ label, colour, is_open, description ]
@@ -36,6 +42,12 @@ class OrderStatuses {
 				'color'       => '#ff6b35',
 				'is_open'     => true,
 				'description' => __( 'Order received, not yet acknowledged.', 'pizzatier' ),
+			],
+			'pzt-review' => [
+				'label'       => __( 'Needs Review', 'pizzatier' ),
+				'color'       => '#d63638',
+				'is_open'     => true,
+				'description' => __( 'Price could not be confirmed automatically. Check it with the customer before preparing.', 'pizzatier' ),
 			],
 			'pzt-confirmed' => [
 				'label'       => __( 'Confirmed', 'pizzatier' ),

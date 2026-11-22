@@ -126,6 +126,10 @@ class PresetShortcode {
 				continue;
 			}
 			$layer_post_id = absint( $meta[ $meta_key ] );
+			// Only the published ingredient of the right type (2.4.3).
+			if ( ! \PizzaTier\Builder\PizzaBuilder::is_public_layer( get_post( $layer_post_id ), 'pizzatier_' . $cfg['type'] . 's' ) ) {
+				continue;
+			}
 			$img_url       = $this->get_layer_image_url( $layer_post_id, $cfg['field'] );
 			if ( ! $img_url ) {
 				continue;
@@ -148,7 +152,7 @@ class PresetShortcode {
 			$z = self::TOPPING_Z_START;
 			foreach ( $meta['topping_ids'] as $tid ) {
 				$tid = absint( $tid );
-				if ( ! $tid ) {
+				if ( ! $tid || ! \PizzaTier\Builder\PizzaBuilder::is_public_layer( get_post( $tid ), 'pizzatier_toppings' ) ) {
 					continue;
 				}
 				$img_url = $this->get_layer_image_url( $tid, self::TOPPING_FIELD );

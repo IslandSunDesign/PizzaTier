@@ -63,6 +63,25 @@ class OrdersPage {
 		return OrderPostType::capability();
 	}
 
+	/**
+	 * Whether the current user may change where order data is sent: the
+	 * notification address, the webhook URL and secret, and uninstall
+	 * behaviour. Kept apart from the orders capability (2.4.3) so a site that
+	 * lowers that one for kitchen staff does not also let them redirect every
+	 * customer's details to an address of their choosing.
+	 */
+	public static function can_manage_integrations(): bool {
+		/**
+		 * Filter the capability required to change order notification and
+		 * webhook settings.
+		 *
+		 * @since 2.4.3
+		 *
+		 * @param string $cap Default 'manage_options'.
+		 */
+		return current_user_can( (string) apply_filters( 'pizzatier_orders_integration_capability', 'manage_options' ) );
+	}
+
 	// -------------------------------------------------------------------------
 	// URLs
 	// -------------------------------------------------------------------------
@@ -125,11 +144,16 @@ class OrdersPage {
 
 		check_admin_referer( 'pizzatier_orders_settings' );
 
+		$integrations = self::can_manage_integrations();
+
 		$checkboxes = [
 			'enabled', 'require_name', 'require_phone', 'require_email',
 			'login_required', 'notes_enabled', 'quantity_enabled',
-			'size_enabled', 'request_time', 'notify_admin',
+			'size_enabled', 'request_time',
 		];
+		if ( $integrations ) {
+			$checkboxes[] = 'notify_admin';
+		}
 
 		foreach ( $checkboxes as $key ) {
 			update_option(
@@ -142,8 +166,10 @@ class OrdersPage {
 			'button_label'     => 'sanitize_text_field',
 			'note_placeholder' => 'sanitize_text_field',
 			'confirm_message'  => 'sanitize_text_field',
-			'admin_email'      => 'sanitize_email',
 		];
+		if ( $integrations ) {
+			$texts['admin_email'] = 'sanitize_email';
+		}
 
 		foreach ( $texts as $key => $sanitizer ) {
 			if ( isset( $_POST[ 'pzt_' . $key ] ) ) {
@@ -211,22 +237,51 @@ class OrdersPage {
 			}
 		}
 
-		// Webhook. An unparseable URL is stored as empty rather than rejected
-		// silently, so a typo switches the webhook off instead of leaving the
-		// previous endpoint quietly receiving orders.
-		if ( isset( $_POST['pzt_webhook_url'] ) ) {
-			$pzt_hook = trim( esc_url_raw( wp_unslash( $_POST['pzt_webhook_url'] ) ) );
-			if ( '' !== $pzt_hook && ! wp_http_validate_url( $pzt_hook ) ) {
-				$pzt_hook = '';
+		// Webhook. An unparseable URL is stored as empty rather than kept, so a
+		// typo switches the webhook off instead of leaving the previous endpoint
+		// quietly receiving orders. A syntactically valid http(s) URL is kept
+		// even when it points at a local/LAN host (a kitchen display on
+		// 192.168.x.x is a normal set-up); such hosts are only contacted when
+		// the 'pizzatier_order_webhook_allow_local' filter allows it — see
+		// RouteDispatcher — so the admin is warned here instead.
+		$pzt_notice = '';
+		if ( $integrations && isset( $_POST['pzt_webhook_url'] ) ) {
+			$pzt_hook = trim( esc_url_raw( wp_unslash( $_POST['pzt_webhook_url'] ), [ 'http', 'https' ] ) );
+			if ( '' !== $pzt_hook ) {
+				$pzt_parts = wp_parse_url( $pzt_hook );
+				if ( ! is_array( $pzt_parts )
+					|| empty( $pzt_parts['host'] )
+					|| empty( $pzt_parts['scheme'] )
+					|| ! in_array( strtolower( (string) $pzt_parts['scheme'] ), [ 'http', 'https' ], true ) ) {
+					$pzt_hook   = '';
+					$pzt_notice = 'webhook_invalid';
+				} elseif ( ! wp_http_validate_url( $pzt_hook )
+					&& ! \PizzaTier\Orders\RouteDispatcher::local_webhooks_allowed( $pzt_hook ) ) {
+					$pzt_notice = 'webhook_local';
+				} elseif ( ! \PizzaTier\Orders\RouteDispatcher::scheme_allowed( $pzt_hook ) ) {
+					// Customer names, phones and addresses must not cross the
+					// internet unencrypted (2.4.3).
+					$pzt_hook   = '';
+					$pzt_notice = 'webhook_https';
+				}
 			}
 			update_option( OrderSettings::PREFIX . 'webhook_url', $pzt_hook );
 		}
 
-		if ( isset( $_POST['pzt_webhook_secret'] ) ) {
-			update_option(
-				OrderSettings::PREFIX . 'webhook_secret',
-				sanitize_text_field( wp_unslash( $_POST['pzt_webhook_secret'] ) )
-			);
+		if ( $integrations && ! empty( $_POST['pzt_webhook_secret_clear'] ) ) {
+			update_option( OrderSettings::PREFIX . 'webhook_secret', '' );
+		} elseif ( $integrations && isset( $_POST['pzt_webhook_secret'] ) ) {
+			// The saved secret is never printed back into the form (2.4.3), so
+			// an empty field means "keep the current one".
+			// The secret is an HMAC key: keep it byte-for-byte apart from
+			// surrounding whitespace and control characters. sanitize_text_field()
+			// would strip %xx sequences and anything tag-like, silently changing
+			// the key the receiver verifies against.
+			$pzt_secret = (string) wp_unslash( $_POST['pzt_webhook_secret'] ); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Control characters stripped on the next line; the value is never output.
+			$pzt_secret = trim( (string) preg_replace( '/[\x00-\x1F\x7F]/', '', $pzt_secret ) );
+			if ( '' !== $pzt_secret ) {
+				update_option( OrderSettings::PREFIX . 'webhook_secret', $pzt_secret );
+			}
 		}
 
 		// Initial status for new orders.
@@ -239,12 +294,18 @@ class OrdersPage {
 
 		// Uninstall behaviour lives outside the orders prefix because
 		// uninstall.php reads it without loading the plugin.
-		update_option(
-			'pizzatier_setting_delete_orders_on_uninstall',
-			isset( $_POST['pzt_delete_on_uninstall'] ) ? 'yes' : 'no'
-		);
+		if ( $integrations ) {
+			update_option(
+				'pizzatier_setting_delete_orders_on_uninstall',
+				isset( $_POST['pzt_delete_on_uninstall'] ) ? 'yes' : 'no'
+			);
+		}
 
-		wp_safe_redirect( self::list_url( [ 'view' => 'settings', 'saved' => 1 ] ) );
+		$pzt_args = [ 'view' => 'settings', 'saved' => 1 ];
+		if ( '' !== $pzt_notice ) {
+			$pzt_args['pzt_notice'] = $pzt_notice;
+		}
+		wp_safe_redirect( self::list_url( $pzt_args ) );
 		exit;
 	}
 
@@ -305,7 +366,8 @@ class OrdersPage {
 			return;
 		}
 
-		check_admin_referer( 'bulk-pizza_orders' );
+		// WP_List_Table emits 'bulk-' . its 'plural' arg (see OrdersListTable).
+		check_admin_referer( 'bulk-pizzatier_orders' );
 
 		$action = '';
 		foreach ( [ 'action', 'action2' ] as $field ) {
@@ -323,6 +385,11 @@ class OrdersPage {
 		$changed = 0;
 
 		foreach ( $ids as $id ) {
+			// Only ever act on pizza orders — the IDs come from the request.
+			if ( get_post_type( $id ) !== OrderPostType::POST_TYPE ) {
+				continue;
+			}
+
 			// Trashed orders still resolve through Order::get(), so restore and
 			// permanent delete are handled before the model is required.
 			if ( 'untrash' === $action ) {
@@ -377,7 +444,9 @@ class OrdersPage {
 		$action   = sanitize_key( wp_unslash( $_GET['pzt_action'] ) );
 		$order_id = absint( wp_unslash( $_GET['order_id'] ) );
 
-		if ( ! Order::get( $order_id ) && 'untrash' !== $action ) {
+		// Restore must also be limited to pizza orders: get_post_type() works
+		// for trashed posts, so it covers every action here.
+		if ( get_post_type( $order_id ) !== OrderPostType::POST_TYPE ) {
 			return;
 		}
 
@@ -501,7 +570,7 @@ class OrdersPage {
 		<form method="post">
 			<?php
 			// No wp_nonce_field() here on purpose — WP_List_Table emits the
-			// bulk-pizza_orders nonce itself, and a second field with the same
+			// bulk-pizzatier_orders nonce itself, and a second field with the same
 			// name would just duplicate it.
 			echo '<input type="hidden" name="page" value="' . esc_attr( self::SLUG ) . '" />';
 			echo '<input type="hidden" name="view" value="classic" />';
@@ -570,8 +639,9 @@ class OrdersPage {
 							<li class="pzt-order-layer pzt-order-layer--<?php echo esc_attr( $layer['type'] ); ?>">
 								<span class="pzt-order-layer__type"><?php echo esc_html( $layer['type'] ); ?></span>
 								<span class="pzt-order-layer__name">
-									<?php if ( $layer['post_id'] > 0 ) : ?>
-										<a href="<?php echo esc_url( get_edit_post_link( $layer['post_id'] ) ); ?>">
+									<?php $pzt_layer_link = $layer['post_id'] > 0 ? get_edit_post_link( (int) $layer['post_id'] ) : null; ?>
+									<?php if ( is_string( $pzt_layer_link ) && '' !== $pzt_layer_link ) : ?>
+										<a href="<?php echo esc_url( $pzt_layer_link ); ?>">
 											<?php echo esc_html( $layer['name'] ); ?>
 										</a>
 									<?php else : ?>
@@ -651,7 +721,7 @@ class OrdersPage {
 						<li class="pzt-order-note">
 							<p class="pzt-order-note__body"><?php echo esc_html( $note['note'] ); ?></p>
 							<p class="pzt-order-note__meta">
-								<?php echo esc_html( self::describe_user( (int) $note['user_id'] ) ); ?>
+								<?php echo esc_html( Order::actor_label( (array) $note ) ); ?>
 								&middot;
 								<?php echo esc_html( self::format_time( $note['time'] ) ); ?>
 							</p>
@@ -685,7 +755,7 @@ class OrdersPage {
 								<strong><?php echo esc_html( OrderStatuses::label( $entry['to'] ) ); ?></strong>
 							</span>
 							<span class="pzt-order-history__meta">
-								<?php echo esc_html( self::describe_user( (int) $entry['user_id'] ) ); ?>
+								<?php echo esc_html( Order::actor_label( (array) $entry ) ); ?>
 								&middot;
 								<?php echo esc_html( self::format_time( $entry['time'] ) ); ?>
 							</span>
@@ -874,8 +944,10 @@ class OrdersPage {
 		$methods  = Order::fulfillment_methods();
 		$enabled  = (array) OrderSettings::get( 'fulfillment' );
 
-		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only notice.
-		$saved = isset( $_GET['saved'] );
+		// phpcs:disable WordPress.Security.NonceVerification.Recommended -- Read-only notices.
+		$saved      = isset( $_GET['saved'] );
+		$pzt_notice = isset( $_GET['pzt_notice'] ) ? sanitize_key( wp_unslash( $_GET['pzt_notice'] ) ) : '';
+		// phpcs:enable WordPress.Security.NonceVerification.Recommended
 
 		?>
 		<div class="pzt-orders-header">
@@ -887,6 +959,14 @@ class OrdersPage {
 
 		<?php if ( $saved ) : ?>
 			<div class="notice notice-success is-dismissible"><p><?php esc_html_e( 'Settings saved.', 'pizzatier' ); ?></p></div>
+		<?php endif; ?>
+
+		<?php if ( 'webhook_invalid' === $pzt_notice ) : ?>
+			<div class="notice notice-error is-dismissible"><p><?php esc_html_e( 'The webhook URL was not a valid http:// or https:// address, so the webhook has been switched off.', 'pizzatier' ); ?></p></div>
+		<?php elseif ( 'webhook_https' === $pzt_notice ) : ?>
+			<div class="notice notice-error is-dismissible"><p><?php esc_html_e( 'The webhook URL used plain http:// to a public address. Orders carry customer names, phone numbers and addresses, so the webhook needs an https:// address and has been switched off.', 'pizzatier' ); ?></p></div>
+		<?php elseif ( 'webhook_local' === $pzt_notice ) : ?>
+			<div class="notice notice-warning is-dismissible"><p><?php esc_html_e( 'The webhook URL was saved, but it points at a local or private network address (or an unusual port). For safety, orders will not be sent there unless a developer allows local webhooks with the pizzatier_order_webhook_allow_local filter.', 'pizzatier' ); ?></p></div>
 		<?php endif; ?>
 
 		<form method="post">
@@ -1045,11 +1125,22 @@ class OrdersPage {
 			<table class="form-table" role="presentation">
 				<tbody>
 					<?php
-					$this->checkbox_row( 'notify_admin', __( 'Email the store', 'pizzatier' ), __( 'Send a summary to the store whenever an order arrives.', 'pizzatier' ) );
-					$this->text_row( 'admin_email', __( 'Notification address', 'pizzatier' ), OrderSettings::admin_email() );
+					$pzt_integrations = self::can_manage_integrations();
+					if ( $pzt_integrations ) {
+						$this->checkbox_row( 'notify_admin', __( 'Email the store', 'pizzatier' ), __( 'Send a summary to the store whenever an order arrives.', 'pizzatier' ) );
+						$this->text_row( 'admin_email', __( 'Notification address', 'pizzatier' ), OrderSettings::admin_email() );
+					}
 					$this->text_row( 'confirm_message', __( 'Confirmation message', 'pizzatier' ), OrderSettings::confirm_message() );
 					$this->number_row( 'rate_limit', __( 'Orders per hour per visitor', 'pizzatier' ), 0, 1000, __( 'Set to 0 to switch the limit off.', 'pizzatier' ) );
-					?>
+					if ( ! $pzt_integrations ) :
+						?>
+					<tr>
+						<th scope="row"><?php esc_html_e( 'Notifications and webhook', 'pizzatier' ); ?></th>
+						<td><p class="description"><?php esc_html_e( 'Where order details are sent is managed by a site administrator.', 'pizzatier' ); ?></p></td>
+					</tr>
+						<?php
+					else :
+						?>
 					<tr>
 						<th scope="row"><?php esc_html_e( 'Webhook URL', 'pizzatier' ); ?></th>
 						<td>
@@ -1059,14 +1150,24 @@ class OrdersPage {
 							<p class="description">
 								<?php esc_html_e( 'Every placed order is POSTed here as JSON — a kitchen display, a POS, or an automation service such as Zapier or Make. Leave empty to switch it off.', 'pizzatier' ); ?>
 							</p>
+							<p class="description">
+								<?php esc_html_e( 'Local network addresses (for example http://192.168.1.50:3000) and non-standard ports are saved but, to stop the site being used to probe its own network, only contacted when a developer opts in with the pizzatier_order_webhook_allow_local filter. Public addresses must use https://, because each order carries the customer\'s contact details.', 'pizzatier' ); ?>
+							</p>
 						</td>
 					</tr>
 					<tr>
 						<th scope="row"><?php esc_html_e( 'Webhook secret', 'pizzatier' ); ?></th>
 						<td>
-							<input type="text" class="regular-text code" name="pzt_webhook_secret"
-							       autocomplete="off"
-							       value="<?php echo esc_attr( (string) OrderSettings::get( 'webhook_secret' ) ); ?>" />
+							<?php $pzt_has_secret = '' !== (string) OrderSettings::get( 'webhook_secret' ); ?>
+							<input type="password" class="regular-text code" name="pzt_webhook_secret"
+							       autocomplete="new-password" value=""
+							       placeholder="<?php echo esc_attr( $pzt_has_secret ? __( 'Saved — leave blank to keep it', 'pizzatier' ) : '' ); ?>" />
+							<?php if ( $pzt_has_secret ) : ?>
+								<label class="pzt-orders-check">
+									<input type="checkbox" name="pzt_webhook_secret_clear" value="1" />
+									<?php esc_html_e( 'Remove the saved secret', 'pizzatier' ); ?>
+								</label>
+							<?php endif; ?>
 							<p class="description">
 								<?php
 								printf(
@@ -1078,6 +1179,9 @@ class OrdersPage {
 							</p>
 						</td>
 					</tr>
+						<?php
+					endif;
+					?>
 				</tbody>
 			</table>
 
@@ -1108,6 +1212,7 @@ class OrdersPage {
 						__( 'Months. After this long an order\'s name, contact details, address and notes are cleared automatically; the order number, date, items and total are kept so the transaction record survives. Set to 0 to switch this off. Retention periods differ by country — check yours before enabling.', 'pizzatier' )
 					);
 					?>
+					<?php if ( self::can_manage_integrations() ) : ?>
 					<tr>
 						<th scope="row"><?php esc_html_e( 'On uninstall', 'pizzatier' ); ?></th>
 						<td>
@@ -1121,6 +1226,7 @@ class OrdersPage {
 							</p>
 						</td>
 					</tr>
+					<?php endif; ?>
 				</tbody>
 			</table>
 
@@ -1214,14 +1320,6 @@ class OrdersPage {
 			: $number . ' ' . $currency;
 	}
 
-	/** Display name for a user ID, or a fallback for system entries. */
-	private static function describe_user( int $user_id ): string {
-		if ( $user_id <= 0 ) {
-			return __( 'Customer', 'pizzatier' );
-		}
-		$user = get_userdata( $user_id );
-		return $user ? $user->display_name : __( 'Unknown user', 'pizzatier' );
-	}
 
 	/** Format a stored GMT timestamp in the site's timezone. */
 	private static function format_time( string $gmt ): string {

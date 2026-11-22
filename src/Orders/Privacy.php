@@ -110,30 +110,35 @@ class Privacy {
 	 *
 	 * Three routes, because no single one is sufficient:
 	 *   • the indexed email meta (exact, fast, written since 2.0.5);
-	 *   • a LIKE against the serialised customer block, which catches orders
-	 *     placed before the index existed;
+	 *   • a LIKE against the serialised customer block for the address wrapped
+	 *     in its serialisation quotes — '"ann@x.com"' — which catches orders
+	 *     placed before the index existed. The quotes matter: a bare LIKE on
+	 *     ann@x.com also matches joann@x.com, and would export or erase
+	 *     another person's orders;
 	 *   • the linked WP user, which catches logged-in orders placed when the
 	 *     email field was optional and left blank.
 	 *
-	 * @param string $email Address being requested.
-	 * @param int    $page  1-based page number.
+	 * @param string $email              Address being requested.
+	 * @param int    $page               1-based page number.
+	 * @param bool   $exclude_anonymised Skip orders already anonymised (eraser).
 	 * @return int[] Post IDs.
 	 */
-	private function find_orders( string $email, int $page ): array {
+	private function find_orders( string $email, int $page, bool $exclude_anonymised = false ): array {
 		$email = strtolower( trim( $email ) );
 		if ( '' === $email ) { return []; }
 
+		// Exact match on the indexed customer email only. Until 2.4.3 a LIKE
+		// against the serialised customer block was also tried, which matched
+		// an address typed into the name or company field, so a stranger's
+		// order could be exported to, or erased for, the wrong person. Every
+		// order's index is (re)built from the structured email field by the
+		// 2.0.5 and 2.4.3 upgrade steps, so the fallback is no longer needed.
 		$meta_query = [
 			'relation' => 'OR',
 			[
 				'key'     => self::META_EMAIL_INDEX,
 				'value'   => $email,
 				'compare' => '=',
-			],
-			[
-				'key'     => Order::META_CUSTOMER,
-				'value'   => $email,
-				'compare' => 'LIKE',
 			],
 		];
 
@@ -146,14 +151,20 @@ class Privacy {
 			];
 		}
 
-		// Custom statuses are registered with exclude_from_search => true, so
-		// post_status => 'any' silently matches nothing here.
-		$statuses = array_keys( OrderStatuses::all() );
-		if ( ! $statuses ) { $statuses = [ OrderStatuses::DEFAULT_STATUS ]; }
+		if ( $exclude_anonymised ) {
+			$meta_query = [
+				'relation' => 'AND',
+				[
+					'key'     => self::META_ANONYMISED,
+					'compare' => 'NOT EXISTS',
+				],
+				$meta_query,
+			];
+		}
 
 		return (array) get_posts( [
 			'post_type'      => OrderPostType::POST_TYPE,
-			'post_status'    => $statuses,
+			'post_status'    => self::query_statuses(),
 			'posts_per_page' => self::PER_PAGE,
 			'paged'          => max( 1, $page ),
 			'orderby'        => 'ID',
@@ -163,6 +174,23 @@ class Privacy {
 			// phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query -- Admin-only, runs once per subject access request; the serialised customer block leaves no indexable alternative for legacy rows.
 			'meta_query'     => $meta_query,
 		] );
+	}
+
+	/**
+	 * Every status an order can be in, including the bin.
+	 *
+	 * Custom statuses are registered with exclude_from_search => true, so
+	 * post_status => 'any' silently matches nothing; the list has to be
+	 * explicit. Trashed orders still hold personal data, so export, erasure
+	 * and retention all have to reach them too.
+	 *
+	 * @return string[]
+	 */
+	private static function query_statuses(): array {
+		$statuses = OrderStatuses::all();
+		if ( ! $statuses ) { $statuses = [ OrderStatuses::DEFAULT_STATUS ]; }
+		$statuses[] = 'trash';
+		return array_values( array_unique( $statuses ) );
 	}
 
 	/* ═══════════════════════════════════════════════════════════════════
@@ -387,12 +415,18 @@ class Privacy {
 			return [ 'items_removed' => false, 'items_retained' => false, 'messages' => [], 'done' => true ];
 		}
 
-		$order_ids = $this->find_orders( $email, $page );
+		// Always page 1: every order anonymised here stops matching the query
+		// (email index removed, customer block blanked, user unlinked, and the
+		// anonymised flag excluded), so the next batch slides into page 1. Using
+		// 'paged' => $page would skip a batch on every pass.
+		$order_ids = $this->find_orders( $email, 1, true );
+		$changed   = 0;
 
 		foreach ( $order_ids as $order_id ) {
 			if ( $this->anonymise_order( (int) $order_id ) ) {
 				$removed  = true;
 				$retained = true;
+				$changed++;
 			}
 		}
 
@@ -415,7 +449,9 @@ class Privacy {
 			'items_removed'  => $removed,
 			'items_retained' => $retained,
 			'messages'       => $messages,
-			'done'           => count( $order_ids ) < self::PER_PAGE,
+			// A full page where nothing could be changed would otherwise be
+			// requested again forever, so treat it as finished.
+			'done'           => count( $order_ids ) < self::PER_PAGE || 0 === $changed,
 		];
 	}
 
@@ -445,6 +481,42 @@ class Privacy {
 
 		$order->set_customer_note( '' );
 
+		// Per-pizza notes are free text written by the customer.
+		$items = $order->get_items();
+		if ( $items ) {
+			foreach ( $items as $index => $item ) {
+				if ( is_array( $item ) ) {
+					$items[ $index ]['notes'] = '';
+				}
+			}
+			$order->set_items( $items );
+		}
+
+		// Provenance: IP, browser and the URLs the customer came from all
+		// identify or track the person. Origin, page and template are kept.
+		$source = $order->get_source();
+		$order->set_source( [
+			'origin'     => $source['origin'],
+			'page_id'    => $source['page_id'],
+			'url'        => '',
+			'referrer'   => '',
+			'ip'         => '',
+			'user_agent' => '',
+			'template'   => $source['template'],
+		] );
+
+		// Status history keeps its transitions and timestamps; free-text notes
+		// staff typed when changing status go.
+		$history = $order->get_status_history();
+		if ( $history ) {
+			foreach ( $history as $index => $entry ) {
+				if ( is_array( $entry ) && isset( $entry['note'] ) && '' !== (string) $entry['note'] ) {
+					$history[ $index ]['note'] = '';
+				}
+			}
+			update_post_meta( $order_id, Order::META_STATUS_HISTORY, $history );
+		}
+
 		// Staff notes keep their timestamps so the order's handling history
 		// stays auditable, but the note bodies go.
 		$staff_notes = $order->get_staff_notes();
@@ -459,11 +531,16 @@ class Privacy {
 		update_post_meta( $order_id, Order::META_USER_ID, 0 );
 		update_post_meta( $order_id, self::META_ANONYMISED, 1 );
 
+		// The customer's account ID also sits in the post author (orders made
+		// before 2.4.3) and as the actor of the "created" history entry.
+		self::unlink_customer_actor( $order_id );
+
 		// The title is the order number, but a customised install may have put
-		// a name in it — reset it defensively.
+		// a name in it — reset it defensively. post_author is cleared here too.
 		wp_update_post( [
-			'ID'         => $order_id,
-			'post_title' => $order->get_number(),
+			'ID'          => $order_id,
+			'post_title'  => $order->get_number(),
+			'post_author' => 0,
 		] );
 
 		/**
@@ -474,6 +551,29 @@ class Privacy {
 		do_action( 'pizzatier_order_anonymised', $order_id );
 
 		return true;
+	}
+
+	/**
+	 * Clear the customer's account ID from the "Order created" status-history
+	 * entry. Staff status changes keep their actor, so the handling history
+	 * stays auditable.
+	 *
+	 * Public so the 2.4.3 upgrade step can repair orders anonymised earlier.
+	 */
+	public static function unlink_customer_actor( int $order_id ): void {
+		$history = get_post_meta( $order_id, Order::META_STATUS_HISTORY, true );
+		if ( ! is_array( $history ) ) { return; }
+
+		$changed = false;
+		foreach ( $history as $index => $entry ) {
+			if ( is_array( $entry ) && '' === (string) ( $entry['from'] ?? '' ) && ! empty( $entry['user_id'] ) ) {
+				$history[ $index ]['user_id'] = 0;
+				$changed                      = true;
+			}
+		}
+		if ( $changed ) {
+			update_post_meta( $order_id, Order::META_STATUS_HISTORY, $history );
+		}
 	}
 
 	/* ═══════════════════════════════════════════════════════════════════
@@ -510,12 +610,9 @@ class Privacy {
 		$months = OrderSettings::get_int( 'retention_months' );
 		if ( $months <= 0 ) { return 0; }
 
-		$statuses = array_keys( OrderStatuses::all() );
-		if ( ! $statuses ) { $statuses = [ OrderStatuses::DEFAULT_STATUS ]; }
-
 		$order_ids = (array) get_posts( [
 			'post_type'      => OrderPostType::POST_TYPE,
-			'post_status'    => $statuses,
+			'post_status'    => self::query_statuses(),
 			'posts_per_page' => 100,
 			'fields'         => 'ids',
 			'no_found_rows'  => true,

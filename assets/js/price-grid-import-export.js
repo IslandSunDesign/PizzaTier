@@ -193,7 +193,7 @@
 			// Add a cell to every existing body row.
 			$table.find( 'tbody tr.pztc-grid-row' ).each( function () {
 				const $row    = $( this );
-				const size    = $row.data( 'size' ) || '';
+				const size    = $row.attr( 'data-size' ) || '';
 				const $td     = buildPriceCell( size, label, '' );
 				$td.addClass( 'pztc-grid-cell--new' );
 				$row.append( $td );
@@ -261,7 +261,7 @@
 				$row.find( '.pztc-grid-cell' ).attr( 'data-size', text );
 				$row.find( '.pztc-price-input' ).each( function () {
 					const $input2   = $( this );
-					const fraction  = $input2.closest( 'td' ).data( 'fraction' ) || '';
+					const fraction  = $input2.closest( 'td' ).attr( 'data-fraction' ) || '';
 					const newKey    = text + '|' + fraction;
 					$input2.attr( 'name', 'pizzatier_commerce_price_grid[cells][' + newKey + ']' );
 					$input2.data( 'key', newKey );
@@ -277,7 +277,7 @@
 				$( '#pztc-grid-table tbody tr' ).each( function () {
 					const $cell = $( this ).find( 'td, th' ).eq( colIndex );
 					$cell.attr( 'data-fraction', text );
-					const size    = $cell.data( 'size' ) || $( this ).data( 'size' ) || '';
+					const size    = $cell.attr( 'data-size' ) || $( this ).attr( 'data-size' ) || '';
 					const newKey  = size + '|' + text;
 					$cell.find( '.pztc-price-input' )
 						.attr( 'name', 'pizzatier_commerce_price_grid[cells][' + newKey + ']' )
@@ -535,7 +535,7 @@
 	function collectFractions() {
 		const fractions = [];
 		$( '#pztc-grid-table thead tr th.pztc-grid-th--fraction' ).each( function () {
-			fractions.push( $( this ).data( 'fraction' ) || '' );
+			fractions.push( $( this ).attr( 'data-fraction' ) || '' );
 		} );
 		return fractions;
 	}
@@ -849,7 +849,7 @@
 
 		const fractions = [];
 		$table.find( 'thead tr th.pztc-grid-th--fraction' ).each( function () {
-			fractions.push( $( this ).data( 'fraction' ) || '' );
+			fractions.push( $( this ).attr( 'data-fraction' ) || '' );
 		} );
 
 		const rows = [];
@@ -860,7 +860,7 @@
 		// Data rows.
 		$table.find( 'tbody tr.pztc-grid-row' ).each( function () {
 			const $row = $( this );
-			const size = $row.data( 'size' ) || $row.find( '.pztc-size-label-input' ).val() || '';
+			const size = $row.attr( 'data-size' ) || $row.find( '.pztc-size-label-input' ).val() || '';
 			const row  = [ size ];
 
 			fractions.forEach( function ( frac ) {

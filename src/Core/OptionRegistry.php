@@ -458,6 +458,10 @@ class OptionRegistry {
 		// Theme overrides first — they take precedence on the Templates screen.
 		if ( function_exists( 'get_stylesheet_directory' ) && function_exists( 'did_action' ) && did_action( 'after_setup_theme' ) ) {
 			$dirs[] = rtrim( (string) get_stylesheet_directory(), '/\\' ) . '/pzttemplates/';
+			// Parent theme templates are loadable too (TemplateLoader).
+			if ( function_exists( 'get_template_directory' ) && get_template_directory() !== get_stylesheet_directory() ) {
+				$dirs[] = rtrim( (string) get_template_directory(), '/\\' ) . '/pzttemplates/';
+			}
 		}
 
 		$dirs[] = defined( 'PIZZATIER_TEMPLATES_DIR' )

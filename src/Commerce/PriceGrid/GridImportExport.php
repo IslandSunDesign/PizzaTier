@@ -471,23 +471,32 @@ class GridImportExport {
 	 * @param array<string,float> $cells
 	 * @return string
 	 */
+	/**
+	 * Neutralise spreadsheet formulas in exported labels (CSV injection):
+	 * a label such as =HYPERLINK(…) would run when the file is opened.
+	 */
+	private static function csv_safe( string $value ): string {
+		return ( '' !== $value && false !== strpos( "=+-@\t\r", $value[0] ) ) ? "'" . $value : $value;
+	}
+
 	public function build_csv( array $sizes, array $fractions, array $cells ): string {
 		$rows = [];
 
 		// Header row.
 		$header = [ 'Size' ];
 		foreach ( $fractions as $f ) {
-			$header[] = $f;
+			$header[] = self::csv_safe( (string) $f );
 		}
 		$rows[] = $header;
 
 		// Data rows.
 		foreach ( $sizes as $size ) {
-			$row = [ $size ];
+			$row = [ self::csv_safe( (string) $size ) ];
 			foreach ( $fractions as $fraction ) {
 				$key     = $this->grid_model->cell_key( $size, $fraction );
-				$price   = isset( $cells[ $key ] ) ? $cells[ $key ] : 0.00;
-				$row[]   = number_format( (float) $price, 2, '.', '' );
+				// A cell that was never set stays blank, so a re-import keeps
+				// it "not set" rather than turning it into a $0 price.
+				$row[]   = isset( $cells[ $key ] ) ? number_format( (float) $cells[ $key ], 2, '.', '' ) : '';
 			}
 			$rows[] = $row;
 		}

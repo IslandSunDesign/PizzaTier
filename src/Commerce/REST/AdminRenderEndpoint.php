@@ -43,7 +43,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 class AdminRenderEndpoint {
 
 	const REST_NAMESPACE = 'pizzatier/v1';
-	const ROUTE          = '/render';
+	const ROUTE          = '/admin-render'; // Own route since 2.4.0 — it shadowed the public /render endpoint.
 
 	public function register(): void {
 		add_action( 'rest_api_init', [ $this, 'register_routes' ] );

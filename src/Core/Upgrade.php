@@ -84,6 +84,8 @@ final class Upgrade {
 			'2.0.0' => [ $this, 'step_200' ],
 			'2.0.5' => [ $this, 'step_205' ],
 			'2.1.0' => [ $this, 'step_210' ],
+			'2.4.0' => [ $this, 'step_240' ],
+			'2.4.3' => [ $this, 'step_243' ],
 		];
 	}
 
@@ -111,8 +113,12 @@ final class Upgrade {
 	private function step_205(): void {
 		if ( ! class_exists( '\\PizzaTier\\Orders\\OrderStatuses' ) ) { return; }
 
-		$statuses = array_keys( \PizzaTier\Orders\OrderStatuses::all() );
+		// OrderStatuses::all() already returns the status names; array_keys()
+		// turned them into [0..n], so no status filter applied. Trashed orders
+		// are customer records too and must be indexed for the privacy tools.
+		$statuses = array_values( (array) \PizzaTier\Orders\OrderStatuses::all() );
 		if ( ! $statuses ) { return; }
+		$statuses[] = 'trash';
 
 		$paged = 1;
 
@@ -132,6 +138,10 @@ final class Upgrade {
 
 				if ( '' !== $email && is_email( $email ) ) {
 					update_post_meta( (int) $order_id, \PizzaTier\Orders\Privacy::META_EMAIL_INDEX, strtolower( $email ) );
+				} else {
+					// No structured email: an index left over from an import or
+					// an older build must not keep the order matchable.
+					delete_post_meta( (int) $order_id, \PizzaTier\Orders\Privacy::META_EMAIL_INDEX );
 				}
 			}
 
@@ -211,6 +221,57 @@ final class Upgrade {
 		if ( ! wp_verify_nonce( $nonce, 'pizzatier_dismiss_route_notice' ) ) { return; }
 
 		delete_option( self::NOTICE_OPTION );
+	}
+
+	/**
+	 * 2.4.3 — privacy repairs.
+	 *
+	 * • Rebuild the exact email index from the structured customer field. The
+	 *   exporter and eraser now match on it alone (the serialised-block LIKE
+	 *   fallback matched addresses typed into other fields).
+	 * • Orders anonymised before this release still carried the customer's
+	 *   account ID as post author and as the actor of the "created" history
+	 *   entry; clear both.
+	 *
+	 * Idempotent and batched like step_205.
+	 */
+	private function step_243(): void {
+		$this->step_205();
+
+		if ( ! class_exists( '\\PizzaTier\\Orders\\Privacy' ) ) { return; }
+		$statuses = array_values( (array) \PizzaTier\Orders\OrderStatuses::all() );
+		if ( ! $statuses ) { return; }
+		$statuses[] = 'trash';
+
+		$paged = 1;
+		do {
+			$order_ids = (array) get_posts( [
+				'post_type'      => \PizzaTier\Orders\OrderPostType::POST_TYPE,
+				'post_status'    => $statuses,
+				'posts_per_page' => 200,
+				'paged'          => $paged,
+				'fields'         => 'ids',
+				'no_found_rows'  => true,
+				'orderby'        => 'ID',
+				'order'          => 'ASC',
+				// phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query -- One-off upgrade step, batched.
+				'meta_query'     => [ [ 'key' => \PizzaTier\Orders\Privacy::META_ANONYMISED, 'compare' => 'EXISTS' ] ],
+			] );
+			foreach ( $order_ids as $order_id ) {
+				$order_id = (int) $order_id;
+				\PizzaTier\Orders\Privacy::unlink_customer_actor( $order_id );
+				if ( (int) get_post_field( 'post_author', $order_id ) !== 0 ) {
+					wp_update_post( [ 'ID' => $order_id, 'post_author' => 0 ] );
+				}
+			}
+			$paged++;
+		} while ( count( $order_ids ) === 200 );
+	}
+
+	private function step_240(): void {
+		// 2.4.0 — Topping Multiplier merged in from the standalone add-on:
+		// carry over its settings and per-topping meta. Idempotent.
+		\PizzaTier\Multiplier\Module::migrate_addon_data();
 	}
 
 	/**

@@ -308,9 +308,31 @@ class ContentHub {
 		$_GET['post_type']  = 'pizzatier_' . $slug;
 		$_POST['post_type'] = 'pizzatier_' . $slug;
 
+		// WP_List_Table builds its pagination and sort links from REQUEST_URI,
+		// which during this request is admin-ajax.php. Point it at the hub
+		// page while the panel renders so those links keep working after a
+		// tab switch.
+		$hub_args = [ 'page' => 'pizzatier-content', 'pl_cpt' => $slug ];
+		foreach ( [ 's', 'orderby', 'order' ] as $pass ) {
+			// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Nonce verified above; read-only list arguments.
+			if ( isset( $_REQUEST[ $pass ] ) && '' !== $_REQUEST[ $pass ] ) {
+				// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Nonce verified above; read-only list arguments.
+				$hub_args[ $pass ] = sanitize_text_field( wp_unslash( (string) $_REQUEST[ $pass ] ) );
+			}
+		}
+		$saved_request_uri = isset( $_SERVER['REQUEST_URI'] ) ? $_SERVER['REQUEST_URI'] : null; // phpcs:ignore WordPress.Security.ValidatedSanitizedInput -- Saved verbatim and restored below; never output.
+		$admin_path        = (string) wp_parse_url( admin_url( 'admin.php' ), PHP_URL_PATH );
+		$_SERVER['REQUEST_URI'] = add_query_arg( array_map( 'rawurlencode', $hub_args ), $admin_path );
+
 		ob_start();
 		$this->render_panel_inner( $slug );
 		$html = ob_get_clean();
+
+		if ( null === $saved_request_uri ) {
+			unset( $_SERVER['REQUEST_URI'] );
+		} else {
+			$_SERVER['REQUEST_URI'] = $saved_request_uri;
+		}
 
 		wp_send_json_success( [
 			'html' => $html,
@@ -876,7 +898,7 @@ class ContentHub {
 
 	/** Resolve the best available thumbnail URL for a layer. */
 	private function get_thumb_url( string $slug, int $post_id ): string {
-		$type = rtrim( $slug, 's' ); // toppings→topping, cheeses→cheese, etc.
+		$type = (string) preg_replace( '/s$/', '', $slug ); // toppings→topping, cheeses→cheese, etc.
 
 		$candidates = [];
 		if ( function_exists( 'get_field' ) ) {

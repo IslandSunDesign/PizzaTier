@@ -87,12 +87,20 @@ class OrderEmailSummary {
 			return;
 		}
 
+		// Once per order: an order moving processing → on-hold → processing
+		// used to send the summary again each time.
+		if ( $order->get_meta( '_pizzatier_summary_sent', true ) ) {
+			return;
+		}
+
 		$pizza_items = $this->get_pizza_items( $order );
 		if ( empty( $pizza_items ) ) {
 			return;
 		}
 
 		$this->dispatch_summary_email( $order, $pizza_items );
+		$order->update_meta_data( '_pizzatier_summary_sent', time() );
+		$order->save_meta_data();
 	}
 
 	// -------------------------------------------------------------------------

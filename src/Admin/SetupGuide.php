@@ -356,20 +356,24 @@ class SetupGuide {
 	}
 
 	/**
-	 * Whether the [pizzatier_builder] shortcode appears in any published content.
+	 * Whether the [pizzatier_builder] shortcode or a PizzaTier block appears
+	 * in any published content.
 	 */
 	private function builder_is_embedded(): bool {
 		global $wpdb;
-		$like = '%' . $wpdb->esc_like( '[pizzatier_builder' ) . '%';
+		$like       = '%' . $wpdb->esc_like( '[pizzatier_builder' ) . '%';
+		// The builder can also be placed as a block (<!-- wp:pizzatier/pizza-builder -->).
+		$like_block = '%' . $wpdb->esc_like( '<!-- wp:pizzatier/pizza-builder' ) . '%';
 
 		// phpcs:disable WordPress.DB.DirectDatabaseQuery
 		$found = $wpdb->get_var(
 			$wpdb->prepare(
 				"SELECT ID FROM {$wpdb->posts}
 				  WHERE post_status = 'publish'
-				    AND post_content LIKE %s
+				    AND ( post_content LIKE %s OR post_content LIKE %s )
 				  LIMIT 1",
-				$like
+				$like,
+				$like_block
 			)
 		);
 		// phpcs:enable WordPress.DB.DirectDatabaseQuery

@@ -122,6 +122,7 @@ $summary_title = sanitize_text_field(
 $_q_base  = [
     'posts_per_page' => -1,
     'post_status'    => 'publish',
+    'has_password'   => false, // Password-protected layers are not on the public menu (2.4.3).
     'orderby'        => [ 'menu_order' => 'ASC', 'title' => 'ASC' ],
 ];
 $crusts   = (array) apply_filters( 'pizzatier_query_args_crusts',   get_posts( array_merge( $_q_base, [ 'post_type' => 'pizzatier_crusts'   ] ) ), 'crusts'   );
@@ -383,9 +384,9 @@ unset( $_sc_instance_css );
 
 <!-- ── Category panels ──────────────────────────────────────────────────── -->
 <div class="sc-panels" data-instance="<?php echo esc_attr( $instance_id ); ?>">
-<?php if ( $_has_pro ) : ?>
+<?php if ( $_has_pro && in_array( 'size', $visible_tabs, true ) ) : ?>
 <?php do_action( 'pizzatier_before_tab_size', $instance_id ); ?>
-<div class="sc-panel sc-panel--size sc-panel--active" data-tab="size" id="<?php echo esc_attr( $instance_id ); ?>-panel-size" role="tabpanel">
+<div class="sc-panel sc-panel--size" data-panel="size" id="<?php echo esc_attr( $instance_id ); ?>-panel-size" role="tabpanel">
 	<div class="sc-panel__header">
 		<h2 class="sc-panel__title"><?php esc_html_e( 'Choose Your Size', 'pizzatier' ); ?></h2>
 		<p class="sc-panel__hint"><?php esc_html_e( 'Select the size of your pizza.', 'pizzatier' ); ?></p>

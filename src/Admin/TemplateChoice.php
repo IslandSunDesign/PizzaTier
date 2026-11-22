@@ -42,18 +42,25 @@ class TemplateChoice {
 		}
 
 		// ── Scan template directories ───────────────────────────────
-		$plugin_dir = PIZZATIER_TEMPLATES_DIR;
-		$plugin_url = PIZZATIER_TEMPLATES_URL;
-		$theme_dir  = trailingslashit( get_stylesheet_directory() ) . 'pzttemplates/';
-		$theme_url  = trailingslashit( get_stylesheet_directory_uri() ) . 'pzttemplates/';
+		// Same roots, in the same precedence, as TemplateLoader uses to load
+		// and activate templates (child theme, parent theme, then plugin), so
+		// every template listed here can actually be activated and rendered.
+		$tpl_loader = new \PizzaTier\Template\TemplateLoader();
 
 		$templates = [];
-		foreach ( [ [ $plugin_dir, $plugin_url, 'plugin' ], [ $theme_dir, $theme_url, 'theme' ] ] as [ $dir, $url, $source ] ) {
-			if ( ! is_dir( $dir ) ) { continue; }
+		foreach ( $tpl_loader->get_template_roots() as $root ) {
+			$dir    = $root['dir'];
+			$url    = $root['url'];
+			$source = $root['source'];
 			foreach ( (array) scandir( $dir ) as $folder ) {
+				$folder = (string) $folder;
 				if ( $folder === '.' || $folder === '..' || ! is_dir( $dir . $folder ) ) { continue; }
+				// Higher-precedence roots come first and win.
+				if ( isset( $templates[ $folder ] ) ) { continue; }
 				$info_file = $dir . $folder . '/pztp-template-info.php';
-				$info      = file_exists( $info_file ) ? include $info_file : [];
+				// Only folders the loader recognises as templates.
+				if ( ! file_exists( $info_file ) ) { continue; }
+				$info      = include $info_file;
 				if ( ! is_array( $info ) ) { $info = []; }
 
 				$preview_url = '';
@@ -79,8 +86,7 @@ class TemplateChoice {
 		$template_settings = [];
 		if ( $active ) {
 			$options_paths = [
-				get_stylesheet_directory() . '/pzttemplates/' . $active . '/pztp-template-options.php',
-				PIZZATIER_TEMPLATES_DIR . $active . '/pztp-template-options.php',
+				$tpl_loader->get_template_file( 'pztp-template-options.php', $active ),
 			];
 			foreach ( $options_paths as $options_file ) {
 				if ( file_exists( $options_file ) ) {
@@ -92,6 +98,17 @@ class TemplateChoice {
 		}
 
 		// ── Preview page URL ────────────────────────────────────────
+		// Saved before the URL is read, so the page reflects the new value
+		// straight away rather than on the next load.
+		$preview_url_saved = false;
+		if ( isset( $_POST['pizzatier_save_preview_url'], $_POST['_wpnonce'] )
+		     && wp_verify_nonce( sanitize_key( wp_unslash( $_POST['_wpnonce'] ) ), 'pizzatier_save_preview_url' ) ) {
+			$posted_preview = isset( $_POST['pizzatier_template_preview_url'] ) ? esc_url_raw( wp_unslash( $_POST['pizzatier_template_preview_url'] ) ) : '';
+			update_option( 'pizzatier_template_preview_url', $posted_preview );
+			wp_cache_delete( 'pizzatier_preview_page_id', 'pizzatier' );
+			$preview_url_saved = true;
+		}
+
 		$preview_page_url  = (string) get_option( 'pizzatier_template_preview_url', '' );
 		$preview_page_auto = false; // true when we found a page automatically
 
@@ -105,7 +122,8 @@ class TemplateChoice {
 					"SELECT ID FROM {$wpdb->posts}
 					 WHERE post_status = 'publish'
 					   AND post_type IN ('page','post')
-					   AND post_content LIKE '%pizzatier_builder%'
+					   AND ( post_content LIKE '%pizzatier_builder%'
+					      OR post_content LIKE '%<!-- wp:pizzatier/pizza-builder%' )
 					 LIMIT 1"
 				);
 				wp_cache_set( 'pizzatier_preview_page_id', $found_id, 'pizzatier', HOUR_IN_SECONDS );
@@ -192,15 +210,9 @@ class TemplateChoice {
 			</form>
 		</div>
 
-		<?php
-		// Handle preview URL save
-		if ( isset( $_POST['pizzatier_save_preview_url'], $_POST['_wpnonce'] )
-		     && wp_verify_nonce( sanitize_key( $_POST['_wpnonce'] ), 'pizzatier_save_preview_url' ) ) {
-			$url = esc_url_raw( wp_unslash( $_POST['pizzatier_template_preview_url'] ?? '' ) );
-			update_option( 'pizzatier_template_preview_url', $url );
-			echo '<div class="notice notice-success is-dismissible"><p>' . esc_html__( 'Preview URL saved.', 'pizzatier' ) . '</p></div>';
-		}
-		?>
+		<?php if ( $preview_url_saved ) : ?>
+		<div class="notice notice-success is-dismissible"><p><?php esc_html_e( 'Preview URL saved.', 'pizzatier' ); ?></p></div>
+		<?php endif; ?>
 
 		<?php if ( $preview_page_auto ) : ?>
 		<div class="ptc-notice ptc-notice--info">
@@ -597,8 +609,7 @@ class TemplateChoice {
 		if ( ! $active ) { return; }
 		// Load the option keys for this template
 		$options_paths = [
-			get_stylesheet_directory() . '/pzttemplates/' . $active . '/pztp-template-options.php',
-			PIZZATIER_TEMPLATES_DIR . $active . '/pztp-template-options.php',
+			( new \PizzaTier\Template\TemplateLoader() )->get_template_file( 'pztp-template-options.php', $active ),
 		];
 		$fields = [];
 		foreach ( $options_paths as $path ) {
@@ -621,17 +632,17 @@ class TemplateChoice {
 				// Hidden input sends 'no', checkbox overwrites with 'yes' if checked
 				// We need to find the last value in the POST array for this key
 				// PHP $_POST will have the checkbox value if checked, or the hidden 'no'
-				$val = isset( $_POST[ $key ] ) ? sanitize_key( (string) $_POST[ $key ] ) : 'no';
+				$val = isset( $_POST[ $key ] ) ? sanitize_key( wp_unslash( (string) $_POST[ $key ] ) ) : 'no';
 				update_option( $key, $val === 'yes' ? 'yes' : 'no' );
 			} elseif ( $field['type'] === 'color' ) {
-				if ( $raw !== null ) { update_option( $key, sanitize_hex_color( (string) $raw ) ?: '' ); }
+				if ( $raw !== null ) { update_option( $key, sanitize_hex_color( wp_unslash( (string) $raw ) ) ?: '' ); }
 			} elseif ( $field['type'] === 'image' ) {
 				if ( $raw !== null ) { update_option( $key, esc_url_raw( trim( wp_unslash( (string) $raw ) ) ) ); }
 			} elseif ( $field['type'] === 'textarea' ) {
 				if ( $raw !== null ) { update_option( $key, wp_kses_post( wp_unslash( (string) $raw ) ) ); }
 			} elseif ( $field['type'] === 'number' || $field['type'] === 'range' ) {
 				if ( $raw !== null ) {
-					$int = (int) $raw;
+					$int = (int) wp_unslash( (string) $raw );
 					if ( isset( $field['min'] ) ) { $int = max( (int) $field['min'], $int ); }
 					if ( isset( $field['max'] ) ) { $int = min( (int) $field['max'], $int ); }
 					update_option( $key, (string) $int );

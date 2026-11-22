@@ -211,8 +211,18 @@
 				refreshRowBadge( tr );
 			}
 
+			/**
+			 * Accept "1,50" (decimal comma) as well as "1.50"; before 2.4.0
+			 * the comma was stripped and "1,50" became 150.00.
+			 */
+			function toNumberString( raw ) {
+				var v = String( raw ).trim();
+				if ( v.indexOf( ',' ) !== -1 && v.indexOf( '.' ) === -1 ) { v = v.replace( ',', '.' ); }
+				return v.replace( /[^0-9.]/g, '' );
+			}
+
 			function normalise( inp ) {
-				var v = inp.value.trim().replace( /[^0-9.]/g, '' );
+				var v = toNumberString( inp.value );
 				if ( v === '' ) { inp.value = ''; markInput( inp ); return; }
 				var n = parseFloat( v );
 				if ( isNaN( n ) || n < 0 ) { n = 0; }
@@ -221,7 +231,7 @@
 			}
 
 			function fillColumn( sec, key, raw ) {
-				var v = String( raw ).trim().replace( /[^0-9.]/g, '' );
+				var v = toNumberString( raw );
 				if ( v === '' ) { return; }
 				var val = parseFloat( v ); if ( isNaN( val ) || val < 0 ) { val = 0; }
 				val = val.toFixed( 2 );
@@ -308,7 +318,8 @@
 						tr.querySelectorAll( '.pztc-price-input' ).forEach( function ( inp ) {
 							var key = inp.getAttribute( 'data-key' );
 							var v = inp.value.trim();
-							cells[ key ] = ( v === '' ) ? 0 : parseFloat( v );
+							// Blank = not set: falls back to the global / product price.
+							if ( v !== '' ) { cells[ key ] = parseFloat( v ); }
 						} );
 						payload.push( { post_id: id, sizes: t.sizes, fractions: t.fractions, cells: cells } );
 					} );
@@ -328,8 +339,9 @@
 						return;
 					}
 					var d = res.data;
-					// Commit successfully-saved rows into the new baseline in place.
-					commitSaved();
+					// Commit successfully-saved rows into the new baseline in place;
+					// rows the server rejected stay dirty so the edit isn't lost.
+					commitSaved( ( d.errors || [] ).map( function ( e ) { return String( e.id ); } ) );
 					var parts = [];
 					if ( d.saved )   { parts.push( sprintf1( CFG.i18n.savedN, d.saved ) ); }
 					if ( d.cleared ) { parts.push( sprintf1( CFG.i18n.clearedN, d.cleared ) ); }
@@ -354,8 +366,10 @@
 			}
 
 			// After a save, treat current values as the saved baseline (no reload).
-			function commitSaved() {
+			function commitSaved( failedIds ) {
+				failedIds = failedIds || [];
 				document.querySelectorAll( '.pztc-bulk-table tbody tr' ).forEach( function ( tr ) {
+					if ( failedIds.indexOf( String( tr.getAttribute( 'data-id' ) ) ) !== -1 ) { return; }
 					if ( tr.classList.contains( 'is-cleared' ) ) {
 						// Reverted to fallback: clear values + baseline.
 						tr.classList.remove( 'is-cleared' );

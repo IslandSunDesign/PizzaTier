@@ -44,6 +44,15 @@ class FrontendEmbed {
 	private static bool $injected = false;
 
 	/**
+	 * True while render_builder_section() runs its own [pizzatier_builder],
+	 * so suppress_content_builders() can tell it apart from a copy pasted
+	 * into the product description.
+	 *
+	 * @var bool
+	 */
+	private static bool $rendering_own = false;
+
+	/**
 	 * Filter: pzdemo_already_injected — returns true when this class has
 	 * already injected the builder, so the demo theme fallback can skip.
 	 */
@@ -92,6 +101,11 @@ class FrontendEmbed {
 		// Priority 20 — after standard content filters, before most plugins.
 		// A static flag prevents double-render if WC hooks also fire.
 		add_filter( 'the_content', [ $this, 'inject_via_content' ], 20 );
+
+		// A builder shortcode/block in the product description would render a
+		// second, unconnected builder next to the embedded one (2.4.1).
+		add_filter( 'pre_do_shortcode_tag', [ $this, 'suppress_content_shortcode' ], 10, 2 );
+		add_filter( 'pre_render_block', [ $this, 'suppress_content_block' ], 10, 2 );
 
 		// ── WC hook injection (secondary — themes that call WC actions) ───
 		// inject_via_content() skips if these already ran (tracked via $injected).
@@ -166,6 +180,57 @@ class FrontendEmbed {
 
 		// Append after content — builder always appears below the description.
 		return $content . $builder_html;
+	}
+
+	/**
+	 * Whether the current content belongs to a pizza product page whose builder
+	 * is embedded automatically (so a builder in its description is a duplicate).
+	 */
+	private function in_embedded_product_content(): bool {
+		if ( self::$rendering_own || is_admin() || ! function_exists( 'is_product' ) || ! is_product() ) {
+			return false;
+		}
+		$product_id = (int) get_queried_object_id();
+		if ( ! $product_id || (int) get_the_ID() !== $product_id ) {
+			return false;
+		}
+		if ( '' === (string) get_post_meta( $product_id, '_pizzatier_builder_template', true ) || ! $this->post_has_pizza_type( $product_id ) ) {
+			return false;
+		}
+		/**
+		 * Whether to hide builder shortcodes/blocks placed in a pizza product's
+		 * own description (the product page already embeds the builder).
+		 *
+		 * @since 2.4.1
+		 *
+		 * @param bool $suppress   Default true.
+		 * @param int  $product_id Product.
+		 */
+		return (bool) apply_filters( 'pizzatier_suppress_description_builder', true, $product_id );
+	}
+
+	/**
+	 * @param false|string $out Short-circuit value.
+	 * @param string       $tag Shortcode tag.
+	 * @return false|string
+	 */
+	public function suppress_content_shortcode( $out, $tag ) {
+		if ( false === $out && in_array( $tag, [ 'pizzatier_builder', 'pizzatier-menu', 'pizza_builder' ], true ) && $this->in_embedded_product_content() ) {
+			return '';
+		}
+		return $out;
+	}
+
+	/**
+	 * @param string|null $pre   Short-circuit value.
+	 * @param array       $block Parsed block.
+	 * @return string|null
+	 */
+	public function suppress_content_block( $pre, $block ) {
+		if ( null === $pre && is_array( $block ) && 'pizzatier/pizza-builder' === ( $block['blockName'] ?? '' ) && $this->in_embedded_product_content() ) {
+			return '';
+		}
+		return $pre;
 	}
 
 	/**
@@ -272,6 +337,33 @@ class FrontendEmbed {
 		// _pizzatier_commerce_enabled_layers stores an array of post IDs.
 		// The shortcode accepts restrict="slug1,slug2,..." to limit visible items.
 		$restrict_atts = $this->build_restrict_atts( $product_id );
+
+		// Render the template first: when it has its own size step (all
+		// bundled templates except Colorbox), the separate "Choose your size"
+		// panel above it is a duplicate and is left out (2.4.1).
+		$embed_html = '';
+		if ( $template_slug ) {
+			$sc = '[pizzatier_builder'
+				. ' template="' . esc_attr( $template_slug ) . '"'
+				. ' id="pztc-' . esc_attr( $idx ) . '"'
+				. $shortcode_atts
+				. $restrict_atts
+				. ']';
+			self::$rendering_own = true;
+			$embed_html          = do_shortcode( $sc );
+			self::$rendering_own = false;
+		}
+		$template_has_sizes = false !== strpos( $embed_html, 'pztc-size-radio' );
+		/**
+		 * Whether to show the product page's own size selector above the builder.
+		 *
+		 * @since 2.4.1
+		 *
+		 * @param bool   $show          Default: true unless the template has its own size step.
+		 * @param int    $product_id    Product.
+		 * @param string $template_slug Builder template.
+		 */
+		$show_outer_sizes = (bool) apply_filters( 'pizzatier_show_product_size_selector', ! $template_has_sizes, $product_id, $template_slug );
 		?>
 		<div
 			class="pztc-builder-section"
@@ -280,19 +372,17 @@ class FrontendEmbed {
 			data-pztc-instance="<?php echo esc_attr( $idx ); ?>"
 		>
 
-			<?php $this->render_size_selector( $sizes, $currency_symbol, $idx ); ?>
+			<?php
+			if ( $show_outer_sizes ) {
+				$this->render_size_selector( $sizes, $currency_symbol, $idx );
+			}
+			?>
 
 			<?php if ( $template_slug ) : ?>
 				<div class="pztc-builder-embed" id="pztc-builder-embed-<?php echo esc_attr( $idx ); ?>">
 					<?php
-					$sc = '[pizzatier_builder'
-						. ' template="' . esc_attr( $template_slug ) . '"'
-						. ' id="pztc-' . esc_attr( $idx ) . '"'
-						. $shortcode_atts
-						. $restrict_atts
-						. ']';
-					// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
-					echo do_shortcode( $sc );
+					// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Shortcode output, escaped by the template.
+					echo $embed_html;
 					?>
 				</div>
 			<?php else : ?>
@@ -633,11 +723,14 @@ class FrontendEmbed {
 	 * @param \WC_Product $product
 	 * @return bool
 	 */
-	public function mark_pizza_sold_individually( bool $sold_individually, \WC_Product $product ): bool {
-		if ( 'pizza' === $product->get_type() ) {
+	public function mark_pizza_sold_individually( $sold_individually, $product ): bool {
+		// Only when the store forces one pizza per line ("Disable quantity
+		// selector" setting). Otherwise WooCommerce would refuse a second,
+		// identical pizza and the checkout-bar quantity stepper was ignored.
+		if ( $product instanceof \WC_Product && 'pizza' === $product->get_type() && (bool) pizzatier_get_option( 'disable_quantity', false ) ) {
 			return true;
 		}
-		return $sold_individually;
+		return (bool) $sold_individually;
 	}
 
 	/**
@@ -648,10 +741,18 @@ class FrontendEmbed {
 	 * @param \WC_Product $product
 	 * @return array
 	 */
-	public function maybe_hide_quantity_field( array $args, \WC_Product $product ): array {
-		if ( 'pizza' === $product->get_type() ) {
+	public function maybe_hide_quantity_field( $args, $product ) {
+		// WooCommerce may call this filter with no product.
+		if ( ! is_array( $args ) || ! $product instanceof \WC_Product || 'pizza' !== $product->get_type() ) {
+			return $args;
+		}
+		if ( function_exists( 'is_product' ) && is_product() || (bool) pizzatier_get_option( 'disable_quantity', false ) ) {
+			// Product page: quantity comes from the builder's stepper.
 			$args['min_value'] = 1;
 			$args['max_value'] = 1;
+		} else {
+			// Cart: let customers change the quantity, within the store limit.
+			$args['max_value'] = max( 1, (int) pizzatier_get_option( 'max_quantity', 99 ) );
 		}
 		return $args;
 	}
@@ -1021,6 +1122,7 @@ class FrontendEmbed {
 					'post_type'      => $cpt,
 					'posts_per_page' => -1,
 					'post_status'    => 'publish',
+					'has_password'   => false, // Password-protected layers are not on the public menu (2.4.3).
 					'fields'         => 'ids',
 				] );
 				foreach ( $posts as $pid ) {
@@ -1054,6 +1156,7 @@ class FrontendEmbed {
 						],
 						'posts_per_page' => -1,
 						'post_status'    => 'publish',
+						'has_password'   => false, // Password-protected layers are not on the public menu (2.4.3).
 						'fields'         => 'ids',
 						'tax_query'      => [ [ // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_tax_query -- Ingredient group membership is only available as a taxonomy; there is no alternative lookup.
 							'taxonomy' => 'pizzatier_ingredient_group',
@@ -1094,6 +1197,7 @@ class FrontendEmbed {
 			$posts = get_posts( [
 				'post_type'      => $cpt,
 				'post_status'    => 'publish',
+				'has_password'   => false, // Password-protected layers are not on the public menu (2.4.3).
 				'posts_per_page' => -1,
 				'fields'         => 'ids',
 				'no_found_rows'  => true,
@@ -1116,28 +1220,49 @@ class FrontendEmbed {
 		// layer post ID enabled on this product that has its own pricing grid.
 		// Layers without a custom grid are omitted — JS falls back to priceGrid.
 		// Shape: { 123: { sizes: [...], fractions: [...], cells: {...} }, … }
-		$layer_grids = [];
-		$enabled_raw = get_post_meta( $product_id, '_pizzatier_enabled_layers', true );
-		if ( is_array( $enabled_raw ) && ! empty( $enabled_raw ) ) {
-			foreach ( $enabled_raw as $layer_pid ) {
-				$layer_pid = absint( $layer_pid );
-				if ( $layer_pid <= 0 ) {
-					continue;
-				}
-				$lg = $this->grid_model->get_layer_grid( $layer_pid );
-				if ( null === $lg ) {
-					continue; // No custom grid — JS uses product fallback.
-				}
-				$layer_cells_clean = [];
-				foreach ( $lg['cells'] as $ck => $cv ) {
-					$layer_cells_clean[ $ck ] = (float) $cv;
-				}
+		// Per-layer grids, global per-type grids and legacy flat prices — the
+		// same sources, in the same order, that the server's
+		// Grid::get_layer_price() uses, so the live price always matches the
+		// verified cart price. Before 2.4.0 only the product's explicitly
+		// enabled layers were shipped, and global grids not at all, so any
+		// ingredient priced by its own or a global grid showed one price in
+		// the builder and was charged another.
+		$layer_grids   = [];
+		$legacy_prices = [];
+		$layer_ids     = get_posts( [
+			'post_type'        => [ 'pizzatier_crusts', 'pizzatier_sauces', 'pizzatier_cheeses', 'pizzatier_toppings', 'pizzatier_drizzles', 'pizzatier_cuts', 'pizzatier_sizes' ],
+			'post_status'      => 'publish',
+			'has_password'     => false, // Password-protected layers are not on the public menu (2.4.3).
+			'posts_per_page'   => -1,
+			'fields'           => 'ids',
+			'no_found_rows'    => true,
+			'suppress_filters' => true,
+		] );
+		if ( $layer_ids ) {
+			update_meta_cache( 'post', $layer_ids );
+		}
+		foreach ( $layer_ids as $layer_pid ) {
+			$layer_pid = (int) $layer_pid;
+			$lg        = $this->grid_model->get_layer_grid( $layer_pid );
+			if ( null !== $lg && ! empty( $lg['cells'] ) ) {
 				$layer_grids[ $layer_pid ] = [
 					'sizes'     => $lg['sizes'],
 					'fractions' => $lg['fractions'],
-					'cells'     => $layer_cells_clean,
+					'cells'     => array_map( 'floatval', $lg['cells'] ),
 				];
 			}
+			$legacy = get_post_meta( $layer_pid, '_pizzatier_price', true );
+			if ( '' !== $legacy && null !== $legacy && is_numeric( $legacy ) ) {
+				$legacy_prices[ $layer_pid ] = (float) $legacy;
+			}
+		}
+		$global_grids = [];
+		foreach ( $this->grid_model->get_all_global_grids() as $gtype => $gg ) {
+			$global_grids[ $gtype ] = [
+				'sizes'     => $gg['sizes'],
+				'fractions' => $gg['fractions'],
+				'cells'     => array_map( 'floatval', $gg['cells'] ),
+			];
 		}
 
 		// ── Build localized config ─────────────────────────────────────────
@@ -1214,10 +1339,26 @@ class FrontendEmbed {
 			'defaultLayers'  => ( function() use ( $product_id ) {
 				$raw = get_post_meta( $product_id, '_pizzatier_default_layers', true );
 				if ( ! is_array( $raw ) ) return (object) [];
+				// Templates key their cards by sanitize_title( title ).
+				$slug_of = function ( $pid ) {
+					$pid = (int) $pid;
+					return $pid > 0 && 'publish' === get_post_status( $pid ) ? sanitize_title( (string) get_the_title( $pid ) ) : '';
+				};
 				$slugs = [];
 				foreach ( $raw as $type => $pid ) {
-					$slug = get_post_field( 'post_name', (int) $pid );
-					if ( $slug ) $slugs[ $type ] = $slug;
+					if ( is_array( $pid ) ) {
+						// e.g. 'toppings' => [ id, id, … ] — before 2.4.0 this
+						// was cast to (int) and sent the slug of post #1.
+						$list = array_values( array_filter( array_map( $slug_of, $pid ) ) );
+						if ( $list ) {
+							$slugs[ $type ] = $list;
+						}
+						continue;
+					}
+					$slug = $slug_of( $pid );
+					if ( $slug ) {
+						$slugs[ $type ] = $slug;
+					}
 				}
 				return $slugs ?: (object) [];
 			} )(),
@@ -1274,6 +1415,22 @@ class FrontendEmbed {
 			// Keys are integers encoded as strings by json_encode —
 			// JS accesses as: layerGrids[String(postId)]
 			'layerGrids'         => $layer_grids ?: (object) [],
+			'globalGrids'        => $global_grids ?: (object) [],
+			'legacyPrices'       => $legacy_prices ?: (object) [],
+
+			// Type → slug → postId, so a slug shared by two ingredient types
+			// (a "bbq" sauce and a "bbq" drizzle) resolves to the right one.
+			'layerPostIdMapTyped' => ( function() {
+				$out   = [];
+				$types = [ 'pizzatier_crusts' => 'crust', 'pizzatier_sauces' => 'sauce', 'pizzatier_cheeses' => 'cheese', 'pizzatier_toppings' => 'topping', 'pizzatier_drizzles' => 'drizzle', 'pizzatier_cuts' => 'cut' ];
+				foreach ( $types as $cpt => $t ) {
+					foreach ( get_posts( [ 'post_type' => $cpt, 'post_status' => 'publish', 'has_password' => false, 'posts_per_page' => -1, 'no_found_rows' => true ] ) as $p ) {
+						$out[ $t ][ (string) $p->post_name ]                 = (int) $p->ID;
+						$out[ $t ][ sanitize_title( (string) $p->post_title ) ] = (int) $p->ID;
+					}
+				}
+				return $out ?: (object) [];
+			} )(),
 
 			// Slug → postId map for all CPT layers so JS can resolve the
 			// postId needed for layerGrids lookup from a layer slug string.
@@ -1292,6 +1449,7 @@ class FrontendEmbed {
 					$cpt_posts = get_posts( [
 						'post_type'      => $cpt,
 						'post_status'    => 'publish',
+						'has_password'   => false, // Password-protected layers are not on the public menu (2.4.3).
 						'posts_per_page' => -1,
 						'fields'         => 'ids',
 						'no_found_rows'  => true,
@@ -1332,7 +1490,12 @@ class FrontendEmbed {
 
 			// REST endpoint.
 			'restUrl'        => rest_url( 'pizzatier/v1/' ),
+			'restPriceEnabled' => (bool) pizzatier_get_option( 'enable_rest_price', true ),
 			'restNonce'      => wp_create_nonce( 'wp_rest' ),
+
+			// Cart-edit restore: only a signature-verified, sanitised copy of
+			// the link's configuration ever reaches the builder (2.4.3).
+			'prefill'        => OrderMeta::verified_prefill(),
 		];
 
 		// ── Emit config as inline JS (supports multiple instances per page) ──

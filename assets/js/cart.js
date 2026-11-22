@@ -185,7 +185,7 @@
 		// Block submission if size wasn't explicitly chosen (multiple sizes available).
 		if ( state.sizeChosen === false ) {
 			showError( $btn, I18N.selectSize || 'Please select a pizza size.' );
-			var $sizeSel = $btn.closest( '.pztc-builder-section' ).find( '.pztc-size-selector--visible' );
+			var $sizeSel = $btn.closest( '.pztc-builder-section' ).find( '.pztc-size-selector--visible, .pztc-inline-size-selector' ).first();
 			if ( $sizeSel.length ) {
 				$sizeSel[0].scrollIntoView( { behavior: 'smooth', block: 'center' } );
 			}
@@ -245,6 +245,12 @@
 	 * @param {function} callback  fn( ok: bool, data: object|null, errorMsg: string|null )
 	 */
 	function verifyPrice( state, cfg, callback ) {
+		// Endpoint switched off in settings: the add-to-cart request is
+		// verified on the server anyway, so skip the pre-check.
+		if ( ( cfg.restPriceEnabled === false ) || ( cfg.restPriceEnabled === undefined && BASE_CFG.restPriceEnabled === false ) ) {
+			callback( true, null, null );
+			return;
+		}
 		const I18N    = cfg.i18n || BASE_CFG.i18n || {};
 		const restUrl = ( cfg.restUrl || BASE_CFG.restUrl || '' ) + 'calculate-price';
 
@@ -401,17 +407,29 @@
 	function setSubmitting( submitting, $btn, I18N ) {
 		isSubmitting = submitting;
 
+		// Change only the label element so the button's icon survives.
+		var $label = $btn.find( '.pztc-btn__label, .pztc-bar-row__btn-text, [class*="__btn-text"], [class*="__btn-label"]' ).first();
+		if ( ! $label.length ) {
+			// Some layouts put the label in a bare text node next to the icon;
+			// wrap it once so the icon is not wiped out with the text.
+			var texts = $btn.contents().filter( function () {
+				return 3 === this.nodeType && '' !== $.trim( this.nodeValue );
+			} );
+			if ( texts.length ) {
+				$( texts[ texts.length - 1 ] ).wrap( '<span class="pztc-btn__label"></span>' );
+				$label = $btn.find( '.pztc-btn__label' ).first();
+			}
+		}
+		var $target = $label.length ? $label : $btn;
 		if ( submitting ) {
-			$btn
-				.addClass( 'pztc-btn--loading' )
-				.prop( 'disabled', true )
-				.data( 'original-text', $btn.text() )
-				.text( I18N.addingToCart || 'Adding…' );
+			if ( $btn.data( 'original-text' ) === undefined ) {
+				$btn.data( 'original-text', $target.text() );
+			}
+			$btn.addClass( 'pztc-btn--loading' ).prop( 'disabled', true );
+			$target.text( I18N.addingToCart || 'Adding…' );
 		} else {
-			$btn
-				.removeClass( 'pztc-btn--loading' )
-				.prop( 'disabled', false )
-				.text( $btn.data( 'original-text' ) || ( I18N.addToCart || 'Add to Cart' ) );
+			$btn.removeClass( 'pztc-btn--loading' ).prop( 'disabled', false );
+			$target.text( $btn.data( 'original-text' ) || ( I18N.addToCart || 'Add to Cart' ) );
 		}
 	}
 
@@ -527,18 +545,26 @@
 	 * @param {object} state  Builder state object.
 	 * @returns {string}
 	 */
+	/**
+	 * Canonical builder instance id ('pztc-1') for a button. Buttons carry
+	 * either the bare index ('1', the main product-page button) or the full
+	 * id ('pztc-1', checkout-bar buttons). Before 2.4.0 the full id was
+	 * prefixed again ('pztc-pztc-1'), so the quantity stepper and the bar
+	 * note were never found.
+	 */
+	function instanceIdFor( $btn ) {
+		var raw = String( $btn.attr( 'data-pztc-instance' ) || $btn.attr( 'data-instance' ) || '' );
+		if ( ! raw ) {
+			var $sec = $btn.closest( '.pztc-builder-section[data-pztc-instance]' );
+			raw = $sec.length ? String( $sec.attr( 'data-pztc-instance' ) ) : '';
+		}
+		if ( ! raw ) { return ''; }
+		return /^\d+$/.test( raw ) ? 'pztc-' + raw : raw;
+	}
+
 	function resolveOrderNote( $btn, state ) {
 		// 1. Look for the bar-level notes textarea scoped to this instance.
-		var instanceId = $btn.data( 'instance' ) || '';
-		// Try data-pztc-instance on button, then walk up to builder section.
-		var rawIdxN = $btn.data( 'pztc-instance' ) || $btn.data( 'instance' ) || '';
-		if ( ! instanceId && rawIdxN ) instanceId = 'pztc-' + rawIdxN;
-		if ( ! instanceId ) {
-			var $secN = $btn.closest( '.pztc-builder-section[data-pztc-instance]' );
-			if ( $secN.length ) {
-				instanceId = 'pztc-' + $secN.data( 'pztc-instance' );
-			}
-		}
+		var instanceId = instanceIdFor( $btn );
 		if ( instanceId ) {
 			var $barNote = $( '.pztc-order-note-input[data-instance="' + instanceId + '"]' );
 			if ( $barNote.length ) {
@@ -568,25 +594,16 @@
 	 * @returns {number}
 	 */
 	function resolveQuantity( $btn ) {
-		// Try data-pztc-instance or data-instance attribute on the button first.
-		var rawIdx = $btn.data( 'pztc-instance' ) || $btn.data( 'instance' ) || '';
-		var instanceId = rawIdx ? 'pztc-' + rawIdx : '';
-
-		// If not set, derive it from the closest builder-section wrapper.
-		if ( ! instanceId ) {
-			var $sec = $btn.closest( '.pztc-builder-section[data-pztc-instance]' );
-			if ( $sec.length ) {
-				instanceId = 'pztc-' + $sec.data( 'pztc-instance' );
-			}
-		}
-
+		var instanceId = instanceIdFor( $btn );
 		if ( ! instanceId ) return 1;
 
 		var $display = $( '#pztc-qty-' + instanceId );
 		if ( ! $display.length ) return 1;
 
 		// cart.js reads dataset.qty (set by checkout-bar.js) or falls back to textContent.
-		var qty = parseInt( $display.data( 'qty' ) || $display.text(), 10 );
+		// attr(), not data(): jQuery caches data() after the first read, so
+		// later stepper changes would be missed.
+		var qty = parseInt( $display.attr( 'data-qty' ) || $display.text(), 10 );
 		return isNaN( qty ) || qty < 1 ? 1 : Math.min( qty, 99 );
 	}
 

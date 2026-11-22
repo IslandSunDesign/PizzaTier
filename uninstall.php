@@ -1,6 +1,11 @@
 <?php
 if ( ! defined( 'WP_UNINSTALL_PLUGIN' ) ) { exit; }
 
+// Read the order-deletion opt-in before any option is removed. Both the
+// hard-coded list and OptionRegistry::uninstall_keys() include this key, so
+// reading it later would always see the default ('no').
+$pizzatier_delete_orders = ( 'yes' === get_option( 'pizzatier_setting_delete_orders_on_uninstall', 'no' ) );
+
 /**
  * PizzaTier Uninstall
  *
@@ -374,9 +379,22 @@ $pizzatier_option_keys = [
 	'pizzatier_builder_viewed',
 	'pizzatier_setting_dark_mode',
 	'pizzatier_wizard_done',
+	// Topping Multiplier (2.4.0+) and the standalone add-on it replaced.
+	'pizzatier_multiplier_settings',
+	'pztm_settings',
+	'pizzatier_zero_grids_kept',
+	'pizzatier_multiplier_addon_notice',
 ];
 
+// The order number sequence is kept with the orders it numbers: deleting it
+// while orders are retained would restart numbering at PZT-0001 on reinstall
+// and collide with existing order numbers. It is removed in the opt-in branch.
+$pizzatier_keep_options = [ 'pizzatier_order_sequence' ];
+
 foreach ( $pizzatier_option_keys as $pizzatier_opt ) {
+	if ( in_array( $pizzatier_opt, $pizzatier_keep_options, true ) ) {
+		continue;
+	}
 	delete_option( $pizzatier_opt );
 }
 
@@ -393,6 +411,9 @@ if ( file_exists( $pizzatier_registry ) ) {
 
 	if ( class_exists( '\PizzaTier\Core\OptionRegistry' ) ) {
 		foreach ( \PizzaTier\Core\OptionRegistry::uninstall_keys() as $pizzatier_opt ) {
+			if ( in_array( $pizzatier_opt, $pizzatier_keep_options, true ) ) {
+				continue;
+			}
 			delete_option( $pizzatier_opt );
 		}
 	}
@@ -423,12 +444,53 @@ foreach ( $pizzatier_cpt_slugs as $pizzatier_post_type ) {
 	}
 }
 
+// ── Ingredient group taxonomy ─────────────────────────────────────────
+// The taxonomy is not registered while uninstall.php runs, so get_terms()
+// and wp_delete_term() cannot see it. Remove its rows directly by name.
+global $wpdb;
+// phpcs:disable WordPress.DB.DirectDatabaseQuery
+$pizzatier_tt_ids = $wpdb->get_col(
+	$wpdb->prepare(
+		"SELECT term_taxonomy_id FROM {$wpdb->term_taxonomy} WHERE taxonomy = %s",
+		'pizzatier_ingredient_group'
+	)
+);
+$pizzatier_term_ids = $wpdb->get_col(
+	$wpdb->prepare(
+		"SELECT term_id FROM {$wpdb->term_taxonomy} WHERE taxonomy = %s",
+		'pizzatier_ingredient_group'
+	)
+);
+if ( $pizzatier_tt_ids ) {
+	$pizzatier_tt_in = implode( ',', array_map( 'absint', $pizzatier_tt_ids ) );
+	// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- List of absint() IDs.
+	$wpdb->query( "DELETE FROM {$wpdb->term_relationships} WHERE term_taxonomy_id IN ({$pizzatier_tt_in})" );
+	$wpdb->query(
+		$wpdb->prepare(
+			"DELETE FROM {$wpdb->term_taxonomy} WHERE taxonomy = %s",
+			'pizzatier_ingredient_group'
+		)
+	);
+}
+foreach ( $pizzatier_term_ids as $pizzatier_term_id ) {
+	$pizzatier_term_id = absint( $pizzatier_term_id );
+	// Only remove the term itself when no other taxonomy still uses it.
+	$pizzatier_term_shared = (int) $wpdb->get_var(
+		$wpdb->prepare( "SELECT COUNT(*) FROM {$wpdb->term_taxonomy} WHERE term_id = %d", $pizzatier_term_id )
+	);
+	if ( 0 === $pizzatier_term_shared ) {
+		$wpdb->query( $wpdb->prepare( "DELETE FROM {$wpdb->termmeta} WHERE term_id = %d", $pizzatier_term_id ) );
+		$wpdb->query( $wpdb->prepare( "DELETE FROM {$wpdb->terms} WHERE term_id = %d", $pizzatier_term_id ) );
+	}
+}
+// phpcs:enable WordPress.DB.DirectDatabaseQuery
+
 // ── Pizza orders ──────────────────────────────────────────────────────
 // Orders are customer transaction records, so they are NOT removed by
 // default — a site may still need them for accounting or dispute history
 // after the plugin is gone. Deletion is strictly opt-in via
 // Settings → Orders ("Delete order history when uninstalling").
-if ( get_option( 'pizzatier_setting_delete_orders_on_uninstall', 'no' ) === 'yes' ) {
+if ( $pizzatier_delete_orders ) {
 	// The pzt-* order statuses are registered by the plugin, which is not
 	// loaded during uninstall. A get_posts() call with 'any' would therefore
 	// resolve to an empty status list and match nothing, so query directly.
@@ -524,7 +586,7 @@ $wpdb->query(
 // The pizza build recorded against each order line. Removed only when the
 // site opted into deleting order records above; otherwise a store that keeps
 // its order history would be left with orders whose contents had vanished.
-if ( 'yes' === get_option( 'pizzatier_setting_delete_orders_on_uninstall', 'no' ) ) {
+if ( $pizzatier_delete_orders ) {
 	$pizzatier_itemmeta = $wpdb->prefix . 'woocommerce_order_itemmeta';
 	if ( $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $pizzatier_itemmeta ) ) ) {
 		// The table name is interpolated from $wpdb->prefix and a string literal

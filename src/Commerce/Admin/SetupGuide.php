@@ -30,8 +30,11 @@ class SetupGuide {
 		if (
 			isset( $_POST['pizzatier_commerce_setup_done'], $_POST['_wpnonce'] )
 			&& wp_verify_nonce( sanitize_key( $_POST['_wpnonce'] ), 'pizzatier_commerce_setup_checklist' )
+			&& current_user_can( 'manage_options' )
 		) {
-			$done = get_option( 'pizzatier_setup_done', [] );
+			// (array): pre-2.0 imports stored `true` here, and writing an
+			// index into a bool is a fatal error on PHP 8.
+			$done = (array) get_option( 'pizzatier_setup_done', [] );
 			$key  = sanitize_key( $_POST['pizzatier_commerce_setup_done'] );
 			if ( isset( $_POST['checked'] ) && '1' === $_POST['checked'] ) {
 				$done[ $key ] = true;
@@ -48,7 +51,7 @@ class SetupGuide {
 	 * @return array{0:array,1:array,2:int,3:int,4:int} steps, done, completed, total, percent
 	 */
 	private function progress(): array {
-		$done  = get_option( 'pizzatier_setup_done', [] );
+		$done  = (array) get_option( 'pizzatier_setup_done', [] );
 		$steps = $this->get_steps();
 
 		$total     = count( $steps );

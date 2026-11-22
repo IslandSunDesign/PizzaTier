@@ -57,7 +57,7 @@
 
 			// Rounding
 			var r = SETTINGS.rounding;
-			if ( r === 'up' )        total = Math.ceil(total * 100) / 100;
+			if ( r === 'up' )        total = Math.ceil(parseFloat((total * 100).toFixed(6))) / 100;
 			else if ( r === 'nearest5' ) total = Math.round(total / 0.05) * 0.05;
 			else if ( r === 'nearest25') total = Math.round(total / 0.25) * 0.25;
 			else if ( r === 'nearest50') total = Math.round(total / 0.50) * 0.50;

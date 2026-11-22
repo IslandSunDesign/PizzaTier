@@ -48,7 +48,7 @@ use PizzaTier\Commerce\PriceGrid\Grid;
 
 class PriceEndpoint {
 
-	const NAMESPACE = 'pizzatier/v1';
+	const REST_NAMESPACE = 'pizzatier/v1';
 	const ROUTE     = '/calculate-price';
 
 	/** @var PriceCalculator */
@@ -68,7 +68,7 @@ class PriceEndpoint {
 
 	public function register_routes(): void {
 		register_rest_route(
-			self::NAMESPACE,
+			self::REST_NAMESPACE,
 			self::ROUTE,
 			[
 				'methods'             => \WP_REST_Server::CREATABLE, // POST
@@ -97,7 +97,26 @@ class PriceEndpoint {
 	 * @param \WP_REST_Request $request
 	 * @return bool
 	 */
-	public function check_permission( \WP_REST_Request $request ): bool {
+	public function check_permission( \WP_REST_Request $request ) {
+		// "Enable REST price endpoint" (Cart & Pricing → Advanced). The cart
+		// skips its pre-check when this is off; add-to-cart still verifies.
+		if ( ! (bool) pizzatier_get_option( 'enable_rest_price', true ) ) {
+			return false;
+		}
+
+		/**
+		 * Filter the per-client limit on the public price endpoint (2.4.3).
+		 *
+		 * The builder re-quotes on each change, so the default is generous.
+		 *
+		 * @param int $max    Requests per window (default 240; 0 disables).
+		 * @param int $window Window in seconds (default 60).
+		 */
+		$max    = (int) apply_filters( 'pizzatier_price_rate_limit', 240 );
+		$window = (int) apply_filters( 'pizzatier_price_rate_window', 60 );
+		if ( ! \PizzaTier\Core\RateLimiter::hit( 'price', $max, $window ) ) {
+			return new \WP_Error( 'pizzatier_rate_limited', __( 'Too many requests. Please slow down and try again shortly.', 'pizzatier' ), [ 'status' => 429 ] );
+		}
 		return true;
 	}
 
@@ -142,6 +161,9 @@ class PriceEndpoint {
 	private function get_args(): array {
 		return [
 			'product_id' => [
+				// Schema checks (types, lengths, maxItems) run only with an explicit
+				// validator when a sanitize_callback is set (2.4.3).
+				'validate_callback' => 'rest_validate_request_arg',
 				'required'          => true,
 				'type'              => 'integer',
 				'minimum'           => 1,
@@ -149,6 +171,9 @@ class PriceEndpoint {
 				'description'       => __( 'WooCommerce product ID.', 'pizzatier' ),
 			],
 			'size'       => [
+				// Schema checks (types, lengths, maxItems) run only with an explicit
+				// validator when a sanitize_callback is set (2.4.3).
+				'validate_callback' => 'rest_validate_request_arg',
 				'required'          => true,
 				'type'              => 'string',
 				'minLength'         => 1,
@@ -157,15 +182,21 @@ class PriceEndpoint {
 				'description'       => __( 'Selected pizza size label.', 'pizzatier' ),
 			],
 			'layers'     => [
+				// Schema checks (types, lengths, maxItems) run only with an explicit
+				// validator when a sanitize_callback is set (2.4.3).
+				'validate_callback' => 'rest_validate_request_arg',
 				'required'          => true,
 				'type'              => 'array',
+				// Bounded before any lookup is done (2.4.3).
+				'maxItems'          => 100,
 				'items'             => [
 					'type'       => 'object',
 					'properties' => [
-						'layerId'      => [ 'type' => 'string', 'minLength' => 1 ],
-						'fraction'     => [ 'type' => 'string', 'minLength' => 1 ],
-						'layerType'    => [ 'type' => 'string' ],
+						'layerId'      => [ 'type' => 'string', 'minLength' => 1, 'maxLength' => 200 ],
+						'fraction'     => [ 'type' => 'string', 'minLength' => 1, 'maxLength' => 40 ],
+						'layerType'    => [ 'type' => 'string', 'maxLength' => 40 ],
 						'layerPostId'  => [ 'type' => 'integer', 'minimum' => 0 ],
+						'portion'      => [ 'type' => 'string', 'maxLength' => 40 ],
 					],
 					'required'   => [ 'layerId', 'fraction' ],
 				],
@@ -192,6 +223,9 @@ class PriceEndpoint {
 				'fraction'    => sanitize_text_field( (string) ( $layer['fraction']    ?? '' ) ),
 				'layerType'   => sanitize_text_field( (string) ( $layer['layerType']   ?? '' ) ),
 				'layerPostId' => absint( $layer['layerPostId'] ?? 0 ),
+				// The specific portion decides the price column (2.4.0: it was
+				// dropped here, so this quote could differ from add-to-cart).
+				'portion'     => sanitize_text_field( (string) ( $layer['portion'] ?? '' ) ),
 			];
 		}
 		return $clean;

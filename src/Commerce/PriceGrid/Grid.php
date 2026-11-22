@@ -224,9 +224,14 @@ class Grid {
 				__( 'Invalid layer post ID.', 'pizzatier' )
 			);
 		}
-		$validated = $this->validate( $data );
+		$validated = $this->validate( $data, true );
 		if ( is_wp_error( $validated ) ) {
 			return $validated;
+		}
+		// Nothing filled in → no custom pricing for this layer at all.
+		if ( empty( $validated['cells'] ) ) {
+			$this->delete_layer_grid( $layer_post_id );
+			return true;
 		}
 		update_post_meta( $layer_post_id, self::LAYER_META_KEY, $validated );
 		return true;
@@ -547,6 +552,9 @@ class Grid {
 			foreach ( $sizes as $size ) {
 				$key = $layer_type . self::CELL_SEP . $size;
 				$raw = $raw_cells[ $key ] ?? '';
+				if ( is_string( $raw ) ) {
+					$raw = trim( $raw );
+				}
 				if ( '' === $raw || null === $raw ) {
 					$cells[ $key ] = 0.00;
 					continue;
@@ -629,10 +637,15 @@ class Grid {
 	 *   'cells'     => [ 'S|Whole' => '8.50', ... ],  // values may be strings
 	 * ]
 	 *
-	 * @param array $data
+	 * @param array $data          Raw grid.
+	 * @param bool  $blank_unset   When true, blank cells are left out instead of
+	 *                             becoming 0.00. Per-layer grids use this so a
+	 *                             cell the admin never filled in falls through to
+	 *                             the global / product price rather than making
+	 *                             the layer free (2.4.0).
 	 * @return array|\WP_Error  Sanitised grid array or error.
 	 */
-	public function validate( array $data ) {
+	public function validate( array $data, bool $blank_unset = false ) {
 		// ── Sizes ──────────────────────────────────────────────────────────
 		if ( empty( $data['sizes'] ) || ! is_array( $data['sizes'] ) ) {
 			return new \WP_Error(
@@ -705,10 +718,16 @@ class Grid {
 			foreach ( $fractions as $fraction ) {
 				$key = $this->cell_key( $size, $fraction );
 				$raw = isset( $raw_cells[ $key ] ) ? $raw_cells[ $key ] : '';
+				if ( is_string( $raw ) ) {
+					$raw = trim( $raw );
+				}
 
 				if ( '' === $raw || null === $raw ) {
-					// Empty cell is allowed — treat as 0.00.
-					$cells[ $key ] = 0.00;
+					// Empty cell: "not set" for per-layer grids (falls through
+					// to the global / product price), 0.00 elsewhere.
+					if ( ! $blank_unset ) {
+						$cells[ $key ] = 0.00;
+					}
 					continue;
 				}
 

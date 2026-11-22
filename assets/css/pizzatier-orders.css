@@ -242,6 +242,18 @@ body.pzt-order-open {
 	border-top: 1px solid var( --pzt-order-border );
 }
 
+/*
+ * The script shows and hides panel parts with the `hidden` attribute. Any
+ * author `display` rule (the footer's flex above, or a theme's) beats the
+ * browser's own [hidden] style, so restate it here — otherwise the Place
+ * Order button stays visible after confirmation when no grid CSS loads.
+ */
+.pzt-order-panel__body[hidden],
+.pzt-order-panel__footer[hidden],
+.pzt-order-panel [hidden] {
+	display: none;
+}
+
 /* Sections --------------------------------------------------------------- */
 
 .pzt-order-section {

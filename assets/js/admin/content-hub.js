@@ -90,6 +90,24 @@
 				}
 			} catch ( e ) {}
 		} );
+
+		// Pagination links: when the panel was rendered over AJAX they can
+		// point at admin-ajax.php. Rebuild them on the hub URL, keeping the
+		// page number and any search / sort arguments.
+		document.querySelectorAll( '.plch-main .tablenav-pages a' ).forEach( function ( a ) {
+			try {
+				var url = new URL( a.href, window.location.href );
+				if ( url.pathname.indexOf( 'admin-ajax.php' ) === -1 && url.searchParams.get( 'page' ) === 'pizzatier-content' ) {
+					return;
+				}
+				var href = hubBase + '&pl_cpt=' + encodeURIComponent( slug );
+				[ 'paged', 's', 'orderby', 'order' ].forEach( function ( k ) {
+					var v = url.searchParams.get( k );
+					if ( v ) { href += '&' + k + '=' + encodeURIComponent( v ); }
+				} );
+				a.href = href;
+			} catch ( e ) {}
+		} );
 	}
 
 	function afterSwap( slug ) {

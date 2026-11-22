@@ -67,6 +67,7 @@ if ( $show_tabs_raw ) {
 $query_base = [
 	'posts_per_page' => -1,
 	'post_status'    => 'publish',
+	'has_password'   => false, // Password-protected layers are not on the public menu (2.4.3).
 	'orderby'        => 'menu_order title',
 	'order'          => 'ASC',
 ];
@@ -355,7 +356,7 @@ $spec_max        = max( 1, (int) get_option( 'pizzatier_setting_cx_special_instr
 					</div>
 					<div class="cb-pizza-sticky__footer">
 						<button type="button" class="cb-btn cb-btn--ghost cb-btn--sm"
-						        onclick="ClearPizza(); window['<?php echo esc_js( $cb_var ); ?>']&&window['<?php echo esc_js( $cb_var ); ?>'].resetAll();">
+						        onclick="window['<?php echo esc_js( $cb_var ); ?>']&&window['<?php echo esc_js( $cb_var ); ?>'].resetAll();">
 							<i class="fa fa-rotate-left"></i> <?php esc_html_e( 'Reset', 'pizzatier' ); ?>
 						</button>
 						<span class="cb-topping-counter">
@@ -557,7 +558,7 @@ $spec_max        = max( 1, (int) get_option( 'pizzatier_setting_cx_special_instr
 								$show_start_over  = get_option( 'pizzatier_setting_cx_show_start_over', 'yes' ) !== 'no';
 								if ( $show_start_over ) :
 								?>
-								<button class="cb-btn cb-btn--ghost" onclick="ClearPizza(); window['<?php echo esc_js( $cb_var ); ?>']&&window['<?php echo esc_js( $cb_var ); ?>'].resetAll();"><i class="fa fa-rotate-left"></i> <?php echo esc_html( $start_over_label ); ?></button>
+								<button class="cb-btn cb-btn--ghost" onclick="window['<?php echo esc_js( $cb_var ); ?>']&&window['<?php echo esc_js( $cb_var ); ?>'].resetAll();"><i class="fa fa-rotate-left"></i> <?php echo esc_html( $start_over_label ); ?></button>
 								<?php endif; ?>
 							</div>
 							<?php if ( $show_spec_instr ) : ?>

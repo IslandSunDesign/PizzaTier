@@ -264,14 +264,18 @@ class LayerImageMaker {
 
 		// Strip data-URI header
 		if ( strpos( $data, 'base64,' ) !== false ) {
-			[ , $data ] = explode( 'base64,', $data );
+			[ , $data ] = explode( 'base64,', $data, 2 );
+		}
+		// Bound the encoded payload before decoding it: base64_decode() would
+		// otherwise allocate the full image first (2.4.3).
+		$max_bytes = (int) apply_filters( 'pizzatier_max_layer_image_bytes', min( (int) wp_max_upload_size(), 8 * 1024 * 1024 ) );
+		if ( $max_bytes > 0 && strlen( $data ) > (int) ceil( $max_bytes * 4 / 3 ) + 4 ) {
+			wp_send_json_error( 'Image too large' );
 		}
 		$raw = base64_decode( $data ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions
 		if ( ! $raw ) { wp_send_json_error( 'Bad data' ); }
 
-		// Bound the decoded payload to avoid large memory allocation / oversized
-		// writes. Defaults to the smaller of the upload limit and 8 MB.
-		$max_bytes = (int) apply_filters( 'pizzatier_max_layer_image_bytes', min( (int) wp_max_upload_size(), 8 * 1024 * 1024 ) );
+		// Decoded size, checked again (padding / whitespace edge cases).
 		if ( $max_bytes > 0 && strlen( $raw ) > $max_bytes ) {
 			wp_send_json_error( 'Image too large' );
 		}

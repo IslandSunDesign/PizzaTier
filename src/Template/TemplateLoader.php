@@ -26,22 +26,95 @@ if ( ! defined( 'ABSPATH' ) ) { exit; }
 class TemplateLoader {
 
 	/**
+	 * Template root directories, highest precedence first.
+	 *
+	 * A theme can ship its own templates in a pzttemplates/ folder: the child
+	 * theme's folder wins over the parent theme's, and both win over the
+	 * plugin's bundled templates. Directories added through the
+	 * pizzatier_template_dirs filter keep their previous precedence among
+	 * themselves (a later directory overrides an earlier one).
+	 *
+	 * @return array<int, array{dir:string,url:string,source:string}>
+	 */
+	public function get_template_roots(): array {
+		$roots = [];
+		$seen  = [];
+
+		$add = static function ( string $dir, string $url, string $source ) use ( &$roots, &$seen ): void {
+			$dir = trailingslashit( wp_normalize_path( $dir ) );
+			if ( isset( $seen[ $dir ] ) || ! is_dir( $dir ) ) { return; }
+			$seen[ $dir ] = true;
+			$roots[]      = [ 'dir' => $dir, 'url' => trailingslashit( $url ), 'source' => $source ];
+		};
+
+		if ( function_exists( 'get_stylesheet_directory' ) ) {
+			$add( get_stylesheet_directory() . '/pzttemplates/', get_stylesheet_directory_uri() . '/pzttemplates/', 'theme' );
+			$add( get_template_directory() . '/pzttemplates/', get_template_directory_uri() . '/pzttemplates/', 'theme' );
+		}
+
+		$dirs = (array) apply_filters( 'pizzatier_template_dirs', [ PIZZATIER_TEMPLATES_DIR ] );
+		foreach ( array_reverse( $dirs ) as $dir ) {
+			if ( ! is_string( $dir ) || '' === $dir ) { continue; }
+			$norm = trailingslashit( wp_normalize_path( $dir ) );
+			if ( trailingslashit( wp_normalize_path( PIZZATIER_TEMPLATES_DIR ) ) === $norm ) {
+				$add( $dir, PIZZATIER_TEMPLATES_URL, 'plugin' );
+			} else {
+				$add( $dir, $this->url_for_dir( $norm ), 'custom' );
+			}
+		}
+
+		return $roots;
+	}
+
+	/**
+	 * Best-effort URL for a directory under wp-content (for filtered dirs).
+	 */
+	private function url_for_dir( string $dir ): string {
+		$content_dir = trailingslashit( wp_normalize_path( WP_CONTENT_DIR ) );
+		if ( 0 === strpos( $dir, $content_dir ) ) {
+			return trailingslashit( content_url( substr( $dir, strlen( $content_dir ) ) ) );
+		}
+		$abspath = trailingslashit( wp_normalize_path( ABSPATH ) );
+		if ( 0 === strpos( $dir, $abspath ) ) {
+			return trailingslashit( site_url( substr( $dir, strlen( $abspath ) ) ) );
+		}
+		return '';
+	}
+
+	/**
+	 * The root that provides a template slug, or null when none does.
+	 *
+	 * @return array{dir:string,url:string,source:string}|null
+	 */
+	public function get_template_root( string $slug ): ?array {
+		if ( '' === $slug || $slug !== basename( $slug ) ) { return null; }
+		foreach ( $this->get_template_roots() as $root ) {
+			if ( file_exists( $root['dir'] . $slug . '/pztp-template-info.php' ) ) {
+				return $root;
+			}
+		}
+		return null;
+	}
+
+	/**
 	 * Return all discovered template slugs → info arrays.
 	 *
 	 * @return array<string, array>
 	 */
 	public function get_available_templates(): array {
-		$dirs      = apply_filters( 'pizzatier_template_dirs', [ PIZZATIER_TEMPLATES_DIR ] );
 		$templates = [];
 
-		foreach ( $dirs as $dir ) {
-			if ( ! is_dir( $dir ) ) { continue; }
-			foreach ( glob( trailingslashit( $dir ) . '*', GLOB_ONLYDIR ) as $template_dir ) {
+		foreach ( $this->get_template_roots() as $root ) {
+			$found = glob( $root['dir'] . '*', GLOB_ONLYDIR );
+			if ( ! is_array( $found ) ) { continue; }
+			foreach ( $found as $template_dir ) {
+				$slug = basename( $template_dir );
+				// Higher-precedence roots come first and win.
+				if ( isset( $templates[ $slug ] ) ) { continue; }
 				$info_file = trailingslashit( $template_dir ) . 'pztp-template-info.php';
 				if ( ! file_exists( $info_file ) ) { continue; }
 				$info = include $info_file;
 				if ( is_array( $info ) ) {
-					$slug              = basename( $template_dir );
 					$templates[ $slug ] = $info;
 				}
 			}
@@ -79,7 +152,9 @@ class TemplateLoader {
 	 */
 	public function get_template_file( string $filename, string $slug = '' ): string {
 		if ( ! $slug ) { $slug = $this->get_active_slug(); }
-		return PIZZATIER_TEMPLATES_DIR . $slug . '/' . $filename;
+		$root = $this->get_template_root( $slug );
+		$base = $root ? $root['dir'] : PIZZATIER_TEMPLATES_DIR;
+		return $base . $slug . '/' . $filename;
 	}
 
 	/**
@@ -87,7 +162,9 @@ class TemplateLoader {
 	 */
 	public function get_template_url( string $filename, string $slug = '' ): string {
 		if ( ! $slug ) { $slug = $this->get_active_slug(); }
-		return PIZZATIER_TEMPLATES_URL . $slug . '/' . $filename;
+		$root = $this->get_template_root( $slug );
+		$base = ( $root && '' !== $root['url'] ) ? $root['url'] : PIZZATIER_TEMPLATES_URL;
+		return $base . $slug . '/' . $filename;
 	}
 
 	/**
@@ -113,19 +190,27 @@ class TemplateLoader {
 	}
 
 	/**
-	 * Confirm path is inside the templates directory (traversal guard).
+	 * Confirm path is inside one of the template roots (traversal guard).
 	 * Returns false and logs a debug notice if the directory doesn't exist.
 	 */
 	private function is_safe_path( string $path ): bool {
-		$real_base = realpath( PIZZATIER_TEMPLATES_DIR );
-		$real_dir  = realpath( dirname( $path ) );
-		if ( ! $real_base || ! $real_dir ) {
-			if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
-				// phpcs:ignore WordPress.PHP.DevelopmentFunctions
-				error_log( '[PizzaTier] TemplateLoader::is_safe_path() — path not found or outside templates dir: ' . $path );
+		$real_dir = realpath( dirname( $path ) );
+		if ( $real_dir ) {
+			$real_dir = trailingslashit( wp_normalize_path( $real_dir ) );
+			foreach ( $this->get_template_roots() as $root ) {
+				$real_base = realpath( $root['dir'] );
+				if ( ! $real_base ) { continue; }
+				$real_base = trailingslashit( wp_normalize_path( $real_base ) );
+				// Strictly below the root: a template's own folder, never the root.
+				if ( $real_dir !== $real_base && 0 === strpos( $real_dir, $real_base ) ) {
+					return true;
+				}
 			}
-			return false;
 		}
-		return strpos( $real_dir, $real_base ) === 0;
+		if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+			// phpcs:ignore WordPress.PHP.DevelopmentFunctions
+			error_log( '[PizzaTier] TemplateLoader::is_safe_path() — path not found or outside template dirs: ' . $path );
+		}
+		return false;
 	}
 }

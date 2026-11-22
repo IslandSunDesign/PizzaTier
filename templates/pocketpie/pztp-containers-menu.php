@@ -125,6 +125,7 @@ if ( $show_tabs_raw ) {
 $query_base = [
     'posts_per_page' => -1,
     'post_status'    => 'publish',
+    'has_password'   => false, // Password-protected layers are not on the public menu (2.4.3).
     'orderby'        => 'menu_order title',
     'order'          => 'ASC',
 ];
@@ -473,7 +474,7 @@ $summary_rows = [
             <div class="pp-cq-pizza__controls">
                 <?php if ( $pp_show_reset ) : ?>
                 <button type="button" class="pp-cq-reset"
-                        onclick="ClearPizza();window['<?php echo esc_js( $pv ); ?>']&&window['<?php echo esc_js( $pv ); ?>'].resetAll();"
+                        onclick="window['<?php echo esc_js( $pv ); ?>']&&window['<?php echo esc_js( $pv ); ?>'].resetAll();"
                         title="<?php esc_attr_e( 'Reset', 'pizzatier' ); ?>">&#8635;</button>
                 <?php endif; ?>
             </div>
@@ -559,7 +560,7 @@ $summary_rows = [
         <div class="pp-ld-controls">
             <?php if ( $pp_show_reset ) : ?>
             <button type="button" class="pp-btn pp-btn--ghost pp-btn--sm"
-                    onclick="ClearPizza();window['<?php echo esc_js( $pv ); ?>']&&window['<?php echo esc_js( $pv ); ?>'].resetAll();">
+                    onclick="window['<?php echo esc_js( $pv ); ?>']&&window['<?php echo esc_js( $pv ); ?>'].resetAll();">
                 &#8635; <?php esc_html_e( 'Reset', 'pizzatier' ); ?>
             </button>
             <?php endif; ?>
@@ -612,7 +613,7 @@ $summary_rows = [
                 </span>
                 <?php if ( $pp_show_reset ) : ?>
                 <button type="button" class="pp-sd-reset"
-                        onclick="ClearPizza();window['<?php echo esc_js( $pv ); ?>']&&window['<?php echo esc_js( $pv ); ?>'].resetAll();">&#8635;</button>
+                        onclick="window['<?php echo esc_js( $pv ); ?>']&&window['<?php echo esc_js( $pv ); ?>'].resetAll();">&#8635;</button>
                 <?php endif; ?>
             </div>
         </div>
@@ -722,7 +723,7 @@ $summary_rows = [
             <div class="pp-sp-sheet__actions">
                 <?php if ( $pp_show_reset ) : ?>
                 <button type="button" class="pp-btn pp-btn--ghost pp-btn--sm"
-                        onclick="ClearPizza();window['<?php echo esc_js( $pv ); ?>']&&window['<?php echo esc_js( $pv ); ?>'].resetAll();">
+                        onclick="window['<?php echo esc_js( $pv ); ?>']&&window['<?php echo esc_js( $pv ); ?>'].resetAll();">
                     &#8635; <?php esc_html_e( 'Reset', 'pizzatier' ); ?>
                 </button>
                 <?php endif; ?>
@@ -788,7 +789,7 @@ $summary_rows = [
             <div class="pp-modal__summary-actions">
                 <!-- Action bar moved to root level below -->
                 <button type="button" class="pp-btn pp-btn--ghost pp-btn--sm"
-                        onclick="ClearPizza();window['<?php echo esc_js( $pv ); ?>']&&window['<?php echo esc_js( $pv ); ?>'].resetAll();window['<?php echo esc_js( $pv ); ?>']&&window['<?php echo esc_js( $pv ); ?>'].closeModal('<?php echo esc_attr( $ii ); ?>')">
+                        onclick="window['<?php echo esc_js( $pv ); ?>']&&window['<?php echo esc_js( $pv ); ?>'].resetAll();window['<?php echo esc_js( $pv ); ?>']&&window['<?php echo esc_js( $pv ); ?>'].closeModal('<?php echo esc_attr( $ii ); ?>')">
                     &#8635; <?php esc_html_e( 'Start Over', 'pizzatier' ); ?>
                 </button>
             </div>

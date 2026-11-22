@@ -1,0 +1,90 @@
+/* PizzaTier Topping Multiplier — admin */
+
+.pztm-wrap .pztm-lede {
+	font-size: 14px;
+	max-width: 720px;
+}
+
+.pztm-methods {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+	gap: 12px;
+	max-width: 900px;
+	margin: 16px 0 8px;
+}
+
+.pztm-method {
+	background: #fff;
+	border: 1px solid #dcdcde;
+	border-left: 4px solid #d63638;
+	border-radius: 4px;
+	padding: 4px 16px 8px;
+}
+
+.pztm-method h2 {
+	font-size: 14px;
+	margin: 12px 0 4px;
+}
+
+.pztm-method p {
+	margin-top: 0;
+}
+
+.pztm-radio {
+	display: inline-block;
+	margin: 2px 0;
+}
+
+.pztm-inline {
+	margin-left: 6px;
+}
+
+.pztm-inline[hidden],
+.pztm-box [hidden] {
+	display: none !important;
+}
+
+.pztm-muted {
+	color: #646970;
+}
+
+.pztm-overview {
+	max-width: 900px;
+	margin-top: 8px;
+}
+
+/* Meta box */
+
+.pztm-box .pztm-row {
+	margin: 0 0 14px;
+}
+
+.pztm-box .pztm-pricing {
+	margin: 6px 0 4px;
+}
+
+.pztm-levels {
+	border-collapse: collapse;
+	margin-top: 6px;
+}
+
+.pztm-levels th {
+	text-align: left;
+	font-weight: 600;
+	padding: 4px 12px 4px 0;
+	white-space: nowrap;
+}
+
+.pztm-levels td {
+	padding: 4px 0;
+}
+
+.pztm-levels select {
+	min-width: 240px;
+}
+
+/* 2.4.1: room for the "No limit" placeholder. */
+#pztm-default-max,
+#pztm-max {
+	width: 7.5em;
+}

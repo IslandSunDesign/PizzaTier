@@ -203,9 +203,11 @@ class BlockRegistrar {
 	 */
 	public function render_builder( array $atts ): string {
 
-		// Detect block editor / REST preview context. The block-renderer
-		// endpoint runs as a REST request, which always defines REST_REQUEST.
-		$is_editor_preview = $this->is_rest_request();
+		// Detect the block editor preview: the block-renderer endpoint, or
+		// any REST request made in the edit context. Other REST requests (a
+		// headless front end rendering post content, for example) get the
+		// real builder rather than the editor placeholder.
+		$is_editor_preview = $this->is_editor_preview_request();
 
 		if ( $is_editor_preview ) {
 			return $this->editor_placeholder( $atts );
@@ -376,6 +378,36 @@ class BlockRegistrar {
 	 */
 	private function is_rest_request(): bool {
 		return defined( 'REST_REQUEST' ) && REST_REQUEST;
+	}
+
+	/**
+	 * Whether this is a block editor preview request.
+	 *
+	 * True for the REST block-renderer endpoint (/wp/v2/block-renderer/…) and
+	 * for any REST request made with context=edit.
+	 */
+	private function is_editor_preview_request(): bool {
+		if ( ! $this->is_rest_request() ) {
+			return false;
+		}
+
+		// phpcs:disable WordPress.Security.NonceVerification.Recommended -- Read-only context detection, no state change.
+		$context = isset( $_REQUEST['context'] ) ? sanitize_key( wp_unslash( (string) $_REQUEST['context'] ) ) : '';
+		if ( 'edit' === $context ) {
+			return true;
+		}
+
+		$route = '';
+		if ( isset( $GLOBALS['wp'] ) && is_object( $GLOBALS['wp'] ) && ! empty( $GLOBALS['wp']->query_vars['rest_route'] ) ) {
+			$route = (string) $GLOBALS['wp']->query_vars['rest_route'];
+		} elseif ( isset( $_GET['rest_route'] ) ) {
+			$route = sanitize_text_field( wp_unslash( (string) $_GET['rest_route'] ) );
+		} elseif ( isset( $_SERVER['REQUEST_URI'] ) ) {
+			$route = sanitize_text_field( wp_unslash( (string) $_SERVER['REQUEST_URI'] ) );
+		}
+		// phpcs:enable WordPress.Security.NonceVerification.Recommended
+
+		return false !== strpos( $route, '/wp/v2/block-renderer' );
 	}
 
 	/**

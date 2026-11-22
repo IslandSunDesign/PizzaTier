@@ -22,19 +22,9 @@ class ShortcodeGenerator {
 		$cuts     = get_posts( array_merge( $q_args, [ 'post_type' => 'pizzatier_cuts'     ] ) );
 		$sizes    = get_posts( array_merge( $q_args, [ 'post_type' => 'pizzatier_sizes'    ] ) );
 
-		// Template list
-		$plugin_tpl_dir = PIZZATIER_TEMPLATES_DIR;
-		$theme_tpl_dir  = get_stylesheet_directory() . '/pzttemplates/';
-		$templates      = [];
-		foreach ( [ $plugin_tpl_dir, $theme_tpl_dir ] as $dir ) {
-			if ( is_dir( $dir ) ) {
-				foreach ( (array) scandir( $dir ) as $f ) {
-					if ( $f !== '.' && $f !== '..' && is_dir( $dir . $f ) ) {
-						$templates[] = $f;
-					}
-				}
-			}
-		}
+		// Template list — the same discovery the loader uses, so every listed
+		// template can be rendered (child theme, parent theme, then plugin).
+		$templates = array_keys( ( new \PizzaTier\Template\TemplateLoader() )->get_available_templates() );
 
 		$all_tabs = [ 'crust', 'sauce', 'cheese', 'toppings', 'drizzle', 'slicing', 'yourpizza' ];
 		$layer_types = [ 'topping', 'crust', 'sauce', 'cheese', 'drizzle', 'cut' ];
@@ -108,7 +98,7 @@ class ShortcodeGenerator {
 							<label>Default Crust</label>
 							<select class="pscg-select" id="b-default-crust">
 								<option value="">— use plugin default —</option>
-								<?php foreach ( $crusts as $p ) : $s = sanitize_title( $p->post_title ); ?>
+								<?php foreach ( $crusts as $p ) : $s = $p->post_name; ?>
 								<option value="<?php echo esc_attr( $s ); ?>"><?php echo esc_html( $p->post_title ); ?></option>
 								<?php endforeach; ?>
 							</select>
@@ -117,7 +107,7 @@ class ShortcodeGenerator {
 							<label>Default Sauce</label>
 							<select class="pscg-select" id="b-default-sauce">
 								<option value="">— use plugin default —</option>
-								<?php foreach ( $sauces as $p ) : $s = sanitize_title( $p->post_title ); ?>
+								<?php foreach ( $sauces as $p ) : $s = $p->post_name; ?>
 								<option value="<?php echo esc_attr( $s ); ?>"><?php echo esc_html( $p->post_title ); ?></option>
 								<?php endforeach; ?>
 							</select>
@@ -126,7 +116,7 @@ class ShortcodeGenerator {
 							<label>Default Cheese</label>
 							<select class="pscg-select" id="b-default-cheese">
 								<option value="">— use plugin default —</option>
-								<?php foreach ( $cheeses as $p ) : $s = sanitize_title( $p->post_title ); ?>
+								<?php foreach ( $cheeses as $p ) : $s = $p->post_name; ?>
 								<option value="<?php echo esc_attr( $s ); ?>"><?php echo esc_html( $p->post_title ); ?></option>
 								<?php endforeach; ?>
 							</select>
@@ -207,7 +197,7 @@ class ShortcodeGenerator {
 							<label>Crust</label>
 							<select class="pscg-select" id="s-crust">
 								<option value="">— none —</option>
-								<?php foreach ( $crusts as $p ) : $sl = sanitize_title( $p->post_title ); ?>
+								<?php foreach ( $crusts as $p ) : $sl = $p->post_name; ?>
 								<option value="<?php echo esc_attr( $sl ); ?>"><?php echo esc_html( $p->post_title ); ?></option>
 								<?php endforeach; ?>
 							</select>
@@ -216,7 +206,7 @@ class ShortcodeGenerator {
 							<label>Sauce</label>
 							<select class="pscg-select" id="s-sauce">
 								<option value="">— none —</option>
-								<?php foreach ( $sauces as $p ) : $sl = sanitize_title( $p->post_title ); ?>
+								<?php foreach ( $sauces as $p ) : $sl = $p->post_name; ?>
 								<option value="<?php echo esc_attr( $sl ); ?>"><?php echo esc_html( $p->post_title ); ?></option>
 								<?php endforeach; ?>
 							</select>
@@ -225,7 +215,7 @@ class ShortcodeGenerator {
 							<label>Cheese</label>
 							<select class="pscg-select" id="s-cheese">
 								<option value="">— none —</option>
-								<?php foreach ( $cheeses as $p ) : $sl = sanitize_title( $p->post_title ); ?>
+								<?php foreach ( $cheeses as $p ) : $sl = $p->post_name; ?>
 								<option value="<?php echo esc_attr( $sl ); ?>"><?php echo esc_html( $p->post_title ); ?></option>
 								<?php endforeach; ?>
 							</select>
@@ -234,7 +224,7 @@ class ShortcodeGenerator {
 							<label>Drizzle</label>
 							<select class="pscg-select" id="s-drizzle">
 								<option value="">— none —</option>
-								<?php foreach ( $drizzles as $p ) : $sl = sanitize_title( $p->post_title ); ?>
+								<?php foreach ( $drizzles as $p ) : $sl = $p->post_name; ?>
 								<option value="<?php echo esc_attr( $sl ); ?>"><?php echo esc_html( $p->post_title ); ?></option>
 								<?php endforeach; ?>
 							</select>
@@ -243,7 +233,7 @@ class ShortcodeGenerator {
 							<label>Cut</label>
 							<select class="pscg-select" id="s-cut">
 								<option value="">— none —</option>
-								<?php foreach ( $cuts as $p ) : $sl = sanitize_title( $p->post_title ); ?>
+								<?php foreach ( $cuts as $p ) : $sl = $p->post_name; ?>
 								<option value="<?php echo esc_attr( $sl ); ?>"><?php echo esc_html( $p->post_title ); ?></option>
 								<?php endforeach; ?>
 							</select>
@@ -253,7 +243,7 @@ class ShortcodeGenerator {
 					<div class="pscg-field pscg-field--full">
 						<label>Toppings <span class="pscg-hint">Hold Ctrl / Cmd to select multiple</span></label>
 						<select class="pscg-select" id="s-toppings" multiple size="6">
-							<?php foreach ( $toppings as $p ) : $sl = sanitize_title( $p->post_title ); ?>
+							<?php foreach ( $toppings as $p ) : $sl = $p->post_name; ?>
 							<option value="<?php echo esc_attr( $sl ); ?>"><?php echo esc_html( $p->post_title ); ?></option>
 							<?php endforeach; ?>
 						</select>

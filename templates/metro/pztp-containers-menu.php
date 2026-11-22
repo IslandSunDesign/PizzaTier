@@ -157,6 +157,7 @@ if ( $show_tabs_raw ) {
 $query_base = [
 	'posts_per_page' => -1,
 	'post_status'    => 'publish',
+	'has_password'   => false, // Password-protected layers are not on the public menu (2.4.3).
 	'orderby'        => 'menu_order title',
 	'order'          => 'ASC',
 ];
@@ -393,7 +394,7 @@ $section_meta = [
 					<span class="mt-hero__count-word"><?php esc_html_e( 'toppings', 'pizzatier' ); ?></span>
 				</div>
 				<button type="button" class="mt-reset-btn"
-				        onclick="ClearPizza(); window['<?php echo esc_js( $mt_var ); ?>']&&window['<?php echo esc_js( $mt_var ); ?>'].resetAll();">
+				        onclick="window['<?php echo esc_js( $mt_var ); ?>']&&window['<?php echo esc_js( $mt_var ); ?>'].resetAll();">
 					<i class="fa fa-rotate-left"></i> <?php esc_html_e( 'Reset', 'pizzatier' ); ?>
 				</button>
 			</div>
@@ -441,7 +442,7 @@ $section_meta = [
 					<span class="mt-hero__count-word"><?php esc_html_e( 'toppings', 'pizzatier' ); ?></span>
 				</div>
 				<button type="button" class="mt-reset-btn"
-				        onclick="ClearPizza(); window['<?php echo esc_js( $mt_var ); ?>']&&window['<?php echo esc_js( $mt_var ); ?>'].resetAll();">
+				        onclick="window['<?php echo esc_js( $mt_var ); ?>']&&window['<?php echo esc_js( $mt_var ); ?>'].resetAll();">
 					<i class="fa fa-rotate-left"></i> <?php esc_html_e( 'Reset', 'pizzatier' ); ?>
 				</button>
 			</div>
@@ -608,7 +609,7 @@ $section_meta = [
 				<span class="mt-tray__empty"><?php esc_html_e( 'Start selecting below ↓', 'pizzatier' ); ?></span>
 			</div>
 			<button type="button" class="mt-tray__reset"
-			        onclick="ClearPizza(); window['<?php echo esc_js( $mt_var ); ?>']&&window['<?php echo esc_js( $mt_var ); ?>'].resetAll();"
+			        onclick="window['<?php echo esc_js( $mt_var ); ?>']&&window['<?php echo esc_js( $mt_var ); ?>'].resetAll();"
 			        title="<?php esc_attr_e( 'Reset pizza', 'pizzatier' ); ?>">
 				<i class="fa fa-rotate-left"></i>
 			</button>

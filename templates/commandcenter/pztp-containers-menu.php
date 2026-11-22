@@ -117,6 +117,7 @@ if ( $show_tabs_raw ) {
 $_q_base  = [
     'posts_per_page' => -1,
     'post_status'    => 'publish',
+    'has_password'   => false, // Password-protected layers are not on the public menu (2.4.3).
     'orderby'        => [ 'menu_order' => 'ASC', 'title' => 'ASC' ],
 ];
 $crusts   = (array) apply_filters( 'pizzatier_query_args_crusts',   get_posts( array_merge( $_q_base, [ 'post_type' => 'pizzatier_crusts'   ] ) ), 'crusts'   );
@@ -434,7 +435,7 @@ do_action( 'pizzatier_before_builder', $instance_id, $template_slug );
                 </div>
                 <div class="cc-canvas-reset">
                     <button type="button" class="cc-ghost-btn"
-                            onclick="ClearPizza(); window['<?php echo esc_js( $cc_var ); ?>']&&window['<?php echo esc_js( $cc_var ); ?>'].resetAll();">
+                            onclick="window['<?php echo esc_js( $cc_var ); ?>']&&window['<?php echo esc_js( $cc_var ); ?>'].resetAll();">
                         <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M3.5 8A4.5 4.5 0 1 1 8 12.5H5"/><polyline points="5 10 5 12.5 2.5 12.5"/></svg>
                         <?php esc_html_e( 'Reset', 'pizzatier' ); ?>
                     </button>
@@ -680,7 +681,7 @@ do_action( 'pizzatier_before_builder', $instance_id, $template_slug );
                         if ( $show_start_over ) :
                         ?>
                         <button type="button" class="cc-ghost-btn"
-                                onclick="ClearPizza(); window['<?php echo esc_js( $cc_var ); ?>']&&window['<?php echo esc_js( $cc_var ); ?>'].resetAll();">
+                                onclick="window['<?php echo esc_js( $cc_var ); ?>']&&window['<?php echo esc_js( $cc_var ); ?>'].resetAll();">
                             <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M3.5 8A4.5 4.5 0 1 1 8 12.5H5"/><polyline points="5 10 5 12.5 2.5 12.5"/></svg>
                             <?php echo esc_html( $start_over_label ); ?>
                         </button>

@@ -474,8 +474,25 @@
 		return parseInt( CFG.productId, 10 ) > 0 ? parseInt( CFG.productId, 10 ) : 0;
 	}
 
+	// One key per checkout attempt. A retry after a lost response re-sends the
+	// same key, so the server returns the first result instead of placing a
+	// second order (2.4.3). Any definitive answer from the server ends the
+	// attempt and the next submit gets a fresh key.
+	var attemptKey = '';
+
+	function newAttemptKey() {
+		var bytes = new Uint8Array( 16 );
+		if ( window.crypto && window.crypto.getRandomValues ) {
+			window.crypto.getRandomValues( bytes );
+		} else {
+			for ( var i = 0; i < bytes.length; i++ ) { bytes[ i ] = Math.floor( Math.random() * 256 ); }
+		}
+		return Array.prototype.map.call( bytes, function ( b ) { return ( '0' + b.toString( 16 ) ).slice( -2 ); } ).join( '' );
+	}
+
 	function submitOrder() {
 		if ( ! validate() ) { return; }
+		if ( ! attemptKey ) { attemptKey = newAttemptKey(); }
 
 		var layers = normaliseState( readRawState( activeInstance ) );
 		if ( ! layers.length ) {
@@ -490,7 +507,9 @@
 			instance_id: activeInstance,
 			template: CFG.template || '',
 			quantity: ui.quantity,
-			notes: fieldValue( 'customer_note' ),
+			// The panel's note field is the order-level note and is sent once,
+			// as customer_note below. Sending it here too stored it twice.
+			// Item notes are left to the server (e.g. extra-portion summaries).
 			layers: layers.map( function ( layer ) {
 				return { type: layer.type, slug: layer.slug, coverage: layer.coverage };
 			} ),
@@ -500,6 +519,7 @@
 		var body = new window.FormData();
 		body.append( 'action', CFG.action );
 		body.append( 'nonce', CFG.nonce );
+		body.append( 'idempotency_key', attemptKey );
 		body.append( 'items', JSON.stringify( [ item ] ) );
 		body.append( 'template', CFG.template || '' );
 		body.append( 'page_id', String( CFG.pageId || 0 ) );
@@ -532,11 +552,19 @@
 				setSubmitting( button, false );
 
 				if ( payload && payload.success ) {
+					attemptKey = '';
 					showConfirmation( payload.data || {} );
 					return;
 				}
 
 				var data = ( payload && payload.data ) ? payload.data : {};
+
+				// A JSON answer other than "still in progress" is final for this
+				// attempt. No JSON at all (a proxy error page) may mean the order
+				// went through, so the key is kept for the retry.
+				if ( payload && data.code !== 'in_progress' ) {
+					attemptKey = '';
+				}
 
 				if ( data.fields && typeof data.fields === 'object' ) {
 					for ( var name in data.fields ) {
@@ -622,7 +650,20 @@
 		var note = document.createElement( 'p' );
 		note.className = 'pzt-order-done__route';
 
-		if ( data.cart_added ) {
+		if ( data.cart_added && warnings.length ) {
+			// Partial success: some pizzas reached the cart, some did not.
+			note.className += ' pzt-order-done__route--warning';
+			note.appendChild( document.createTextNode( warnings[ 0 ] ) );
+
+			if ( data.cart_url && ! data.redirect ) {
+				note.appendChild( document.createTextNode( ' ' ) );
+				var partialLink = document.createElement( 'a' );
+				partialLink.className = 'pzt-order-done__cart-link';
+				partialLink.href = data.cart_url;
+				partialLink.textContent = I18N.goToCart || 'Go to cart';
+				note.appendChild( partialLink );
+			}
+		} else if ( data.cart_added ) {
 			note.appendChild( document.createTextNode( I18N.addedToCart || 'Your pizza has also been added to your cart.' ) );
 
 			if ( data.cart_url && ! data.redirect ) {

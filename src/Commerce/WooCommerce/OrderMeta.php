@@ -161,9 +161,10 @@ class OrderMeta {
 		}
 
 		// Order-again pre-fill — intercept WC's "order again" flow.
-		if ( (bool) pizzatier_get_option( 'allow_reorder', false ) ) {
-			add_filter( 'woocommerce_order_again_redirect', [ $this, 'handle_order_again_redirect' ], 10, 2 );
-		}
+		// "Order again": rebuild each pizza's configuration and re-price it at
+		// today's prices. Before 2.4.0 this hooked a filter WooCommerce does
+		// not have, so re-ordered pizzas entered the cart empty at base price.
+		add_filter( 'woocommerce_order_again_cart_item_data', [ $this, 'order_again_cart_item_data' ], 10, 3 );
 	}
 
 	// -------------------------------------------------------------------------
@@ -1049,35 +1050,96 @@ class OrderMeta {
 	// -------------------------------------------------------------------------
 
 	/**
-	 * Append an "Edit pizza" link to the cart item name for pizza products.
+	 * Signed "Edit pizza" URL for a configured pizza cart line ('' otherwise).
+	 * Shared by the classic cart and the block cart (Store API extension data).
 	 *
-	 * The link encodes the current configuration (size + layers) into a
-	 * signed URL parameter so the product page can rehydrate the builder.
-	 * The cart item is removed from the cart once the customer clicks Edit,
-	 * so they are effectively replacing it with a new configuration.
-	 *
-	 * @param string $name           Cart item name HTML.
-	 * @param array  $cart_item      Cart item data.
-	 * @param string $cart_item_key  Cart item key.
-	 * @return string
+	 * @param array  $cart_item     Cart item data.
+	 * @param string $cart_item_key Cart item key.
 	 */
-	public function append_cart_edit_link( string $name, array $cart_item, string $cart_item_key ): string {
+	/**
+	 * The signed cart-edit configuration on this request, verified and
+	 * sanitised, or null when there is none or it does not verify.
+	 *
+	 * The builder used to decode ?pizzatier_commerce_cfg= in the browser and
+	 * trust it, so a crafted link could inject markup through the coverage
+	 * and slug fields (DOM XSS, fixed in 2.4.3). The signature is now checked
+	 * here and the builder receives only this cleaned copy.
+	 *
+	 * @return array{s:string,l:array,n:string}|null
+	 */
+	public static function verified_prefill(): ?array {
+		// phpcs:disable WordPress.Security.NonceVerification.Recommended -- Read-only; authenticity comes from the HMAC below.
+		if ( empty( $_GET['pizzatier_commerce_cfg'] ) || empty( $_GET['pizzatier_commerce_sig'] ) ) {
+			return null;
+		}
+		$payload = sanitize_text_field( wp_unslash( $_GET['pizzatier_commerce_cfg'] ) );
+		$sig     = sanitize_key( wp_unslash( $_GET['pizzatier_commerce_sig'] ) );
+		// phpcs:enable WordPress.Security.NonceVerification.Recommended
+
+		if ( strlen( $payload ) > 20000 || ! preg_match( '/^[A-Za-z0-9_\-]+$/', $payload ) ) {
+			return null;
+		}
+		$expected = substr( hash_hmac( 'sha256', $payload, wp_salt( 'auth' ) ), 0, 16 );
+		if ( ! hash_equals( $expected, $sig ) ) {
+			return null;
+		}
+
+		// phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_decode -- Decodes the signed cart configuration; parsed only as JSON.
+		$json = base64_decode( strtr( $payload, '-_', '+/' ), true );
+		$cfg  = is_string( $json ) ? json_decode( $json, true ) : null;
+		if ( ! is_array( $cfg ) ) {
+			return null;
+		}
+
+		$types  = [ 'crust', 'sauce', 'cheese', 'drizzle', 'cut', 'topping' ];
+		$layers = [];
+		foreach ( array_slice( (array) ( $cfg['l'] ?? [] ), 0, 100 ) as $l ) {
+			if ( ! is_array( $l ) ) {
+				continue;
+			}
+			$id = sanitize_title( (string) ( $l['id'] ?? '' ) );
+			if ( '' === $id ) {
+				continue;
+			}
+			$type = rtrim( strtolower( sanitize_key( (string) ( $l['lt'] ?? '' ) ) ), 's' );
+			if ( 'slicing' === $type ) {
+				$type = 'cut';
+			}
+			$portion  = self::canonical_portion( (string) ( $l['po'] ?? '' ) );
+			$layers[] = [
+				'id' => $id,
+				'fr' => \PizzaTier\Commerce\LayerResolver::fraction_of( (string) ( $l['fr'] ?? '' ) ),
+				'po' => $portion,
+				'pl' => '' !== $portion ? self::portion_label( $portion ) : '',
+				'lt' => in_array( $type, $types, true ) ? $type : '',
+				'nm' => sanitize_text_field( (string) ( $l['nm'] ?? '' ) ),
+			];
+		}
+
+		return [
+			's' => substr( sanitize_text_field( (string) ( $cfg['s'] ?? '' ) ), 0, 100 ),
+			'l' => $layers,
+			'n' => substr( sanitize_textarea_field( (string) ( $cfg['n'] ?? '' ) ), 0, 2000 ),
+		];
+	}
+
+	public static function cart_edit_url( array $cart_item, string $cart_item_key ): string {
 		if ( empty( $cart_item[ self::CART_SIZE ] ) ) {
-			return $name;
+			return '';
 		}
 
 		$product_id = (int) ( $cart_item['product_id'] ?? 0 );
 		if ( ! $product_id ) {
-			return $name;
+			return '';
 		}
 
 		$product = wc_get_product( $product_id );
 		if ( ! $product || 'pizza' !== $product->get_type() ) {
-			return $name;
+			return '';
 		}
 
 		// Build the encoded configuration payload.
-		$edit_layers = $this->resolve_layers_for_display(
+		$edit_layers = ( new self() )->resolve_layers_for_display(
 			$cart_item[ self::CART_LAYERS ]       ?? [],
 			$cart_item[ self::CART_INPUT_LAYERS ] ?? []
 		);
@@ -1096,11 +1158,13 @@ class OrderMeta {
 			'n' => $cart_item[ self::CART_ORDER_NOTE ] ?? '',
 		];
 
-		// phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_encode -- Builds a data: URI from inline SVG markup defined above; nothing is decoded or executed.
-		$payload   = base64_encode( wp_json_encode( $config ) );
+		// URL-safe base64: a raw '+' arrived as a space, breaking the
+		// signature check and the JS decode (2.4.0).
+		// phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_encode -- Encodes the cart configuration for the edit link; it is HMAC-signed and only ever parsed as JSON.
+		$payload   = rtrim( strtr( base64_encode( wp_json_encode( $config ) ), '+/', '-_' ), '=' );
 		$signature = hash_hmac( 'sha256', $payload, wp_salt( 'auth' ) );
 
-		$edit_url = add_query_arg(
+		return add_query_arg(
 			[
 				'pizzatier_commerce_edit_key'  => $cart_item_key,
 				'pizzatier_commerce_cfg'       => $payload,
@@ -1109,6 +1173,26 @@ class OrderMeta {
 			],
 			get_permalink( $product_id )
 		);
+	}
+
+	/**
+	 * Append an "Edit pizza" link to the cart item name for pizza products.
+	 *
+	 * The link encodes the current configuration (size + layers) into a
+	 * signed URL parameter so the product page can rehydrate the builder.
+	 * The cart item is removed from the cart once the customer clicks Edit,
+	 * so they are effectively replacing it with a new configuration.
+	 *
+	 * @param string $name           Cart item name HTML.
+	 * @param array  $cart_item      Cart item data.
+	 * @param string $cart_item_key  Cart item key.
+	 * @return string
+	 */
+	public function append_cart_edit_link( string $name, array $cart_item, string $cart_item_key ): string {
+		$edit_url = self::cart_edit_url( $cart_item, $cart_item_key );
+		if ( '' === $edit_url ) {
+			return $name;
+		}
 
 		$edit_link = sprintf(
 			' <a href="%s" class="pztc-cart-edit-link">%s</a>',
@@ -1156,90 +1240,44 @@ class OrderMeta {
 	// -------------------------------------------------------------------------
 
 	/**
-	 * When a customer clicks "Order Again", redirect them to the pizza product
-	 * page with their previous configuration pre-filled, rather than silently
-	 * adding to the cart (which would skip the builder entirely).
+	 * Rebuild a pizza's cart data when a customer clicks "Order again".
 	 *
-	 * WooCommerce fires woocommerce_order_again_redirect after adding all
-	 * items from the previous order. We intercept and redirect to the first
-	 * pizza product page instead, removing it from the cart first.
-	 *
-	 * @param string    $redirect  Default redirect URL (usually cart page).
-	 * @param \WC_Order $order     The original order being repeated.
-	 * @return string
+	 * @param array                  $data  Cart item data so far.
+	 * @param \WC_Order_Item_Product $item  Order item.
+	 * @param \WC_Order              $order Order.
+	 * @return array
 	 */
-	public function handle_order_again_redirect( string $redirect, \WC_Order $order ): string {
-		// Find the first pizza line item in the order.
-		$pizza_item = null;
-		foreach ( $order->get_items() as $item ) {
-			if ( ! $item instanceof \WC_Order_Item_Product ) {
-				continue;
-			}
-			$size = $item->get_meta( self::META_SIZE );
-			if ( $size ) {
-				$pizza_item = $item;
-				break;
-			}
+	public function order_again_cart_item_data( $data, $item, $order ) {
+		if ( ! is_array( $data ) || ! $item instanceof \WC_Order_Item_Product ) {
+			return $data;
 		}
-
-		if ( ! $pizza_item ) {
-			return $redirect;
+		$size = (string) $item->get_meta( self::META_SIZE );
+		if ( '' === $size ) {
+			return $data;
 		}
-
-		$product_id = (int) $pizza_item->get_product_id();
-		if ( ! $product_id ) {
-			return $redirect;
+		$input = $item->get_meta( self::META_INPUT_LAYERS );
+		if ( ! is_array( $input ) || empty( $input ) ) {
+			$input = array_values( array_filter( (array) $item->get_meta( self::META_LAYERS ), function ( $l ) {
+				return is_array( $l ) && 0 !== strpos( (string) ( $l['layerId'] ?? '' ), '_' );
+			} ) );
 		}
-
-		$size   = (string) $pizza_item->get_meta( self::META_SIZE );
-		$layers = $this->resolve_layers_for_display(
-			$pizza_item->get_meta( self::META_LAYERS ),
-			$pizza_item->get_meta( self::META_INPUT_LAYERS )
-		);
-
-		if ( ! $size || empty( $layers ) ) {
-			return $redirect;
+		$product_id = (int) $item->get_product_id();
+		$calculator = new \PizzaTier\Commerce\PriceCalculator( new \PizzaTier\Commerce\PriceGrid\Grid() );
+		$result     = $calculator->calculate( $product_id, $size, $input );
+		if ( is_wp_error( $result ) ) {
+			return $data; // CartRules then asks the customer to rebuild it.
 		}
-
-		// Remove the item that WC just added to the cart (WC adds it before this hook fires).
-		if ( WC()->cart ) {
-			foreach ( WC()->cart->get_cart() as $key => $cart_item ) {
-				if ( (int) ( $cart_item['product_id'] ?? 0 ) === $product_id
-					&& ! empty( $cart_item[ self::CART_SIZE ] ) ) {
-					WC()->cart->remove_cart_item( $key );
-					break;
-				}
-			}
+		$layers = \PizzaTier\Commerce\LayerResolver::resolve( $input, $product_id );
+		$data[ self::CART_SIZE ]         = $size;
+		$data[ self::CART_LAYERS ]       = $result['breakdown'];
+		$data[ self::CART_INPUT_LAYERS ] = $layers;
+		$data[ self::CART_TOTAL ]        = (float) $result['total'];
+		$data[ self::CART_BASE_PRICE ]   = (float) ( $result['base_price'] ?? 0 );
+		$data[ self::CART_KEY ]          = md5( $product_id . $size . wp_json_encode( $layers ) );
+		$note = (string) $item->get_meta( self::META_ORDER_NOTE );
+		if ( '' !== $note ) {
+			$data[ self::CART_ORDER_NOTE ] = $note;
 		}
-
-		// Build the pre-fill payload (same format as cart edit).
-		$note   = (string) $pizza_item->get_meta( self::META_ORDER_NOTE );
-		$config = [
-			's' => $size,
-			'l' => array_map( function ( array $layer ) {
-				return [
-					'id' => $layer['layerId']   ?? '',
-					'fr' => $layer['fraction']   ?? 'Whole',
-					'po' => $layer['portion']      ?? '',
-					'pl' => $layer['portionLabel'] ?? '',
-					'lt' => $layer['layerType'] ?? '',
-					'nm' => $layer['layerName'] ?? '',
-				];
-			}, $layers ),
-			'n' => $note,
-		];
-
-		// phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_encode -- Builds a data: URI from inline SVG markup defined above; nothing is decoded or executed.
-		$payload   = base64_encode( wp_json_encode( $config ) );
-		$signature = hash_hmac( 'sha256', $payload, wp_salt( 'auth' ) );
-
-		return add_query_arg(
-			[
-				'pizzatier_commerce_cfg'       => $payload,
-				'pizzatier_commerce_sig'       => substr( $signature, 0, 16 ),
-				'pizzatier_commerce_reorder'   => '1',
-			],
-			get_permalink( $product_id )
-		);
+		return $data;
 	}
 }

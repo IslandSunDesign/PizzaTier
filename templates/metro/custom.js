@@ -29,23 +29,43 @@
                 }
                 return $stage;
             },
+            /** Live (not fading-out) layer div for an id. */
+            findLayer: function ($stage, layerId) {
+                if (!$stage || !$stage.length) { return $(); }
+                return $stage.find('.np-layer-div').filter(function () {
+                    return this.getAttribute('data-layer-id') === layerId && !$(this).hasClass('is-removing');
+                });
+            },
             setLayer: function ($stage, layerId, src, zIndex, cls, coverage) {
-                if (!$stage.length) { return; }
-                var $el = $stage.find('[data-layer-id="' + layerId + '"]');
-                if (!src) { $el.fadeOut(200, function () { $(this).remove(); }); return; }
+                if (!$stage || !$stage.length) { return; }
+                /* Skip nodes that are fading out: updating one in place left the
+                   new image inside a div that was deleted 200ms later. */
+                var $el = this.findLayer($stage, layerId);
+                if (!src) { this.removeLayer($stage, layerId); return; }
                 if (!$el.length) {
                     $el = $('<div class="np-layer-div" style="position:absolute;inset:0;"></div>').attr('data-layer-id', layerId);
+                    if (cls) { $el.addClass(cls); }
                     $stage.append($el);
                 }
-                $el.css('z-index', zIndex).html('<img src="' + src + '" style="width:100%;height:100%;object-fit:cover;opacity:0;" />');
-                $el.find('img').on('load', function () { $(this).css({ transition: 'opacity 0.3s', opacity: 1 }); });
+                $el.css('z-index', zIndex);
+                /* Update the existing <img> in place (rebuilding it wiped the
+                   coverage clip-path) and always apply this layer's coverage. */
+                var $img = $el.find('img');
+                if (!$img.length) {
+                    $img = $('<img alt="" style="width:100%;height:100%;object-fit:cover;opacity:0;" />');
+                    $img.on('load', function () { $(this).css({ transition: 'opacity 0.3s', opacity: 1 }); });
+                    $el.append($img);
+                }
+                if ($img.attr('src') !== src) { $img.attr('src', src); }
+                if ($img[0].complete && $img[0].naturalWidth) { $img.css({ opacity: 1 }); }
+                $img.css('clip-path', this.getCoverageClip(coverage || 'whole'));
             },
             removeLayer: function ($stage, layerId) {
-                $stage.find('[data-layer-id="' + layerId + '"]').fadeOut(200, function () { $(this).remove(); });
+                this.findLayer($stage, layerId).addClass('is-removing').fadeOut(200, function () { $(this).remove(); });
             },
             getCoverageClip: function (fraction) {
                 var clips = {
-                    'whole':                'circle(50%)',
+                    'whole':                'none',
                     'half-left':            'polygon(0 0,50% 0,50% 100%,0 100%)',
                     'half-right':           'polygon(50% 0,100% 0,100% 100%,50% 100%)',
                     'quarter-top-left':     'polygon(0 0,50% 0,50% 50%,0 50%)',
@@ -169,12 +189,37 @@
             }, 50);
         }
 
+        /* Single-quoted JS string inside a double-quoted HTML attribute. */
+        function _jsq(str) {
+            return _esc(String(str).replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/[\r\n\u2028\u2029]/g, ''));
+        }
+
         function _esc(str) {
             return String(str)
                 .replace(/&/g, '&amp;')
                 .replace(/</g, '&lt;')
                 .replace(/>/g, '&gt;')
                 .replace(/"/g, '&quot;');
+        }
+
+        /* ── Card lookup: by slug, else by matching layer image URL ── */
+        function _findCard(layerType, slug, url) {
+            var $all  = $find('.mt-card[data-layer="' + layerType + '"]');
+            var $card = $();
+            if (slug) {
+                $card = $all.filter(function () { return this.getAttribute('data-slug') === String(slug); });
+            }
+            if (!$card.length && url) {
+                $card = $all.filter(function () { return this.getAttribute('data-layer-img') === url; });
+            }
+            return $card.first();
+        }
+
+        /* Own card for a remove call; tray chips are not inside a card. */
+        function _cardFor(layerType, slug, triggerEl) {
+            var $card = triggerEl ? $(triggerEl).closest('.mt-card') : $();
+            if (!$card.length) { $card = _findCard(layerType, slug, ''); }
+            return $card;
         }
 
         /* ── Apply layer offsets from shortcode data attr ── */
@@ -206,7 +251,7 @@
                 var imgHtml = sel.thumb
                     ? '<img src="' + _esc(sel.thumb) + '" alt="' + _esc(sel.title) + '">'
                     : '';
-                var removeJS = "window['" + mtVarAttr + "']&&window['" + mtVarAttr + "'].removeBase('" + lt + "','" + _esc(sel.slug) + "',this)";
+                var removeJS = "window['" + _jsq(mtVarAttr) + "']&&window['" + _jsq(mtVarAttr) + "'].removeBase('" + _jsq(lt) + "','" + _jsq(sel.slug) + "',this)";
                 chips += '<div class="mt-chip" data-layer="' + lt + '" data-slug="' + _esc(sel.slug) + '">'
                        + imgHtml
                        + '<span>' + _esc(sel.title) + '</span>'
@@ -216,8 +261,8 @@
 
             $.each(state.toppings, function (slug, t) {
                 var imgHtml = t.thumb ? '<img src="' + _esc(t.thumb) + '" alt="' + _esc(t.title) + '">' : '';
-                var removeJS = "window['" + mtVarAttr + "']&&window['" + mtVarAttr + "'].removeTopping('pizzatier-topping-" + _esc(slug) + "','" + _esc(slug) + "',this)";
-                var covLabel = t.coverage ? ' <small>(' + t.coverage.replace('quarter-','Q').replace('half-left','L½').replace('half-right','R½') + ')</small>' : '';
+                var removeJS = "window['" + _jsq(mtVarAttr) + "']&&window['" + _jsq(mtVarAttr) + "'].removeTopping('pizzatier-topping-" + _jsq(slug) + "','" + _jsq(slug) + "',this)";
+                var covLabel = t.coverage ? ' <small>(' + _esc(t.coverage.replace('quarter-','Q').replace('half-left','L½').replace('half-right','R½')) + ')</small>' : '';
                 chips += '<div class="mt-chip" data-layer="toppings" data-slug="' + _esc(slug) + '">'
                        + imgHtml
                        + '<span>' + _esc(t.title) + covLabel + '</span>'
@@ -389,54 +434,53 @@
                 var $wrap  = $stage.closest('.np-pizza-stage-wrap');
                 if (!$wrap.length) { return; }
 
-                var applyBase = function (layerType, urlAttr, slugAttr, zIndex, cssClass) {
-                    var url  = $wrap.data(urlAttr)  || '';
-                    var slug = $wrap.data(slugAttr) || '';
+                /* Every base type (drizzle / cut included) goes through the same
+                   path so the default is in state (priced) and its card selected.
+                   crust/sauce/cheese fall back to the first card when no default. */
+                var applyBase = function (layerType, useFirstFallback) {
+                    var url   = $wrap.attr('data-default-' + layerType) || '';
+                    var slug  = $wrap.attr('data-default-' + layerType + '-slug') || '';
+                    var $card = _findCard(layerType, slug, url);
 
-                    if (url) {
-                        PizzaStack.setLayer($stage, 'layer-' + layerType, url, zIndex, cssClass);
-                        state[layerType === 'cut' ? 'cut' : layerType] = {
-                            slug: slug, title: slug, layerImg: url, thumb: ''
-                        };
-                        if (slug) {
-                            _markCard( $find('.mt-card[data-layer="' + layerType + '"][data-slug="' + slug + '"]'), true );
-                        }
-                    } else {
-                        var $first = $find('.mt-card[data-layer="' + layerType + '"]').first();
-                        if ($first.length) {
-                            var fSlug  = $first.data('slug')      || '';
-                            var fImg   = $first.data('layer-img') || '';
-                            var fThumb = $first.data('thumb')     || '';
-                            if (fImg) {
-                                PizzaStack.setLayer($stage, 'layer-' + layerType, fImg, zIndex, cssClass);
-                                state[layerType === 'cut' ? 'cut' : layerType] = {
-                                    slug: fSlug, title: fSlug, layerImg: fImg, thumb: fThumb
-                                };
-                                _markCard($first, true);
-                            }
-                        }
+                    if (!url && useFirstFallback) {
+                        $card = $find('.mt-card[data-layer="' + layerType + '"]').first();
+                        url   = $card.length ? ($card.attr('data-layer-img') || '') : '';
                     }
+                    if (!url) { return; }
+
+                    if ($card.length) { slug = $card.attr('data-slug') || slug; }
+                    PizzaStack.setLayer($stage, 'layer-' + layerType, url, zMap[layerType] || 200, 'nl-' + layerType);
+                    state[layerType] = {
+                        slug: slug,
+                        title: ($card.length && $card.attr('data-title')) || slug,
+                        layerImg: url,
+                        thumb: $card.length ? ($card.attr('data-thumb') || '') : ''
+                    };
+                    if (layerType === 'crust') { $heroCanvas.addClass('mt-has-crust'); }
+                    if ($card.length) { _markCard($card, true); }
                 };
 
-                applyBase('crust',  'default-crust',  'default-crust-slug',  100, 'nl-crust');
-                applyBase('sauce',  'default-sauce',  'default-sauce-slug',  150, 'nl-sauce');
-                applyBase('cheese', 'default-cheese', 'default-cheese-slug', 200, 'nl-cheese');
-
-                var drUrl = $wrap.data('default-drizzle') || '';
-                if (drUrl) { PizzaStack.setLayer($stage, 'layer-drizzle', drUrl, 900, 'nl-drizzle'); }
-                var cuUrl = $wrap.data('default-cut') || '';
-                if (cuUrl) { PizzaStack.setLayer($stage, 'layer-cut', cuUrl, 950, 'nl-cut'); }
+                applyBase('crust',   true);
+                applyBase('sauce',   true);
+                applyBase('cheese',  true);
+                applyBase('drizzle', false);
+                applyBase('cut',     false);
 
                 try {
                     var defaultTops = JSON.parse($wrap.attr('data-default-toppings') || '[]');
                     if (Array.isArray(defaultTops)) {
                         defaultTops.forEach(function (t) {
+                            if (!t || !t.slug || !t.layerImg) { return; }
+                            var $tc = _findCard('toppings', t.slug, t.layerImg);
                             PizzaStack.setLayer($stage, 'layer-topping-' + t.slug, t.layerImg, t.zindex || 400, 'nl-topping', t.coverage || 'whole');
                             state.toppings[t.slug] = {
-                                slug: t.slug, title: t.slug, layerImg: t.layerImg,
-                                zindex: t.zindex || 400, coverage: t.coverage || 'whole', thumb: ''
+                                slug: t.slug,
+                                title: ($tc.length && $tc.attr('data-title')) || t.slug,
+                                layerImg: t.layerImg,
+                                zindex: t.zindex || 400, coverage: t.coverage || 'whole',
+                                thumb: $tc.length ? ($tc.attr('data-thumb') || '') : ''
                             };
-                            _markCard($find('.mt-card[data-layer="toppings"][data-slug="' + t.slug + '"]'), true);
+                            _markCard($tc, true);
                         });
                     }
                 } catch (e) { /* malformed JSON — skip */ }
@@ -471,7 +515,8 @@
 
             /* Remove a base layer */
             removeBase: function (layerType, slug, triggerEl) {
-                var $card  = triggerEl ? $(triggerEl).closest('.mt-card') : $root.find('.mt-card[data-layer="' + layerType + '"][data-slug="' + slug + '"]');
+                /* Tray chips call this with a trigger that is not inside a card. */
+                var $card  = _cardFor(layerType, slug, triggerEl);
                 var $stage = getHeroStage();
                 var stateKey = (layerType === 'cut') ? 'cut' : layerType;
 
@@ -516,9 +561,8 @@
 
             /* Remove a topping */
             removeTopping: function (layerId, slug, triggerEl) {
-                var $card  = triggerEl
-                    ? $(triggerEl).closest('.mt-card')
-                    : $root.find('.mt-card[data-layer="toppings"][data-slug="' + slug + '"]');
+                /* Tray chips call this with a trigger that is not inside a card. */
+                var $card  = _cardFor('toppings', slug, triggerEl);
                 var $stage = getHeroStage();
 
                 delete state.toppings[slug];
@@ -540,10 +584,13 @@
             /* Set coverage for a topping */
             setCoverage: function (slug, fraction) {
                 if (!state.toppings[slug]) { return; }
+                if (['whole','half-left','half-right','quarter-top-left','quarter-top-right','quarter-bottom-left','quarter-bottom-right'].indexOf(fraction) === -1) { return; }
                 state.toppings[slug].coverage = fraction;
 
                 var $stage = getHeroStage();
-                var $layer = $stage.find('[data-layer-id="layer-topping-' + slug + '"]');
+                var $layer = PizzaStack.findLayer
+                    ? PizzaStack.findLayer($stage, 'layer-topping-' + slug)
+                    : $stage.find('[data-layer-id="layer-topping-' + slug + '"]');
                 $layer.find('img').css('clip-path', PizzaStack.getCoverageClip(fraction));
 
                 $covModal.find('.mt-cov-modal__btn').removeClass('is-active')
@@ -563,30 +610,67 @@
                 _renderChips();
                 /* Clear both hero and sidebar stages */
                 [$heroCanvas, $sidebarCanvas].forEach(function ($c) {
-                    if ($c.length) { $c.find('.np-pizza-stage .np-layer-div').remove(); }
+                    if ($c.length) { $c.find('.np-pizza-stage .np-layer-div').stop(true).remove(); }
                 });
+                $heroCanvas.removeClass('mt-has-crust');
                 mirrorStage($orbPizza,   PizzaStack.getStage($heroCanvas));
                 mirrorStage($trayThumb,  PizzaStack.getStage($heroCanvas));
             },
 
             /* State read / write (for PizzaTierAPI compat) */
             getState: function () { return $.extend(true, {}, state); },
+            /* Accepts the shape frontend-builder sends for default layers and
+               cart-edit restore: { crust:{slug}, …, toppings:{slug:{slug,coverage}} }.
+               layerImg / title / thumb are resolved from the matching card when
+               missing, and coverage is applied. (No global ClearPizza() here —
+               that wiped every builder on the page.) */
             setState: function (newState) {
                 instance.resetAll();
-                ClearPizza();
                 var $stage = getHeroStage();
 
-                if (newState.crust)   { PizzaStack.setLayer($stage, 'layer-crust',   newState.crust.layerImg,   zMap.crust,   'mt-crust');   state.crust   = newState.crust;   }
-                if (newState.sauce)   { PizzaStack.setLayer($stage, 'layer-sauce',   newState.sauce.layerImg,   zMap.sauce,   'mt-sauce');   state.sauce   = newState.sauce;   }
-                if (newState.cheese)  { PizzaStack.setLayer($stage, 'layer-cheese',  newState.cheese.layerImg,  zMap.cheese,  'mt-cheese');  state.cheese  = newState.cheese;  }
-                if (newState.drizzle) { PizzaStack.setLayer($stage, 'layer-drizzle', newState.drizzle.layerImg, zMap.drizzle, 'mt-drizzle'); state.drizzle = newState.drizzle; }
-                if (newState.cut)     { PizzaStack.setLayer($stage, 'layer-cut',     newState.cut.layerImg,     zMap.cut,     'mt-cut');     state.cut     = newState.cut;     }
-
-                if (newState.toppings) {
-                    $.each(newState.toppings, function (slug, t) {
-                        PizzaStack.setLayer($stage, 'layer-topping-' + slug, t.layerImg, t.zindex || 400, 'mt-topping', t.coverage || 'whole');
-                        state.toppings[slug] = t;
+                if (newState && typeof newState === 'object') {
+                    ['crust', 'sauce', 'cheese', 'drizzle', 'cut'].forEach(function (lt) {
+                        var sel = newState[lt];
+                        if (!sel) { return; }
+                        if (typeof sel !== 'object') { sel = { slug: String(sel) }; }
+                        var $card = _findCard(lt, sel.slug, sel.layerImg);
+                        var img   = sel.layerImg || ($card.length ? ($card.attr('data-layer-img') || '') : '');
+                        if (!img) { return; }
+                        var slug  = sel.slug || ($card.length ? ($card.attr('data-slug') || '') : '');
+                        state[lt] = {
+                            slug:     slug,
+                            title:    sel.title || ($card.length && $card.attr('data-title')) || slug,
+                            thumb:    sel.thumb || ($card.length ? ($card.attr('data-thumb') || '') : ''),
+                            layerImg: img
+                        };
+                        PizzaStack.setLayer($stage, 'layer-' + lt, img, zMap[lt], 'mt-' + lt);
+                        if (lt === 'crust') { $heroCanvas.addClass('mt-has-crust'); }
+                        _markCard($card, true);
                     });
+
+                    if (newState.toppings && typeof newState.toppings === 'object') {
+                        $.each(newState.toppings, function (key, t) {
+                            if (!t || typeof t !== 'object') { t = { slug: String(t || key) }; }
+                            var slug = t.slug || String(key);
+                            var $card = _findCard('toppings', slug, t.layerImg);
+                            var img   = t.layerImg || ($card.length ? ($card.attr('data-layer-img') || '') : '');
+                            if (!img) { return; }
+                            var cov   = ['whole','half-left','half-right','quarter-top-left','quarter-top-right','quarter-bottom-left','quarter-bottom-right'].indexOf(t.coverage) !== -1 ? t.coverage : 'whole';
+                            var z     = t.zindex || ($card.length ? parseInt($card.attr('data-zindex'), 10) : 0) || 400;
+                            state.toppings[slug] = {
+                                slug:     slug,
+                                title:    t.title || ($card.length && $card.attr('data-title')) || slug,
+                                thumb:    t.thumb || ($card.length ? ($card.attr('data-thumb') || '') : ''),
+                                layerImg: img,
+                                zindex:   z,
+                                coverage: cov
+                            };
+                            PizzaStack.setLayer($stage, 'layer-topping-' + slug, img, z, 'mt-topping', cov);
+                            $stage.find('[data-layer-id="layer-topping-' + slug + '"] img')
+                                  .css('clip-path', PizzaStack.getCoverageClip(cov));
+                            _markCard($card, true);
+                        });
+                    }
                 }
                 _updateCounters();
                 _updateToppingBadge();
@@ -666,8 +750,10 @@
             _initCardClicks: function () {
                 /* Delegate a single click handler on the root — no onclick= attrs needed */
                 $root.on('click.mt-card', '.mt-card', function (e) {
-                    /* Ignore clicks on the explicit action buttons (coverage btn) */
-                    if ($(e.target).closest('.mt-card__btn--coverage').length) { return; }
+                    /* Ignore clicks on the card's own controls (add / remove /
+                       coverage buttons carry their own onclick handlers — acting
+                       here too toggled the topping on and straight back off). */
+                    if ($(e.target).closest('button, a, input, select, label, .mt-card__btn, .mt-card__btn--coverage').length) { return; }
 
                     var $card      = $(this);
                     var layerType  = $card.data('layer');
@@ -805,16 +891,26 @@
 
     window.PizzaTierMT = MT;
 
-    /* PizzaTierAPI — standard surface consumed by PizzaTier */
-    window.PizzaTierAPI = window.PizzaTierAPI || {
+    /* PizzaTierAPI — standard surface consumed by PizzaTier. setState is what
+       frontend-builder's default layers and cart-edit restore call. */
+    MT.API = {
         getState: function (instanceId) {
             var inst = MT.getInstance(instanceId);
             return inst ? inst.getState() : null;
+        },
+        setState: function (instanceId, newState) {
+            var inst = MT.getInstance(instanceId);
+            if (inst && newState && typeof newState === 'object') { inst.setState(newState); }
         },
         getAllInstances: function () {
             return Object.keys(MT._instances);
         }
     };
+    if (window.PizzaTierAPI && typeof window.PizzaTierAPI.register === 'function') {
+        window.PizzaTierAPI.register(MT.API);
+    } else {
+        window.PizzaTierAPI = window.PizzaTierAPI || MT.API;
+    }
 
     /* ════════════════════════════════════════════════════════
        LEGACY GLOBALS (D62 compat — same as NightPie)

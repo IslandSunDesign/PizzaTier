@@ -1,0 +1,345 @@
+/*
+ * PizzaTier Topping Multiplier — front end.
+ *
+ * The control inherits colour and font from whichever template card it sits
+ * in, so it matches light and dark templates alike. Override the custom
+ * properties below in a theme to restyle it.
+ */
+
+.pztm-amount {
+	--pztm-accent: currentColor;
+	--pztm-radius: 999px;
+	--pztm-size: 26px;
+
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	justify-content: space-between;
+	gap: 4px 8px;
+	width: 100%;
+	max-width: 100%;
+	box-sizing: border-box;
+	margin: 6px 0 2px;
+	font-size: 12px;
+	line-height: 1.2;
+	color: inherit;
+	cursor: default;
+	user-select: none;
+	-webkit-user-select: none;
+}
+
+.pztm-amount *,
+.pztm-amount *::before,
+.pztm-amount *::after {
+	box-sizing: border-box;
+}
+
+.pztm-amount__label {
+	opacity: 0.75;
+	font-weight: 600;
+	text-transform: uppercase;
+	letter-spacing: 0.04em;
+	font-size: 10px;
+	white-space: nowrap;
+}
+
+.pztm-amount__stepper {
+	display: inline-flex;
+	flex: 1 0 auto;
+	align-items: center;
+	justify-content: space-between;
+	gap: 2px;
+	min-width: 118px;
+	max-width: 180px;
+	margin-left: auto;
+	padding: 2px;
+	border: 1px solid rgba(128, 128, 128, 0.4);
+	border: 1px solid color-mix(in srgb, currentColor 28%, transparent);
+	border-radius: var(--pztm-radius);
+	background: rgba(128, 128, 128, 0.08);
+	background: color-mix(in srgb, currentColor 6%, transparent);
+}
+
+/*
+ * Buttons: themes style <button> globally and often with high specificity,
+ * so the few properties that define this control are pinned.
+ */
+.pztm-amount button.pztm-amount__btn {
+	display: inline-flex !important;
+	flex: 0 0 auto;
+	align-items: center;
+	justify-content: center;
+	width: var(--pztm-size) !important;
+	height: var(--pztm-size) !important;
+	min-width: 0 !important;
+	min-height: 0 !important;
+	margin: 0 !important;
+	padding: 0 !important;
+	border: 0 !important;
+	border-radius: 50% !important;
+	background: transparent !important;
+	color: inherit !important;
+	font: inherit;
+	font-size: 15px !important;
+	font-weight: 700;
+	line-height: 1 !important;
+	letter-spacing: 0 !important;
+	text-transform: none !important;
+	text-decoration: none !important;
+	box-shadow: none !important;
+	cursor: pointer;
+	transition: background-color 0.15s ease, opacity 0.15s ease;
+}
+
+.pztm-amount button.pztm-amount__btn:hover:not(:disabled),
+.pztm-amount button.pztm-amount__btn:focus-visible {
+	background: rgba(128, 128, 128, 0.2) !important;
+	background: color-mix(in srgb, currentColor 16%, transparent) !important;
+}
+
+.pztm-amount button.pztm-amount__btn:focus-visible {
+	outline: 2px solid currentColor;
+	outline-offset: 1px;
+}
+
+.pztm-amount button.pztm-amount__btn:disabled {
+	opacity: 0.3;
+	cursor: not-allowed;
+}
+
+.pztm-amount__value {
+	flex: 1 1 auto;
+	min-width: 3.6em;
+	padding: 0 4px;
+	text-align: center;
+	font-weight: 700;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+.pztm-amount--multi .pztm-amount__value {
+	color: var(--pztm-accent);
+}
+
+.pztm-amount--limit .pztm-amount__stepper {
+	animation: pztm-shake 0.35s ease;
+}
+
+@keyframes pztm-shake {
+	0%, 100% { transform: translateX(0); }
+	25% { transform: translateX(-3px); }
+	75% { transform: translateX(3px); }
+}
+
+/* Inside a coverage dialog: a little more room. */
+.pztm-amount--modal {
+	margin: 14px 0 4px;
+	padding-top: 12px;
+	border-top: 1px solid rgba(128, 128, 128, 0.25);
+	border-top: 1px solid color-mix(in srgb, currentColor 14%, transparent);
+	font-size: 13px;
+}
+
+.pztm-amount--modal .pztm-amount__label {
+	font-size: 11px;
+}
+
+/* Compact chips (PocketPie) wrap the control onto its own line. */
+.pp-chip .pztm-amount {
+	flex-basis: 100%;
+	margin-top: 4px;
+}
+
+/* Plain list rows (flex rows): sit inline at the end of the row. */
+.pl-item .pztm-amount {
+	flex: 0 0 auto;
+	width: auto;
+	margin: 0 0 0 10px;
+}
+
+/* …but a list of layers gets its own line under the row. */
+.pl-item:has(.pztm-amount--layers) {
+	flex-wrap: wrap;
+}
+
+.pl-item .pztm-amount--layers {
+	flex: 1 0 100%;
+	width: 100%;
+	margin: 8px 0 2px;
+}
+
+/* Metro: the control sits under the card footer, so give it the card's inset. */
+.mt-card > .pztm-amount {
+	min-width: 0;
+	padding: 0 12px 12px;
+}
+
+/* ── Separate layers: "Add another layer" + one entry per layer ─────── */
+
+.pztm-amount--layers .pztm-amount__value {
+	flex: 0 0 auto;
+	min-width: 0;
+	padding: 0;
+	text-align: right;
+	font-size: 11px;
+}
+
+.pztm-layers {
+	flex: 1 0 100%;
+	min-width: 0;
+	max-width: 100%;
+	display: flex;
+	flex-direction: column;
+	gap: 3px;
+	margin: 2px 0 !important;
+	padding: 0 !important;
+	list-style: none !important;
+}
+
+.pztm-layers[hidden] {
+	display: none !important;
+}
+
+.pztm-layers__item {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	min-width: 0;
+	margin: 0 !important;
+	padding: 3px 4px 3px 10px;
+	border-radius: 6px;
+	background: rgba(128, 128, 128, 0.1);
+	background: color-mix(in srgb, currentColor 8%, transparent);
+	list-style: none !important;
+}
+
+.pztm-layers__item::before {
+	content: none !important;
+}
+
+.pztm-layers__name {
+	flex: 1 1 auto;
+	min-width: 0;
+	line-height: 1.25;
+	overflow-wrap: anywhere;
+}
+
+.pztm-amount button.pztm-layers__remove,
+button.pztm-entry-remove {
+	display: inline-flex !important;
+	flex: 0 0 auto;
+	align-items: center;
+	justify-content: center;
+	width: 22px !important;
+	height: 22px !important;
+	min-width: 0 !important;
+	min-height: 0 !important;
+	margin: 0 !important;
+	padding: 0 !important;
+	border: 0 !important;
+	border-radius: 50% !important;
+	background: transparent !important;
+	color: inherit !important;
+	font-size: 15px !important;
+	line-height: 1 !important;
+	box-shadow: none !important;
+	cursor: pointer;
+	opacity: 0.7;
+}
+
+.pztm-amount button.pztm-layers__remove:hover,
+.pztm-amount button.pztm-layers__remove:focus-visible,
+button.pztm-entry-remove:hover,
+button.pztm-entry-remove:focus-visible {
+	opacity: 1;
+	background: rgba(128, 128, 128, 0.2) !important;
+	background: color-mix(in srgb, currentColor 16%, transparent) !important;
+}
+
+.pztm-amount--layers button.pztm-amount__btn.pztm-layers__add {
+	flex: 1 0 100%;
+	gap: 6px;
+	width: 100% !important;
+	height: auto !important;
+	min-height: var(--pztm-size) !important;
+	padding: 4px 12px !important;
+	border: 1px dashed rgba(128, 128, 128, 0.5) !important;
+	border: 1px dashed color-mix(in srgb, currentColor 35%, transparent) !important;
+	border-radius: var(--pztm-radius) !important;
+	font-size: 12px !important;
+	font-weight: 600;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+.pztm-amount--limit .pztm-layers__add {
+	animation: pztm-shake 0.35s ease;
+}
+
+/* Template topping lists: level tag (Thickness) and added-layer entries. */
+.pztm-entry-level {
+	font-weight: 600;
+	opacity: 0.85;
+}
+
+.pztm-entry {
+	opacity: 0.92;
+}
+
+.pl-summary__item.pztm-entry,
+.sc-summary__row.pztm-entry {
+	position: relative;
+	padding-right: 28px;
+}
+
+.pl-summary__item.pztm-entry button.pztm-entry-remove,
+.sc-summary__row.pztm-entry button.pztm-entry-remove {
+	position: absolute;
+	top: 50%;
+	right: 2px;
+	transform: translateY(-50%);
+}
+
+/* ── Pizza preview: added portions ─────────────────────────────────── */
+
+.pztm-layer {
+	position: absolute;
+	left: 0;
+	top: 0;
+	width: 100%;
+	height: 100%;
+	overflow: hidden;
+	pointer-events: none;
+	opacity: 0;
+	transition: opacity 0.45s ease;
+}
+
+.pztm-layer--in {
+	opacity: 1;
+}
+
+.pztm-layer__img {
+	position: absolute;
+	inset: 0;
+	width: 100%;
+	height: 100%;
+	max-width: none;
+	object-fit: contain;
+	transform-origin: 50% 50%;
+	transition: transform 0.45s ease;
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.pztm-layer,
+	.pztm-layer__img,
+	.pztm-amount__btn {
+		transition: none;
+	}
+
+	.pztm-amount--limit .pztm-amount__stepper,
+	.pztm-amount--limit .pztm-layers__add {
+		animation: none;
+	}
+}

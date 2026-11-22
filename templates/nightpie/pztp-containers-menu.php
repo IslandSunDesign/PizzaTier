@@ -108,6 +108,7 @@ if ( $show_tabs_raw ) {
 $query_base = [
 	'posts_per_page' => -1,
 	'post_status'    => 'publish',
+	'has_password'   => false, // Password-protected layers are not on the public menu (2.4.3).
 	'orderby'        => 'menu_order title',
 	'order'          => 'ASC',
 ];
@@ -344,7 +345,7 @@ $initial_pizza = $builder->build_dynamic(
 					</div>
 					<div class="np-pizza-sticky__footer">
 						<button type="button" class="np-btn np-btn--ghost np-btn--sm"
-						        onclick="ClearPizza(); window['<?php echo esc_js( $np_var ); ?>']&&window['<?php echo esc_js( $np_var ); ?>'].resetAll();">
+						        onclick="window['<?php echo esc_js( $np_var ); ?>']&&window['<?php echo esc_js( $np_var ); ?>'].resetAll();">
 							<i class="fa fa-rotate-left"></i> <?php esc_html_e( 'Reset', 'pizzatier' ); ?>
 						</button>
 						<span class="np-topping-counter">
@@ -543,7 +544,7 @@ $initial_pizza = $builder->build_dynamic(
 							</div>
 							<div class="np-panel__nav">
 								<button class="np-btn np-btn--prev" onclick="<?php echo esc_js( $np_var ); ?>.goTab('slicing')"><i class="fa fa-arrow-left"></i> <?php esc_html_e( 'Back', 'pizzatier' ); ?></button>
-								<button class="np-btn np-btn--ghost" onclick="ClearPizza(); window['<?php echo esc_js( $np_var ); ?>']&&window['<?php echo esc_js( $np_var ); ?>'].resetAll();"><i class="fa fa-rotate-left"></i> <?php esc_html_e( 'Start Over', 'pizzatier' ); ?></button>
+								<button class="np-btn np-btn--ghost" onclick="window['<?php echo esc_js( $np_var ); ?>']&&window['<?php echo esc_js( $np_var ); ?>'].resetAll();"><i class="fa fa-rotate-left"></i> <?php esc_html_e( 'Start Over', 'pizzatier' ); ?></button>
 							</div>
 						</section>
 						<?php do_action( 'pizzatier_after_tab_yourpizza', $instance_id ); ?>

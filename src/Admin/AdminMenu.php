@@ -152,6 +152,15 @@ class AdminMenu {
 
 		add_submenu_page(
 			'pizzatier',
+			__( 'Topping Multiplier', 'pizzatier' ),
+			__( 'Topping Multiplier', 'pizzatier' ),
+			'manage_options',
+			\PizzaTier\Multiplier\Admin\SettingsPage::SLUG,
+			[ new \PizzaTier\Multiplier\Admin\SettingsPage(), 'render' ]
+		);
+
+		add_submenu_page(
+			'pizzatier',
 			__( 'Pizza Presets', 'pizzatier' ),
 			__( 'Pizza Presets', 'pizzatier' ),
 			'manage_options',
@@ -185,7 +194,12 @@ class AdminMenu {
 		add_submenu_page( 'pizzatier', __( 'Layer Builder Wizard','pizzatier' ), __( '✦ Layer Builder',      'pizzatier' ), 'manage_options', 'pizzatier-layer-wizard',[ $this, 'render_layer_wizard'] );
 		add_submenu_page( 'pizzatier', __( 'Setup Guide',         'pizzatier' ), __( 'Setup Guide',         'pizzatier' ), 'manage_options', 'pizzatier-setup',      [ $this, 'render_setup'      ] );
 		add_submenu_page( 'pizzatier', __( 'Site Migration',      'pizzatier' ), __( 'Site Migration',      'pizzatier' ), 'manage_options', 'pizzatier-migration',  [ $this, 'render_migration' ] );
-		add_submenu_page( 'pizzatier', __( 'Settings Wizard',     'pizzatier' ), __( '✦ Settings Wizard',   'pizzatier' ), 'manage_options', 'pizzatier-wizard',     [ $this, 'render_wizard'     ] );
+		$wizard_hook = add_submenu_page( 'pizzatier', __( 'Settings Wizard',     'pizzatier' ), __( '✦ Settings Wizard',   'pizzatier' ), 'manage_options', 'pizzatier-wizard',     [ $this, 'render_wizard'     ] );
+		// The wizard's form POST ends in a redirect, so it is handled on the
+		// page's load-{hook} action, which fires before any admin output.
+		if ( $wizard_hook ) {
+			add_action( 'load-' . $wizard_hook, [ $this, 'handle_wizard_post' ] );
+		}
 
 		// Register Content Hub page (still needs to exist as a real page)
 		add_submenu_page( 'pizzatier', __( 'Content Hub', 'pizzatier' ), '', 'manage_options', 'pizzatier-content', [ $this, 'render_content' ] );
@@ -253,5 +267,6 @@ class AdminMenu {
 	public function render_template():   void { ( new TemplateChoice() )->render(); }
 	public function render_settings():   void { ( new Settings() )->render(); }
 	public function render_wizard():     void { ( new SettingsWizard() )->render(); }
+	public function handle_wizard_post(): void { ( new SettingsWizard() )->handle_post(); }
 	public function render_help():       void { ( new Help() )->render(); }
 }

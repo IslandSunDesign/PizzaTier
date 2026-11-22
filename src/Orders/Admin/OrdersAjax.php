@@ -602,6 +602,7 @@ class OrdersAjax {
 	 */
 	private function next_step( string $status, string $method ) {
 		$map = [
+			'pzt-review'       => [ 'pzt-confirmed', __( 'Price checked — confirm', 'pizzatier' ) ],
 			'pzt-new'          => [ 'pzt-confirmed', __( 'Confirm', 'pizzatier' ) ],
 			'pzt-confirmed'    => [ 'pzt-preparing', __( 'Start preparing', 'pizzatier' ) ],
 			'pzt-preparing'    => [ 'pzt-ready', __( 'Mark ready', 'pizzatier' ) ],
@@ -647,7 +648,7 @@ class OrdersAjax {
 
 			$out[] = [
 				'change' => ( '' !== $from ? OrderStatuses::label( $from ) . ' → ' : '' ) . OrderStatuses::label( $to ),
-				'by'     => $this->describe_user( isset( $entry['user_id'] ) ? (int) $entry['user_id'] : 0 ),
+				'by'     => Order::actor_label( (array) $entry ),
 				'when'   => $this->format_local( isset( $entry['time'] ) ? (string) $entry['time'] : '' ),
 				'note'   => isset( $entry['note'] ) ? (string) $entry['note'] : '',
 			];
@@ -661,18 +662,11 @@ class OrdersAjax {
 		foreach ( array_reverse( $order->get_staff_notes() ) as $note ) {
 			$out[] = [
 				'note' => isset( $note['note'] ) ? (string) $note['note'] : '',
-				'by'   => $this->describe_user( isset( $note['user_id'] ) ? (int) $note['user_id'] : 0 ),
+				'by'   => Order::actor_label( (array) $note ),
 				'when' => $this->format_local( isset( $note['time'] ) ? (string) $note['time'] : '' ),
 			];
 		}
 		return $out;
 	}
 
-	private function describe_user( int $user_id ): string {
-		if ( $user_id <= 0 ) {
-			return __( 'Customer', 'pizzatier' );
-		}
-		$user = get_userdata( $user_id );
-		return $user ? $user->display_name : __( 'Unknown user', 'pizzatier' );
-	}
 }

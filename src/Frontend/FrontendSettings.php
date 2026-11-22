@@ -127,8 +127,11 @@ class FrontendSettings {
 	public function apply_performance(): void {
 		// Disable all plugin CSS
 		if ( self::gb( 'pizzatier_setting_adv_disable_css' ) ) {
-			wp_dequeue_style( 'pizzatier-css' );
-			wp_dequeue_style( 'pizzatier-bootstrap-grid' );
+			self::dequeue_plugin_styles();
+			// Shortcodes and blocks can enqueue template styles while the page
+			// content renders, after this hook. Catch those before the late
+			// styles are printed in the footer.
+			add_action( 'wp_print_footer_scripts', [ __CLASS__, 'dequeue_plugin_styles' ], 1 );
 		}
 
 		// Preload hint for critical CSS
@@ -268,32 +271,88 @@ class FrontendSettings {
 	}
 
 	/**
-	 * Apply query-time settings when CPT posts are fetched for builder rendering.
-	 * Hooked to pizzatier_query_args_toppings filter.
+	 * Dequeue every PizzaTier frontend stylesheet.
 	 *
-	 * @param array  $args   WP_Query args
-	 * @param string $type   CPT type slug
+	 * Template stylesheets (pizzatier-template-*) depend on pizzatier-css, so
+	 * dequeuing only pizzatier-css left it printed through the dependency
+	 * chain. They are dequeued as well.
 	 */
-	public function apply_sort_filter( array $args, string $type ): array {
-		if ( $type !== 'toppings' ) { return $args; }
+	public static function dequeue_plugin_styles(): void {
+		wp_dequeue_style( 'pizzatier-css' );
+		wp_dequeue_style( 'pizzatier-bootstrap-grid' );
+		$styles = wp_styles();
+		foreach ( (array) $styles->queue as $handle ) {
+			if ( 0 === strpos( (string) $handle, 'pizzatier-template-' ) ) {
+				wp_dequeue_style( $handle );
+			}
+		}
+	}
+
+	/**
+	 * Apply the topping sort setting when toppings are fetched for rendering.
+	 * Hooked to the pizzatier_query_args_toppings filter.
+	 *
+	 * The filter carries two shapes: TemplateAPI passes WP_Query args (with a
+	 * 'post_type' key), while the bundled templates pass the already-fetched
+	 * list of WP_Post objects. Adding 'orderby'/'order' keys to the post list
+	 * put strings into an array of posts, so the list is sorted in place
+	 * instead. Both shapes are returned in the shape they arrived in.
+	 *
+	 * @param mixed  $value WP_Query args, or a list of WP_Post objects.
+	 * @param string $type  CPT type slug.
+	 * @return mixed
+	 */
+	public function apply_sort_filter( $value, $type = '' ) {
+		if ( 'toppings' !== $type || ! is_array( $value ) ) { return $value; }
 
 		$sort_order = self::g( 'pizzatier_setting_topping_sort', 'menu' );
 
-		switch ( $sort_order ) {
-			case 'alpha_asc':
-				$args['orderby'] = 'title';
-				$args['order']   = 'ASC';
-				break;
-			case 'alpha_desc':
-				$args['orderby'] = 'title';
-				$args['order']   = 'DESC';
-				break;
-			default: // 'menu' = WordPress menu_order
-				$args['orderby'] = 'menu_order title';
-				$args['order']   = 'ASC';
+		// Query args.
+		if ( isset( $value['post_type'] ) ) {
+			switch ( $sort_order ) {
+				case 'alpha_asc':
+					$value['orderby'] = 'title';
+					$value['order']   = 'ASC';
+					break;
+				case 'alpha_desc':
+					$value['orderby'] = 'title';
+					$value['order']   = 'DESC';
+					break;
+				default: // 'menu' = WordPress menu_order
+					$value['orderby'] = 'menu_order title';
+					$value['order']   = 'ASC';
+			}
+			return $value;
 		}
 
-		return $args;
+		// A list of posts: sort only when every element is a post, so a
+		// value some other filter reshaped is passed through untouched.
+		if ( ! $value ) { return $value; }
+		foreach ( $value as $item ) {
+			if ( ! $item instanceof \WP_Post ) { return $value; }
+		}
+
+		$by_title = static function ( \WP_Post $a, \WP_Post $b ): int {
+			return strnatcasecmp( (string) $a->post_title, (string) $b->post_title );
+		};
+
+		switch ( $sort_order ) {
+			case 'alpha_asc':
+				usort( $value, $by_title );
+				break;
+			case 'alpha_desc':
+				usort( $value, static function ( \WP_Post $a, \WP_Post $b ) use ( $by_title ): int {
+					return $by_title( $b, $a );
+				} );
+				break;
+			default: // 'menu' = menu_order, then title.
+				usort( $value, static function ( \WP_Post $a, \WP_Post $b ) use ( $by_title ): int {
+					$cmp = (int) $a->menu_order <=> (int) $b->menu_order;
+					return 0 !== $cmp ? $cmp : $by_title( $a, $b );
+				} );
+		}
+
+		return $value;
 	}
 
 	/**

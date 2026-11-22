@@ -17,17 +17,25 @@ class SettingsWizard {
 		return (array) get_option( 'pizzatier_wizard_done', [] );
 	}
 
-	public function render(): void {
+	/**
+	 * Handle the wizard's form POST.
+	 *
+	 * Runs on the page's load-{hook} action, before the admin header is
+	 * printed, so the post/redirect/get redirect can still send headers.
+	 * It used to run inside the menu callback, after output had begun.
+	 */
+	public function handle_post(): void {
 		if ( ! current_user_can( 'manage_options' ) ) { return; }
+		if ( ! isset( $_SERVER['REQUEST_METHOD'] ) || 'POST' !== $_SERVER['REQUEST_METHOD'] ) { return; }
 
 		// ── Handle step save ─────────────────────────────────────────────
-		if ( isset( $_POST['_wpnonce'] ) && wp_verify_nonce( sanitize_key( $_POST['_wpnonce'] ), 'pizzatier_wizard' ) ) {
+		if ( isset( $_POST['_wpnonce'] ) && wp_verify_nonce( sanitize_key( wp_unslash( $_POST['_wpnonce'] ) ), 'pizzatier_wizard' ) ) {
 
 			// Mark/unmark step done
 			if ( isset( $_POST['pzwiz_mark_done'] ) ) {
 				$done_arr = $this->get_done();
-				$key = sanitize_key( $_POST['pzwiz_mark_done'] );
-				$state = ( isset( $_POST['pzwiz_state'] ) && $_POST['pzwiz_state'] === '0' ) ? false : true;
+				$key = sanitize_key( wp_unslash( $_POST['pzwiz_mark_done'] ) );
+				$state = ( isset( $_POST['pzwiz_state'] ) && '0' === sanitize_key( wp_unslash( $_POST['pzwiz_state'] ) ) ) ? false : true;
 				if ( $state ) {
 					$done_arr[ $key ] = true;
 				} else {
@@ -38,7 +46,7 @@ class SettingsWizard {
 
 			// Save wizard step settings
 			if ( isset( $_POST['pzwiz_save'] ) ) {
-				$this->save_step( sanitize_key( $_POST['pzwiz_save'] ) );
+				$this->save_step( sanitize_key( wp_unslash( $_POST['pzwiz_save'] ) ) );
 			}
 
 			// Reset wizard
@@ -49,9 +57,13 @@ class SettingsWizard {
 			wp_safe_redirect( remove_query_arg( [] ) );
 			exit;
 		}
+	}
+
+	public function render(): void {
+		if ( ! current_user_can( 'manage_options' ) ) { return; }
 
 		$done       = $this->get_done();
-		$active_tab = isset( $_GET['step'] ) ? sanitize_key( $_GET['step'] ) : '';
+		$active_tab = isset( $_GET['step'] ) ? sanitize_key( $_GET['step'] ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only navigation parameter.
 
 		// ── Load CPT options for dropdowns ────────────────────────────────
 		$q        = [ 'posts_per_page' => -1, 'post_status' => 'publish', 'orderby' => 'title', 'order' => 'ASC' ];

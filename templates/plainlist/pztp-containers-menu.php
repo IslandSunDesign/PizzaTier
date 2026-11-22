@@ -141,6 +141,7 @@ $max_toppings = (int) apply_filters( 'pizzatier_max_toppings', $max_toppings, $i
 $query_base = [
 	'posts_per_page' => -1,
 	'post_status'    => 'publish',
+	'has_password'   => false, // Password-protected layers are not on the public menu (2.4.3).
 	'orderby'        => 'menu_order title',
 	'order'          => 'ASC',
 ];

@@ -349,8 +349,9 @@ class SiteMigration {
 		// about (the layer-image attachment ID, which we re-resolve to
 		// URL below anyway). Capturing arbitrary user-added meta as-is
 		// is the whole point.
-		$raw_meta = get_post_meta( $id );
-		$meta     = [];
+		$raw_meta   = get_post_meta( $id );
+		$meta       = [];
+		$meta_multi = [];
 		foreach ( $raw_meta as $key => $values ) {
 			if ( $this->is_internal_meta_key( $key ) ) { continue; }
 			// get_post_meta returns array of strings; collapse single-value
@@ -360,6 +361,7 @@ class SiteMigration {
 				$meta[ $key ] = maybe_unserialize( $values[0] );
 			} else {
 				$meta[ $key ] = array_map( 'maybe_unserialize', $values );
+				$meta_multi[] = (string) $key;
 			}
 		}
 
@@ -401,6 +403,9 @@ class SiteMigration {
 			'status'      => (string) $post->post_status,
 			'menu_order'  => (int)    $post->menu_order,
 			'meta'        => $meta,
+			// Keys stored as several meta rows. Every other array in 'meta'
+			// is a single serialized value and must be restored as one row.
+			'meta_multi'  => array_values( array_intersect( $meta_multi, array_map( 'strval', array_keys( $meta ) ) ) ),
 			'terms'       => $term_slugs,
 			'layer_image' => $layer_image,
 			'images'      => $images,
@@ -894,21 +899,7 @@ class SiteMigration {
 
 			// Meta — wp_insert_post returns a fresh ID, so copy meta now.
 			if ( ! empty( $row['meta'] ) && is_array( $row['meta'] ) ) {
-				foreach ( $row['meta'] as $mkey => $mval ) {
-					$mkey_safe = sanitize_key( (string) $mkey );
-					if ( ! $mkey_safe ) { continue; }
-					if ( $this->is_internal_meta_key( $mkey_safe ) ) { continue; }
-
-					if ( is_array( $mval ) ) {
-						// Multi-value meta: clear, then add each value.
-						delete_post_meta( $post_id, $mkey_safe );
-						foreach ( $mval as $v ) {
-							add_post_meta( $post_id, $mkey_safe, $this->sanitize_meta_value( $v ) );
-						}
-					} else {
-						update_post_meta( $post_id, $mkey_safe, $this->sanitize_meta_value( $mval ) );
-					}
-				}
+				$this->import_meta( (int) $post_id, $row['meta'], $row['meta_multi'] ?? null );
 			}
 
 			// Taxonomy terms — only those that already exist on the destination
@@ -950,6 +941,43 @@ class SiteMigration {
 			'images_loaded' => $images_loaded,
 			'images_failed' => $images_failed,
 		];
+	}
+
+	/**
+	 * Write imported meta onto a post.
+	 *
+	 * Exports from 2.4.0 on carry 'meta_multi', the list of keys that were
+	 * stored as several rows. Any other array value is a single serialized
+	 * value (a price grid, a layer list...) and is written back intact as
+	 * one row. Before 2.4.0 that distinction was not recorded, and every
+	 * array was split into one row per element, so a serialized array came
+	 * back as several rows. Older files (no 'meta_multi') keep the old
+	 * behaviour, since their arrays cannot be told apart.
+	 *
+	 * @param int        $post_id    Destination post.
+	 * @param array      $meta       key => value map from the export.
+	 * @param array|null $multi_keys Keys stored as multiple rows, or null for a pre-2.4.0 file.
+	 */
+	private function import_meta( int $post_id, array $meta, $multi_keys ): void {
+		$legacy = ! is_array( $multi_keys );
+		$multi  = $legacy ? [] : array_flip( array_map( 'strval', $multi_keys ) );
+
+		foreach ( $meta as $mkey => $mval ) {
+			$mkey_safe = sanitize_key( (string) $mkey );
+			if ( '' === $mkey_safe || $this->is_internal_meta_key( $mkey_safe ) ) { continue; }
+
+			$is_multi = is_array( $mval ) && ( $legacy || isset( $multi[ (string) $mkey ] ) );
+
+			if ( $is_multi ) {
+				// Multi-row meta: clear, then add each row.
+				delete_post_meta( $post_id, $mkey_safe );
+				foreach ( $mval as $v ) {
+					add_post_meta( $post_id, $mkey_safe, wp_slash( $this->sanitize_meta_value( $v ) ) );
+				}
+			} else {
+				update_post_meta( $post_id, $mkey_safe, wp_slash( $this->sanitize_meta_value( $mval ) ) );
+			}
+		}
 	}
 
 	/**
@@ -1100,8 +1128,12 @@ class SiteMigration {
 	 * @return array
 	 */
 	private function collect_orders(): array {
-		$statuses = array_keys( \PizzaTier\Orders\OrderStatuses::all() );
+		// OrderStatuses::all() already returns status names; array_keys() gave
+		// [0..n], which WP_Query treats as no status filter at all. Trashed
+		// orders are included so they are exported and de-duplicated too.
+		$statuses = array_values( (array) \PizzaTier\Orders\OrderStatuses::all() );
 		if ( ! $statuses ) { $statuses = [ \PizzaTier\Orders\OrderStatuses::DEFAULT_STATUS ]; }
+		$statuses[] = 'trash';
 
 		// Custom statuses registered with exclude_from_search => true are not
 		// matched by post_status => 'any', so they are queried by name.
@@ -1119,22 +1151,48 @@ class SiteMigration {
 			$id       = (int) $post->ID;
 			$raw_meta = get_post_meta( $id );
 			$meta     = [];
+			$multi    = [];
 
 			foreach ( $raw_meta as $key => $values ) {
 				if ( $this->is_internal_meta_key( $key ) ) { continue; }
-				$meta[ $key ] = count( $values ) === 1
-					? maybe_unserialize( $values[0] )
-					: array_map( 'maybe_unserialize', $values );
+				if ( count( $values ) === 1 ) {
+					$meta[ $key ] = maybe_unserialize( $values[0] );
+				} else {
+					$meta[ $key ] = array_map( 'maybe_unserialize', $values );
+					$multi[]      = (string) $key;
+				}
+			}
+
+			// WordPress user IDs mean nothing on another site. Carry the
+			// account's email (to re-link only to the same address there) and
+			// each actor's display name instead of trusting raw IDs (2.4.3).
+			$linked = (int) ( $meta[ \PizzaTier\Orders\Order::META_USER_ID ] ?? 0 );
+			$user   = $linked > 0 ? get_userdata( $linked ) : false;
+			foreach ( [ \PizzaTier\Orders\Order::META_STATUS_HISTORY, \PizzaTier\Orders\Order::META_STAFF_NOTES ] as $actor_key ) {
+				if ( isset( $meta[ $actor_key ] ) && is_array( $meta[ $actor_key ] ) ) {
+					foreach ( $meta[ $actor_key ] as $i => $entry ) {
+						$uid = is_array( $entry ) ? (int) ( $entry['user_id'] ?? 0 ) : 0;
+						if ( $uid > 0 ) {
+							$actor = get_userdata( $uid );
+							$meta[ $actor_key ][ $i ]['by_name'] = $actor ? (string) $actor->display_name : '';
+						}
+					}
+				}
 			}
 
 			$out[] = [
-				'slug'       => (string) $post->post_name,
-				'title'      => (string) $post->post_title,
-				'content'    => (string) $post->post_content,
-				'status'     => (string) $post->post_status,
-				'date_gmt'   => (string) $post->post_date_gmt,
-				'menu_order' => (int) $post->menu_order,
-				'meta'       => $meta,
+				'slug'         => (string) $post->post_name,
+				'title'        => (string) $post->post_title,
+				'content'      => (string) $post->post_content,
+				'status'       => (string) $post->post_status,
+				// The status to restore a binned order with, so it can be
+				// re-binned on import instead of coming back as a live order.
+				'trash_status' => 'trash' === $post->post_status ? (string) get_post_meta( $id, '_wp_trash_meta_status', true ) : '',
+				'date_gmt'     => (string) $post->post_date_gmt,
+				'menu_order'   => (int) $post->menu_order,
+				'user_email'   => $user ? (string) $user->user_email : '',
+				'meta'         => $meta,
+				'meta_multi'   => $multi,
 			];
 		}
 
@@ -1180,13 +1238,24 @@ class SiteMigration {
 				continue;
 			}
 
-			$status = isset( $row['status'] ) ? sanitize_key( (string) $row['status'] ) : '';
+			$status     = isset( $row['status'] ) ? sanitize_key( (string) $row['status'] ) : '';
+			$is_trashed = ( 'trash' === $status );
+			if ( $is_trashed ) {
+				// Restore with the status it had before it was binned, then bin
+				// it again below. Until 2.4.3 'trash' failed validation and the
+				// order came back as a brand-new order in the live queue.
+				$status = isset( $row['trash_status'] ) ? sanitize_key( (string) $row['trash_status'] ) : '';
+			}
 			if ( ! \PizzaTier\Orders\OrderStatuses::is_valid( $status ) ) {
-				$status = \PizzaTier\Orders\OrderStatuses::DEFAULT_STATUS;
+				$status = $is_trashed ? 'pzt-cancelled' : \PizzaTier\Orders\OrderStatuses::DEFAULT_STATUS;
+				if ( ! \PizzaTier\Orders\OrderStatuses::is_valid( $status ) ) {
+					$status = \PizzaTier\Orders\OrderStatuses::DEFAULT_STATUS;
+				}
 			}
 
 			$postarr = [
 				'post_type'    => self::ORDER_POST_TYPE,
+				'post_author'  => 0,
 				'post_title'   => isset( $row['title'] ) ? sanitize_text_field( (string) $row['title'] ) : $number,
 				'post_content' => isset( $row['content'] ) ? wp_kses_post( (string) $row['content'] ) : '',
 				'post_status'  => $status,
@@ -1208,18 +1277,11 @@ class SiteMigration {
 				continue;
 			}
 
-			foreach ( $row['meta'] as $mkey => $mval ) {
-				$mkey_safe = sanitize_key( (string) $mkey );
-				if ( '' === $mkey_safe || $this->is_internal_meta_key( $mkey_safe ) ) { continue; }
+			$this->import_meta( (int) $post_id, $row['meta'], $row['meta_multi'] ?? null );
+			$this->relink_imported_order( (int) $post_id, $row );
 
-				if ( is_array( $mval ) ) {
-					delete_post_meta( $post_id, $mkey_safe );
-					foreach ( $mval as $v ) {
-						add_post_meta( $post_id, $mkey_safe, $this->sanitize_meta_value( $v ) );
-					}
-				} else {
-					update_post_meta( $post_id, $mkey_safe, $this->sanitize_meta_value( $mval ) );
-				}
+			if ( $is_trashed ) {
+				wp_trash_post( (int) $post_id );
 			}
 
 			$created++;
@@ -1229,11 +1291,56 @@ class SiteMigration {
 	}
 
 	/**
+	 * Replace source-site user IDs on an imported order.
+	 *
+	 * The customer link is kept only when an account with the exact same email
+	 * address exists here; otherwise it is cleared, because user #12 on the
+	 * source is an unrelated person on this site and would otherwise receive
+	 * the order in a privacy export and see it against their profile. Staff
+	 * actors in the history and notes are reduced to their display name.
+	 */
+	private function relink_imported_order( int $post_id, array $row ): void {
+		$order_key = \PizzaTier\Orders\Order::class;
+
+		$email   = isset( $row['user_email'] ) ? sanitize_email( (string) $row['user_email'] ) : '';
+		$user    = ( '' !== $email ) ? get_user_by( 'email', $email ) : false;
+		$user_id = $user instanceof \WP_User ? (int) $user->ID : 0;
+
+		/**
+		 * Filter the destination account an imported order is linked to.
+		 *
+		 * @since 2.4.3
+		 *
+		 * @param int    $user_id Destination user ID, 0 for none.
+		 * @param string $email   Source account email ('' when the order had none).
+		 * @param array  $row     Raw import row.
+		 */
+		$user_id = max( 0, (int) apply_filters( 'pizzatier_import_order_user_id', $user_id, $email, $row ) );
+		update_post_meta( $post_id, $order_key::META_USER_ID, $user_id );
+
+		foreach ( [ $order_key::META_STATUS_HISTORY, $order_key::META_STAFF_NOTES ] as $actor_key ) {
+			$entries = get_post_meta( $post_id, $actor_key, true );
+			if ( ! is_array( $entries ) ) { continue; }
+			foreach ( $entries as $i => $entry ) {
+				if ( ! is_array( $entry ) ) { continue; }
+				$entries[ $i ]['user_id']  = 0;
+				$entries[ $i ]['by_name']  = sanitize_text_field( (string) ( $entry['by_name'] ?? '' ) );
+				$entries[ $i ]['imported'] = 1;
+			}
+			update_post_meta( $post_id, $actor_key, $entries );
+		}
+	}
+
+	/**
 	 * Whether an order with this number already exists.
 	 */
 	private function order_number_exists( string $number, string $number_key ): bool {
-		$statuses = array_keys( \PizzaTier\Orders\OrderStatuses::all() );
+		// OrderStatuses::all() already returns status names; array_keys() gave
+		// [0..n], which WP_Query treats as no status filter at all. Trashed
+		// orders are included so they are exported and de-duplicated too.
+		$statuses = array_values( (array) \PizzaTier\Orders\OrderStatuses::all() );
 		if ( ! $statuses ) { $statuses = [ \PizzaTier\Orders\OrderStatuses::DEFAULT_STATUS ]; }
+		$statuses[] = 'trash';
 
 		$found = get_posts( [
 			'post_type'      => self::ORDER_POST_TYPE,

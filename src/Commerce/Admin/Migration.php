@@ -74,6 +74,9 @@ class Migration {
 			// a step off it warned on PHP 8 and the checklist stopped working.
 			'setup_done'     => (array) get_option( 'pizzatier_setup_done', [] ),
 			'wc_products'    => $this->collect_wc_pizza_products(),
+			// Site-wide per-type price grids (Pricing page) — not exported
+			// before 2.4.0, so every migrated site lost them.
+			'global_grids'   => ( new \PizzaTier\Commerce\PriceGrid\Grid() )->get_all_global_grids(),
 		];
 
 		return $payload;
@@ -150,7 +153,18 @@ class Migration {
 			if ( count( $values ) === 1 ) {
 				$meta[ $key ] = maybe_unserialize( $values[0] );
 			} else {
-				$meta[ $key ] = array_map( 'maybe_unserialize', $values );
+				// Marked so the importer can tell several rows from one array
+				// value (2.4.0: a single array — e.g. the price grid — was
+				// split into one row per element on import).
+				$meta[ $key ] = [ '__pzt_multi' => array_map( 'maybe_unserialize', $values ) ];
+			}
+		}
+
+		// Layer references are post IDs, which differ between sites:
+		// export them as post type + slug and map them back on import.
+		foreach ( [ '_pizzatier_enabled_layers', '_pizzatier_default_layers' ] as $ref_key ) {
+			if ( isset( $meta[ $ref_key ] ) && is_array( $meta[ $ref_key ] ) ) {
+				$meta[ $ref_key ] = [ '__pzt_refs' => self::ids_to_refs( $meta[ $ref_key ] ) ];
 			}
 		}
 
@@ -236,6 +250,16 @@ class Migration {
 				(array) get_option( 'pizzatier_setup_done', [] ),
 				$flags
 			) );
+		}
+
+		// Global price grids — validated through the same rules as the Pricing page.
+		if ( ! empty( $commerce['global_grids'] ) && is_array( $commerce['global_grids'] ) ) {
+			$grid = new \PizzaTier\Commerce\PriceGrid\Grid();
+			foreach ( $commerce['global_grids'] as $gtype => $gdata ) {
+				if ( is_array( $gdata ) ) {
+					$grid->save_global_layer_grid( sanitize_key( (string) $gtype ), $gdata );
+				}
+			}
 		}
 
 		// WC products — create-only by slug. Skipped if WooCommerce isn't active.
@@ -345,12 +369,15 @@ class Migration {
 					if ( ! $mkey_safe || $this->is_internal_meta_key( $mkey_safe ) ) {
 						continue;
 					}
-					if ( is_array( $mval ) ) {
+					if ( is_array( $mval ) && array_key_exists( '__pzt_refs', $mval ) ) {
+						update_post_meta( $post_id, $mkey_safe, self::refs_to_ids( (array) $mval['__pzt_refs'] ) );
+					} elseif ( is_array( $mval ) && array_key_exists( '__pzt_multi', $mval ) ) {
 						delete_post_meta( $post_id, $mkey_safe );
-						foreach ( $mval as $v ) {
+						foreach ( (array) $mval['__pzt_multi'] as $v ) {
 							add_post_meta( $post_id, $mkey_safe, $this->sanitize_meta_value( $v ) );
 						}
 					} else {
+						// One value — arrays (price grids, layer maps) stay whole.
 						update_post_meta( $post_id, $mkey_safe, $this->sanitize_meta_value( $mval ) );
 					}
 				}
@@ -404,6 +431,53 @@ class Migration {
 	 * Best-effort sanitization for arbitrary meta values from import.
 	 * Mirrors the main importer's logic so behaviour is consistent.
 	 */
+	/**
+	 * Post IDs (flat list, or type => id / id list) → [ post_type, slug ] refs.
+	 *
+	 * @param array $ids IDs.
+	 * @return array
+	 */
+	private static function ids_to_refs( array $ids ): array {
+		$out = [];
+		foreach ( $ids as $k => $v ) {
+			if ( is_array( $v ) ) {
+				$out[ $k ] = self::ids_to_refs( $v );
+				continue;
+			}
+			$pid = (int) $v;
+			$out[ $k ] = $pid > 0 && get_post( $pid )
+				? [ 'type' => (string) get_post_type( $pid ), 'slug' => (string) get_post_field( 'post_name', $pid ) ]
+				: null;
+		}
+		return $out;
+	}
+
+	/**
+	 * Reverse of ids_to_refs() on the destination site; unknown refs drop out.
+	 *
+	 * @param array $refs Refs.
+	 * @return array
+	 */
+	private static function refs_to_ids( array $refs ): array {
+		$out = [];
+		foreach ( $refs as $k => $r ) {
+			if ( is_array( $r ) && ! isset( $r['slug'] ) ) {
+				$out[ $k ] = self::refs_to_ids( $r );
+				continue;
+			}
+			if ( ! is_array( $r ) || empty( $r['slug'] ) || empty( $r['type'] ) || 0 !== strpos( (string) $r['type'], 'pizzatier_' ) ) {
+				continue;
+			}
+			$post = get_page_by_path( sanitize_title( (string) $r['slug'] ), OBJECT, sanitize_key( (string) $r['type'] ) );
+			if ( $post instanceof \WP_Post ) {
+				$out[ $k ] = (int) $post->ID;
+			}
+		}
+		// Keep flat lists as lists.
+		$is_list = array_keys( $refs ) === range( 0, max( 0, count( $refs ) - 1 ) ) && ! empty( $refs );
+		return $is_list ? array_values( $out ) : $out;
+	}
+
 	private function sanitize_meta_value( $value ) {
 		if ( is_array( $value ) ) {
 			return array_map( [ $this, 'sanitize_meta_value' ], $value );

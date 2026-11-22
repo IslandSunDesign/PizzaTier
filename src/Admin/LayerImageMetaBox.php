@@ -227,7 +227,7 @@ class LayerImageMetaBox {
 	public function ajax_set_layer_image(): void {
 		$post_id   = absint( wp_unslash( $_POST['post_id'] ?? 0 ) );
 		$filename  = sanitize_file_name( wp_unslash( $_POST['filename'] ?? 'layer-image.png' ) );
-		$data      = $_POST['data'] ?? ''; // phpcs:ignore
+		$data      = isset( $_POST['data'] ) && is_string( $_POST['data'] ) ? $_POST['data'] : ''; // phpcs:ignore WordPress.Security -- Base64 image data; size-bounded, decoded and MIME-checked below after the nonce and capability checks.
 
 		check_ajax_referer( 'pzl_metabox_set_layer_image_' . $post_id, 'meta_nonce' );
 
@@ -237,6 +237,17 @@ class LayerImageMetaBox {
 		}
 		if ( ! $post_id ) {
 			wp_send_json_error( 'Missing parameters' );
+		}
+		// Only ingredient posts carry layer images (2.4.3: any post the user
+		// could edit was accepted).
+		$allowed_types = array_map(
+			static function ( string $slug ): string {
+				return 'pizzatier_' . $slug;
+			},
+			self::IMAGE_TYPES
+		);
+		if ( ! in_array( get_post_type( $post_id ), $allowed_types, true ) ) {
+			wp_send_json_error( 'Invalid post type' );
 		}
 
 		// Allowlist the writable meta keys to prevent arbitrary meta writes.
@@ -254,14 +265,18 @@ class LayerImageMetaBox {
 
 		// Strip data-URI header
 		if ( strpos( $data, 'base64,' ) !== false ) {
-			[ , $data ] = explode( 'base64,', $data );
+			[ , $data ] = explode( 'base64,', $data, 2 );
+		}
+		// Bound the encoded payload before decoding it: base64_decode() would
+		// otherwise allocate the full image first (2.4.3).
+		$max_bytes = (int) apply_filters( 'pizzatier_max_layer_image_bytes', min( (int) wp_max_upload_size(), 8 * 1024 * 1024 ) );
+		if ( $max_bytes > 0 && strlen( $data ) > (int) ceil( $max_bytes * 4 / 3 ) + 4 ) {
+			wp_send_json_error( 'Image too large' );
 		}
 		$raw = base64_decode( $data ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions
 		if ( ! $raw ) { wp_send_json_error( 'Bad image data' ); }
 
-		// Bound the decoded payload to avoid large memory allocation / oversized
-		// writes. Defaults to the smaller of the upload limit and 8 MB.
-		$max_bytes = (int) apply_filters( 'pizzatier_max_layer_image_bytes', min( (int) wp_max_upload_size(), 8 * 1024 * 1024 ) );
+		// Decoded size, checked again (padding / whitespace edge cases).
 		if ( $max_bytes > 0 && strlen( $raw ) > $max_bytes ) {
 			wp_send_json_error( 'Image too large' );
 		}

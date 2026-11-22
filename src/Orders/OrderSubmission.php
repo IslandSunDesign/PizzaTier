@@ -28,6 +28,18 @@ class OrderSubmission {
 	/** Transient prefix for the per-IP rate limiter. */
 	const RATE_PREFIX = 'pizzatier_ord_rl_';
 
+	/** Most line items accepted in one submission. Filterable. */
+	const MAX_ITEMS = 20;
+
+	/**
+	 * Most layers accepted per line item. Generous on purpose: extra portions
+	 * are sent as repeated topping layers. Filterable.
+	 */
+	const MAX_LAYERS = 60;
+
+	/** @var array<string,\WP_Post|null> Per-request layer lookups. */
+	private $layer_cache = [];
+
 	/**
 	 * Layer type => CPT name. Layers arriving under any other type are dropped.
 	 */
@@ -103,8 +115,33 @@ class OrderSubmission {
 			);
 		}
 
+		// ── Retry of an earlier attempt? ──────────────────────────────────
+		// A retry after a lost response replays the first result instead of
+		// placing a second order (2.4.3). Checked before the rate limit so
+		// retries do not use up the customer's allowance.
+		$idem_key = Idempotency::key_from_request( is_user_logged_in() ? 'u' . get_current_user_id() : 'g' . $this->ip_hash() );
+		$previous = Idempotency::lookup( $idem_key );
+		if ( null !== $previous ) {
+			if ( 'done' === $previous['state'] && isset( $previous['response'] ) && is_array( $previous['response'] ) ) {
+				$replay             = $previous['response'];
+				$replay['replayed'] = true;
+				wp_send_json_success( $replay );
+			}
+			wp_send_json_error(
+				[
+					'message' => __( 'Your order is still being placed. Please wait a moment.', 'pizzatier' ),
+					'code'    => 'in_progress',
+				],
+				409
+			);
+		}
+
 		// ── Rate limit ────────────────────────────────────────────────────
-		if ( ! $this->check_rate_limit() ) {
+		// Counted on arrival, not on success: the check and the increment are
+		// one step, so a burst of parallel requests cannot all pass a check
+		// made before any of them was recorded, and failed attempts (which
+		// still cost database lookups) are counted too.
+		if ( ! $this->consume_rate_limit() ) {
 			wp_send_json_error(
 				[
 					'message' => __( 'You have placed several orders in a short time. Please wait a few minutes and try again.', 'pizzatier' ),
@@ -182,6 +219,68 @@ class OrderSubmission {
 			);
 		}
 
+		// Size caps, enforced before any item is resolved: each layer costs
+		// database lookups, and this endpoint is open to guests.
+		/**
+		 * Filter the maximum number of line items in one order submission.
+		 *
+		 * @since 2.4.0
+		 *
+		 * @param int $max Default 20.
+		 */
+		$max_items = max( 1, (int) apply_filters( 'pizzatier_order_max_items', self::MAX_ITEMS ) );
+		/**
+		 * Filter the maximum number of layers in one order line item.
+		 *
+		 * @since 2.4.0
+		 *
+		 * @param int $max Default 60 (room for extra portions).
+		 */
+		$max_layers = max( 1, (int) apply_filters( 'pizzatier_order_max_layers', self::MAX_LAYERS ) );
+
+		if ( count( $items_in ) > $max_items ) {
+			wp_send_json_error(
+				[
+					'message' => sprintf(
+						/* translators: %d: maximum number of pizzas per order. */
+						__( 'An order can contain at most %d pizzas. Please split it into smaller orders.', 'pizzatier' ),
+						$max_items
+					),
+					'code'    => 'too_many_items',
+				],
+				400
+			);
+		}
+
+		foreach ( $items_in as $item_in ) {
+			$layer_count = ( is_array( $item_in ) && isset( $item_in['layers'] ) && is_array( $item_in['layers'] ) )
+				? count( $item_in['layers'] )
+				: 0;
+			if ( $layer_count > $max_layers ) {
+				wp_send_json_error(
+					[
+						'message' => sprintf(
+							/* translators: %d: maximum number of toppings and layers per pizza. */
+							__( 'A pizza can have at most %d toppings and layers. Please remove some and try again.', 'pizzatier' ),
+							$max_layers
+						),
+						'code'    => 'too_many_layers',
+					],
+					400
+				);
+			}
+		}
+
+		// The order-level note, read once: it decides what is kept of each
+		// item's note below, and is stored on the order further down.
+		$customer_note = '';
+		if ( OrderSettings::is_on( 'notes_enabled' ) && isset( $_POST['customer_note'] ) ) {
+			$customer_note = self::truncate(
+				sanitize_textarea_field( wp_unslash( $_POST['customer_note'] ) ),
+				max( 1, OrderSettings::get_int( 'note_maxlength' ) )
+			);
+		}
+
 		// The product the builder was embedded in, when there was one. Both the
 		// pricing bridge and the cart dispatch need it, and both validate it
 		// before use, so an untrusted value can only ever select a real pizza
@@ -194,11 +293,34 @@ class OrderSubmission {
 			if ( ! is_array( $item_in ) ) {
 				continue;
 			}
-			$item = $this->resolve_item( $item_in );
+			$item = $this->resolve_item( $item_in, $customer_note );
+			if ( is_wp_error( $item ) ) {
+				wp_send_json_error(
+					[
+						'message' => $item->get_error_message(),
+						'code'    => $item->get_error_code(),
+					],
+					400
+				);
+			}
 			if ( null !== $item ) {
 				$items[] = $item;
 			}
 		}
+
+		// An item that should have been priced but could not be (a size or
+		// layer the price grid does not cover) is not silently charged as
+		// something else: the order is held for staff to price by hand
+		// before the kitchen starts it (2.4.3).
+		$unpriced = [];
+		if ( OrderPricing::is_available() && OrderProduct::resolve( $product_id ) > 0 ) {
+			foreach ( $items as $index => $item ) {
+				if ( 'none' === $item['price_source'] ) {
+					$unpriced[] = $index + 1;
+				}
+			}
+		}
+		$needs_review = ! empty( $unpriced ) && OrderStatuses::is_valid( OrderStatuses::REVIEW_STATUS );
 
 		if ( empty( $items ) ) {
 			wp_send_json_error(
@@ -210,9 +332,21 @@ class OrderSubmission {
 			);
 		}
 
+		// ── Claim this attempt ────────────────────────────────────────────
+		if ( ! Idempotency::claim( $idem_key ) ) {
+			wp_send_json_error(
+				[
+					'message' => __( 'Your order is still being placed. Please wait a moment.', 'pizzatier' ),
+					'code'    => 'in_progress',
+				],
+				409
+			);
+		}
+
 		// ── Create the record ─────────────────────────────────────────────
-		$order = Order::create( OrderSettings::initial_status() );
+		$order = Order::create( $needs_review ? OrderStatuses::REVIEW_STATUS : OrderSettings::initial_status() );
 		if ( is_wp_error( $order ) ) {
+			Idempotency::release( $idem_key );
 			wp_send_json_error(
 				[
 					'message' => __( 'We could not save your order. Please try again.', 'pizzatier' ),
@@ -227,17 +361,15 @@ class OrderSubmission {
 		$order->set_fulfillment( $fulfillment );
 		$order->set_items( $items );
 
-		if ( OrderSettings::is_on( 'notes_enabled' ) && isset( $_POST['customer_note'] ) ) {
-			$note = sanitize_textarea_field( wp_unslash( $_POST['customer_note'] ) );
-			$max  = max( 1, OrderSettings::get_int( 'note_maxlength' ) );
-			$order->set_customer_note( self::truncate( $note, $max ) );
+		if ( '' !== $customer_note ) {
+			$order->set_customer_note( $customer_note );
 		}
 
 		$order->set_source(
 			[
 				'origin'     => 'builder',
 				'page_id'    => isset( $_POST['page_id'] ) ? absint( wp_unslash( $_POST['page_id'] ) ) : 0,
-				'url'        => isset( $_POST['page_url'] ) ? esc_url_raw( wp_unslash( $_POST['page_url'] ) ) : '',
+				'url'        => isset( $_POST['page_url'] ) ? self::same_site_url( esc_url_raw( wp_unslash( $_POST['page_url'] ) ) ) : '',
 				'referrer'   => wp_get_referer() ? wp_get_referer() : '',
 				'ip'         => $this->get_ip(),
 				'user_agent' => isset( $_SERVER['HTTP_USER_AGENT'] ) ? sanitize_text_field( wp_unslash( $_SERVER['HTTP_USER_AGENT'] ) ) : '',
@@ -247,7 +379,16 @@ class OrderSubmission {
 
 		$order->recalculate_totals();
 
-		$this->bump_rate_limit();
+		if ( $needs_review ) {
+			$order->add_staff_note(
+				sprintf(
+					/* translators: %s: comma-separated pizza numbers, e.g. "1, 3". */
+					__( 'Held for review: the price grid could not price pizza %s, so the total is incomplete. Confirm the price with the customer before preparing it.', 'pizzatier' ),
+					implode( ', ', $unpriced )
+				),
+				0
+			);
+		}
 
 		/**
 		 * Fires once a front-end order has been fully populated.
@@ -262,6 +403,11 @@ class OrderSubmission {
 		// Everything above this point is the same for every store. What differs
 		// is where the finished order goes, which is RouteDispatcher's job.
 		$dispatch = ( new RouteDispatcher() )->dispatch( $order, $product_id, $emailed );
+
+		// A held order is the store's only record of an unpriced pizza.
+		if ( $needs_review ) {
+			$dispatch['discard'] = false;
+		}
 
 		// Read everything needed for the response before the record can be
 		// discarded — a discarded order has no meta left to read.
@@ -279,9 +425,15 @@ class OrderSubmission {
 
 		// A cart failure on a route that also records the order is a warning,
 		// not a failure: the kitchen already has the ticket. The customer is
-		// told so they do not go to a checkout with an empty cart.
+		// told so they do not go to a checkout with an empty cart. Store-side
+		// delivery problems ($dispatch['admin_errors'], e.g. the webhook) are
+		// deliberately not passed on.
 		if ( ! empty( $dispatch['errors'] ) ) {
 			$response['warnings'] = array_values( $dispatch['errors'] );
+		}
+
+		if ( $needs_review ) {
+			$response['needs_review'] = true;
 		}
 
 		if ( ! empty( $dispatch['discard'] ) ) {
@@ -304,7 +456,23 @@ class OrderSubmission {
 			$response['stored']   = false;
 		}
 
+		Idempotency::complete( $idem_key, $response );
+
 		wp_send_json_success( $response );
+	}
+
+	/**
+	 * Keep a submitted page URL only when it points at this site. It is shown
+	 * as a link on the order screen, so an arbitrary off-site address there
+	 * would be a ready-made phishing link (2.4.3).
+	 */
+	private static function same_site_url( string $url ): string {
+		if ( '' === $url ) {
+			return '';
+		}
+		$host = strtolower( (string) wp_parse_url( $url, PHP_URL_HOST ) );
+		$home = strtolower( (string) wp_parse_url( home_url(), PHP_URL_HOST ) );
+		return ( '' !== $host && $host === $home ) ? $url : '';
 	}
 
 	/**
@@ -363,13 +531,26 @@ class OrderSubmission {
 	 * Rebuild one line item from the database using only the slugs the client
 	 * sent. Names, post IDs and prices all come from the server.
 	 *
+	 * @param array  $item_in       Raw item from the request.
+	 * @param string $customer_note The order-level note, already sanitised.
 	 * @return array|null Null when the item resolved to nothing usable.
 	 */
-	private function resolve_item( array $item_in ) {
+	private function resolve_item( array $item_in, string $customer_note = '' ) {
 		$types      = self::layer_types();
 		$coverages  = $this->allowed_coverages();
 		$layers_in  = isset( $item_in['layers'] ) && is_array( $item_in['layers'] ) ? $item_in['layers'] : [];
 		$layers_out = [];
+
+		// Defence in depth — handle() already rejects oversized items.
+		$layers_in = array_slice( $layers_in, 0, max( 1, (int) apply_filters( 'pizzatier_order_max_layers', self::MAX_LAYERS ) ) );
+
+		// Same repeat rules as Commerce\LayerResolver, which prices the order,
+		// so the kitchen ticket, the email, the webhook and the cart all
+		// describe exactly what was charged (2.4.3). Before this, a repeated
+		// layer made the ticket say "Pepperoni ×20" while pricing counted one.
+		$seen       = [];
+		$first_cov  = [];
+		$levels     = [];
 
 		foreach ( $layers_in as $layer_in ) {
 			if ( ! is_array( $layer_in ) ) {
@@ -394,6 +575,23 @@ class OrderSubmission {
 			if ( ! in_array( $coverage, $coverages, true ) ) {
 				$coverage = 'whole';
 			}
+			// Only toppings are priced by coverage; everything else is whole.
+			if ( 'topping' !== $type ) {
+				$coverage = 'whole';
+			}
+
+			$pid = (int) $post->ID;
+			$n   = ( $seen[ $pid ] ?? 0 ) + 1;
+			$seen[ $pid ] = $n;
+			if ( $n > 1 ) {
+				if ( 'topping' !== $type || ! self::extra_portion_allowed( $slug, $n ) ) {
+					continue;
+				}
+				$coverage        = $first_cov[ $pid ];
+				$levels[ $slug ] = $n;
+			} else {
+				$first_cov[ $pid ] = $coverage;
+			}
 
 			$layers_out[] = [
 				'type'           => $type,
@@ -410,13 +608,34 @@ class OrderSubmission {
 			return null;
 		}
 
+		$limit_error = \PizzaTier\Commerce\LayerResolver::topping_limit_error(
+			array_map(
+				static function ( $l ) {
+					return [ 'layerId' => $l['slug'], 'layerType' => $l['type'] ];
+				},
+				$layers_out
+			)
+		);
+		if ( null !== $limit_error ) {
+			return new \WP_Error( 'topping_limit', $limit_error );
+		}
+
 		// ── Size ──────────────────────────────────────────────────────────
 		$size      = [ 'slug' => '', 'label' => '', 'post_id' => 0, 'diameter' => 0.0 ];
 		$size_in   = isset( $item_in['size'] ) && is_array( $item_in['size'] ) ? $item_in['size'] : [];
 		$size_slug = sanitize_title( (string) ( isset( $size_in['slug'] ) ? $size_in['slug'] : '' ) );
 
+		// A size the customer cannot have chosen is refused rather than
+		// quietly priced as the cheapest one (2.4.3).
+		if ( '' === $size_slug && OrderSettings::is_on( 'size_enabled' ) && $this->has_public_sizes() ) {
+			return new \WP_Error( 'size_required', __( 'Please choose a size for your pizza.', 'pizzatier' ) );
+		}
+
 		if ( '' !== $size_slug ) {
 			$size_post = $this->find_layer_post( 'pizzatier_sizes', $size_slug );
+			if ( ! $size_post instanceof \WP_Post ) {
+				return new \WP_Error( 'invalid_size', __( 'That pizza size is not available. Please choose another.', 'pizzatier' ) );
+			}
 			if ( $size_post instanceof \WP_Post ) {
 				$diameter = get_post_meta( $size_post->ID, '_pizzatier_diameter_inches', true );
 				if ( '' === $diameter || false === $diameter ) {
@@ -436,8 +655,17 @@ class OrderSubmission {
 			? min( $max_qty, max( 1, (int) ( isset( $item_in['quantity'] ) ? $item_in['quantity'] : 1 ) ) )
 			: 1;
 
-		$notes = sanitize_textarea_field( (string) ( isset( $item_in['notes'] ) ? $item_in['notes'] : '' ) );
-		$notes = self::truncate( $notes, max( 1, OrderSettings::get_int( 'note_maxlength' ) ) );
+		$notes = $this->filter_item_notes(
+			sanitize_textarea_field( (string) ( isset( $item_in['notes'] ) ? $item_in['notes'] : '' ) ),
+			$customer_note
+		);
+
+		// The kitchen's extra-portion summary is written here, from the
+		// validated layers — never taken from text the customer sent (2.4.3).
+		$summary = self::portion_summary( $levels );
+		if ( '' !== $summary ) {
+			$notes = '' === $notes ? $summary : $summary . "\n" . $notes;
+		}
 
 		$item = [
 			'instance_id'  => sanitize_text_field( (string) ( isset( $item_in['instance_id'] ) ? $item_in['instance_id'] : '' ) ),
@@ -477,13 +705,132 @@ class OrderSubmission {
 	}
 
 	/**
+	 * Decide what is kept of a line item's note.
+	 *
+	 * Everything in an incoming note is customer text. It is kept only when
+	 * order notes are switched on, is cut to the configured length, and is
+	 * dropped when it merely repeats the order-level note (older front-end
+	 * scripts sent the same note in both places).
+	 *
+	 * Lines that imitate the server's "Extra portions:" summary are removed.
+	 * Until 2.4.3 such lines were trusted as system text, so a customer could
+	 * put arbitrary "Extra portions: …" instructions on the kitchen ticket even
+	 * with notes switched off. The real summary is now generated from the
+	 * validated layers in resolve_item().
+	 */
+	private function filter_item_notes( string $notes, string $customer_note ): string {
+		if ( '' === trim( $notes ) || ! OrderSettings::is_on( 'notes_enabled' ) ) {
+			return '';
+		}
+
+		$prefixes = self::summary_prefixes();
+		$free     = [];
+		foreach ( preg_split( '/\r\n|\r|\n/', $notes ) as $line ) {
+			$trimmed = ltrim( $line );
+			foreach ( $prefixes as $prefix ) {
+				if ( '' !== $prefix && 0 === stripos( $trimmed, $prefix ) ) {
+					continue 2;
+				}
+			}
+			$free[] = $line;
+		}
+
+		$free_text = trim( implode( "\n", $free ) );
+		if ( '' !== $free_text && '' !== trim( $customer_note ) && trim( $customer_note ) === $free_text ) {
+			return '';
+		}
+
+		return '' !== $free_text
+			? self::truncate( $free_text, max( 1, OrderSettings::get_int( 'note_maxlength' ) ) )
+			: '';
+	}
+
+	/** Prefixes that mark the server's extra-portion summary line. */
+	private static function summary_prefixes(): array {
+		return array_values(
+			array_unique(
+				[
+					'Extra portions:',
+					trim( sprintf( /* translators: %s: extra portion summary. */ __( 'Extra portions: %s', 'pizzatier' ), '' ) ),
+				]
+			)
+		);
+	}
+
+	/**
+	 * Server-made "Extra portions: Pepperoni (Double)" line for the kitchen.
+	 *
+	 * @param array<string,int> $levels Topping slug → number of portions (2+).
+	 */
+	private static function portion_summary( array $levels ): string {
+		if ( empty( $levels ) || ! class_exists( \PizzaTier\Multiplier\Config::class )
+			|| ! class_exists( \PizzaTier\Multiplier\Pricing\CartLabels::class )
+			|| ! \PizzaTier\Multiplier\Config::get( 'order_note' ) ) {
+			return '';
+		}
+		/* translators: %s: list such as "Pepperoni (Double)". */
+		return sprintf( __( 'Extra portions: %s', 'pizzatier' ), \PizzaTier\Multiplier\Pricing\CartLabels::summary( $levels ) );
+	}
+
+	/**
+	 * Whether the nth portion of a topping may be ordered — the same rule
+	 * Commerce\LayerResolver applies when pricing it.
+	 */
+	private static function extra_portion_allowed( string $slug, int $n ): bool {
+		if ( ! class_exists( \PizzaTier\Multiplier\Config::class ) || ! \PizzaTier\Multiplier\Config::enabled() ) {
+			return false;
+		}
+		$conf = \PizzaTier\Multiplier\Config::topping( $slug );
+		if ( null === $conf || $n > (int) $conf['max'] ) {
+			return false;
+		}
+		$same_max = function_exists( 'pizzatier_get_option' ) ? (int) pizzatier_get_option( 'max_same_topping', 0 ) : 0;
+		return $same_max <= 0 || $n <= $same_max;
+	}
+
+	/** Whether any published size exists, i.e. the size picker has choices. */
+	private function has_public_sizes(): bool {
+		static $has = null;
+		if ( null === $has ) {
+			$has = ! empty(
+				get_posts(
+					[
+						'post_type'        => 'pizzatier_sizes',
+						'post_status'      => 'publish',
+						'posts_per_page'   => 1,
+						'fields'           => 'ids',
+						'no_found_rows'    => true,
+						'suppress_filters' => false,
+					]
+				)
+			);
+		}
+		return $has;
+	}
+
+	/**
 	 * Look up a layer post by slug within one CPT.
 	 *
 	 * @return \WP_Post|null
 	 */
 	private function find_layer_post( string $post_type, string $slug ) {
+		// Added portions repeat the same layer, so look each one up once.
+		$key = $post_type . '|' . $slug;
+		if ( array_key_exists( $key, $this->layer_cache ) ) {
+			return $this->layer_cache[ $key ];
+		}
+		$this->layer_cache[ $key ] = $this->lookup_layer_post( $post_type, $slug );
+		return $this->layer_cache[ $key ];
+	}
+
+	/**
+	 * @param string $post_type Post type.
+	 * @param string $slug      Slug or sanitised title.
+	 * @return \WP_Post|null
+	 */
+	private function lookup_layer_post( string $post_type, string $slug ) {
 		$post = get_page_by_path( $slug, OBJECT, $post_type );
-		if ( $post instanceof \WP_Post && 'publish' === $post->post_status ) {
+		if ( $post instanceof \WP_Post && 'publish' === $post->post_status && '' === (string) $post->post_password ) {
 			return $post;
 		}
 
@@ -498,7 +845,7 @@ class OrderSubmission {
 			]
 		);
 
-		return ! empty( $found ) ? $found[0] : null;
+		return ( ! empty( $found ) && '' === (string) $found[0]->post_password ) ? $found[0] : null;
 	}
 
 	/**
@@ -539,25 +886,78 @@ class OrderSubmission {
 	// Rate limiting
 	// -------------------------------------------------------------------------
 
-	/** Whether this IP is still under its hourly submission allowance. */
-	private function check_rate_limit(): bool {
+	/**
+	 * Record one submission against this IP and report whether it is still
+	 * within the hourly allowance.
+	 *
+	 * The increment is atomic so concurrent requests cannot all read the same
+	 * count: with a persistent object cache it uses wp_cache_incr(); otherwise
+	 * it upserts the transient's own option row in a single statement. The
+	 * row keeps the standard transient layout, so get_transient() and the
+	 * core expired-transient cleanup continue to work on it.
+	 *
+	 * @return bool True when the request may proceed.
+	 */
+	private function consume_rate_limit(): bool {
 		$limit = OrderSettings::get_int( 'rate_limit' );
 		if ( $limit <= 0 ) {
 			return true;
 		}
-		$count = (int) get_transient( self::RATE_PREFIX . $this->ip_hash() );
-		return $count < $limit;
-	}
 
-	/** Record one successful submission against this IP. */
-	private function bump_rate_limit(): void {
-		$limit = OrderSettings::get_int( 'rate_limit' );
-		if ( $limit <= 0 ) {
-			return;
+		$key = self::RATE_PREFIX . $this->ip_hash();
+
+		if ( wp_using_ext_object_cache() ) {
+			$group = 'pizzatier_rate_limit';
+			wp_cache_add( $key, 0, $group, HOUR_IN_SECONDS );
+			$count = wp_cache_incr( $key, 1, $group );
+			if ( false !== $count ) {
+				return (int) $count <= $limit;
+			}
+			// Backend without incr support — fall through to the database.
 		}
-		$key   = self::RATE_PREFIX . $this->ip_hash();
-		$count = (int) get_transient( $key );
-		set_transient( $key, $count + 1, HOUR_IN_SECONDS );
+
+		global $wpdb;
+
+		// Purges the row first when the hour window has expired.
+		get_transient( $key );
+
+		$value_name   = '_transient_' . $key;
+		$timeout_name = '_transient_timeout_' . $key;
+
+		// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Atomic counter; the options cache is cleared below.
+		$wpdb->query(
+			$wpdb->prepare(
+				"INSERT IGNORE INTO {$wpdb->options} (option_name, option_value, autoload) VALUES (%s, %s, %s)",
+				$timeout_name,
+				(string) ( time() + HOUR_IN_SECONDS ),
+				'no'
+			)
+		);
+		$wpdb->query(
+			$wpdb->prepare(
+				"INSERT INTO {$wpdb->options} (option_name, option_value, autoload) VALUES (%s, %s, %s)
+				 ON DUPLICATE KEY UPDATE option_value = CAST( option_value AS UNSIGNED ) + 1",
+				$value_name,
+				'1',
+				'no'
+			)
+		);
+		$count = $wpdb->get_var(
+			$wpdb->prepare( "SELECT option_value FROM {$wpdb->options} WHERE option_name = %s", $value_name )
+		);
+		// phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+
+		wp_cache_delete( $value_name, 'options' );
+		wp_cache_delete( $timeout_name, 'options' );
+
+		if ( null === $count ) {
+			// The database refused the write; fall back to the options API
+			// rather than blocking every order.
+			$count = (int) get_transient( $key ) + 1;
+			set_transient( $key, $count, HOUR_IN_SECONDS );
+		}
+
+		return (int) $count <= $limit;
 	}
 
 	/**
@@ -565,13 +965,44 @@ class OrderSubmission {
 	 * ends up in the options table.
 	 */
 	private function ip_hash(): string {
-		return md5( $this->get_ip() . wp_salt( 'nonce' ) );
+		$ip = $this->get_ip();
+		// One IPv6 subscriber usually holds a whole /64, so keying on the full
+		// address let a single client rotate past the limit (2.4.3).
+		if ( false !== strpos( $ip, ':' ) && function_exists( 'inet_pton' ) ) {
+			$packed = @inet_pton( $ip ); // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged -- Validated IP; false only on exotic input.
+			if ( false !== $packed && 16 === strlen( $packed ) ) {
+				$ip = bin2hex( substr( $packed, 0, 8 ) ) . '::/64';
+			}
+		}
+		return md5( $ip . wp_salt( 'nonce' ) );
 	}
 
-	/** Best-effort requesting IP address. */
+	/**
+	 * Best-effort requesting IP address.
+	 *
+	 * REMOTE_ADDR is the only value a client cannot forge, so it is the
+	 * default. Behind a reverse proxy or CDN it is the proxy's address, which
+	 * would put every visitor in one rate-limit bucket; such sites supply the
+	 * real client address through the 'pizzatier_order_client_ip' filter
+	 * (reading the header their own proxy sets — never trust
+	 * X-Forwarded-For unless the proxy overwrites it).
+	 */
 	private function get_ip(): string {
-		$ip = isset( $_SERVER['REMOTE_ADDR'] ) ? sanitize_text_field( wp_unslash( $_SERVER['REMOTE_ADDR'] ) ) : '';
-		return filter_var( $ip, FILTER_VALIDATE_IP ) ? $ip : '';
+		$remote = isset( $_SERVER['REMOTE_ADDR'] ) ? sanitize_text_field( wp_unslash( $_SERVER['REMOTE_ADDR'] ) ) : '';
+		$remote = filter_var( $remote, FILTER_VALIDATE_IP ) ? $remote : '';
+
+		/**
+		 * Filter the client IP address used for order rate limiting and
+		 * recorded on the order.
+		 *
+		 * @since 2.4.0
+		 *
+		 * @param string $ip          Default: REMOTE_ADDR (validated), or ''.
+		 * @param string $remote_addr The raw validated REMOTE_ADDR.
+		 */
+		$ip = trim( (string) apply_filters( 'pizzatier_order_client_ip', $remote, $remote ) );
+
+		return filter_var( $ip, FILTER_VALIDATE_IP ) ? $ip : $remote;
 	}
 
 	// -------------------------------------------------------------------------
@@ -605,6 +1036,9 @@ class OrderSubmission {
 			__( 'New pizza order: %s', 'pizzatier' ),
 			$order->get_number()
 		);
+		if ( OrderStatuses::REVIEW_STATUS === $order->get_status() ) {
+			$lines[] = __( 'NEEDS REVIEW: the price could not be confirmed automatically. Check it with the customer before preparing this order.', 'pizzatier' );
+		}
 		$lines[] = '';
 		$lines[] = __( 'Customer', 'pizzatier' );
 		$lines[] = '  ' . $customer['name'];
@@ -653,8 +1087,14 @@ class OrderSubmission {
 		}
 
 		$lines[] = '';
-		$lines[] = __( 'Manage this order:', 'pizzatier' );
-		$lines[] = admin_url( 'admin.php?page=pizzatier-orders&order=' . $order->get_id() );
+		if ( OrderRoute::stores_record() ) {
+			$lines[] = __( 'Manage this order:', 'pizzatier' );
+			$lines[] = admin_url( 'admin.php?page=pizzatier-orders&order=' . $order->get_id() );
+		} else {
+			// The "notify only" route deletes the record once this email has
+			// gone, so a link to it would only lead to "Order not found".
+			$lines[] = __( 'This order was sent without being saved on the site, so this email is the store\'s copy of it.', 'pizzatier' );
+		}
 
 		$subject = sprintf(
 			/* translators: 1: site name, 2: order number. */

@@ -60,6 +60,11 @@ final class Plugin {
 		$layer_grid_mb = new Admin\LayerGridMetaBox( new PriceGrid\Grid() );
 		$layer_grid_mb->register();
 
+		// One-click repair for layer grids saved as all zeros by < 2.4.0.
+		if ( is_admin() ) {
+			( new Admin\ZeroGridNotice() )->register();
+		}
+
 		// ── Order pizza build meta box (on WC order edit screen) ─────────
 		// Dedicated meta box showing the full pizza configuration for every
 		// pizza line item in an order. Works on both legacy and HPOS orders.
@@ -101,6 +106,9 @@ final class Plugin {
 			// Frontend embed (builder injection + size selector + price bar).
 			$frontend = new WooCommerce\FrontendEmbed( new PriceGrid\Grid() );
 			$frontend->register();
+
+			// Cart rules — builder-only adds, guests, name/thumbnail/note templates.
+			( new WooCommerce\CartRules() )->register();
 
 			// Cart integration — AJAX add-to-cart + price override.
 			$cart = new WooCommerce\CartIntegration( $calculator );

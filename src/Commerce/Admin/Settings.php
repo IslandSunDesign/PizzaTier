@@ -200,9 +200,6 @@ class Settings {
 				'nearest50' => __( 'Nearest $0.50', 'pizzatier' ),
 				'nearest1'  => __( 'Nearest $1.00', 'pizzatier' ),
 			] ],
-			[ 'price_includes_tax', __( 'Grid prices are tax-inclusive', 'pizzatier' ),
-			  __( 'Check if the prices you entered in price grids already include tax. PizzaTier will not add further tax on top of grid add-on amounts.', 'pizzatier' ),
-			  'checkbox' ],
 			[ 'show_per_topping_price', __( 'Show per-topping price in builder', 'pizzatier' ),
 			  __( 'Display the add-on price next to each topping option in the frontend builder (e.g. Pepperoni +$1.50). Requires the active PizzaTier template to support this.', 'pizzatier' ),
 			  'checkbox' ],
@@ -475,20 +472,10 @@ class Settings {
 		add_settings_section( 'pizzatier_commerce_section_advanced', __( 'Advanced', 'pizzatier' ), '__return_false', self::PAGE_SLUG );
 
 		$fields = [
-			[ 'tax_display', __( 'Tax display on product page', 'pizzatier' ),
-			  __( 'How taxes appear in the live price bar.', 'pizzatier' ), 'select', '', [
-				''     => __( 'Inherit from WooCommerce', 'pizzatier' ),
-				'incl' => __( 'Including tax', 'pizzatier' ),
-				'excl' => __( 'Excluding tax', 'pizzatier' ),
-			] ],
-			[ 'tax_class_override', __( 'Tax class override', 'pizzatier' ),
-			  __( 'Force a specific WooCommerce tax class on all pizza products. Leave blank to use each product\'s own class.', 'pizzatier' ), 'text', '' ],
 			[ 'enable_rest_price', __( 'Enable REST price endpoint', 'pizzatier' ),
 			  __( 'Expose /wp-json/pizzatier/v1/calculate-price for server-side price verification. Disable only for custom checkout flows.', 'pizzatier' ), 'checkbox' ],
 			[ 'disable_quantity', __( 'Disable quantity selector for pizza products', 'pizzatier' ),
 			  __( 'Force qty=1 — each customisation is its own cart line item.', 'pizzatier' ), 'checkbox' ],
-			[ 'cache_price_grid', __( 'Cache price grid data', 'pizzatier' ),
-			  __( 'Cache price grid lookups in a transient to reduce database queries on high-traffic stores. Cache is cleared when any grid is saved.', 'pizzatier' ), 'checkbox' ],
 			[ 'schema_markup', __( 'Output product schema markup', 'pizzatier' ),
 			  __( 'Add JSON-LD schema markup for pizza product pages to help with rich search results.', 'pizzatier' ), 'checkbox' ],
 			[ 'price_update_delay_ms', __( 'Live price update delay (ms)', 'pizzatier' ),

@@ -8,12 +8,17 @@
  * inline from pztp-containers-menu.php after the builder HTML.
  *
  * Compatible with the broader PizzaTier JS ecosystem:
- *   - Calls ClearPizza() / AddPizzaTier() / RemovePizzaTier() if available.
+ *   - Registers with the shared window.PizzaTierAPI facade.
  *   - Dispatches 'pizzatier:selection_changed' on the root element.
+ *
+ * Plainlist renders no pizza image, so it deliberately does NOT call the
+ * legacy ClearPizza() / AddPizzaTier() / RemovePizzaTier() globals: they were
+ * called with the wrong arguments, and RemovePizzaTier( 'crust', … ) ran
+ * $( '.crust' ).remove(), deleting unrelated elements (and other builders'
+ * layers) across the page.
  */
 
 /* jshint browser:true */
-/* global ClearPizza, AddPizzaTier, RemovePizzaTier */
 
 (function ( window, document ) {
 	'use strict';
@@ -76,10 +81,6 @@
 				prev.setAttribute( 'aria-checked', 'false' );
 				var prevInput = prev.querySelector( '.pl-item__input' );
 				if ( prevInput ) { prevInput.checked = false; }
-				// Notify layer system
-				if ( typeof RemovePizzaTier === 'function' && state.exclusive[ layerType ] ) {
-					try { RemovePizzaTier( layerType, state.exclusive[ layerType ].slug ); } catch(e) {}
-				}
 				delete state.exclusive[ layerType ];
 			}
 
@@ -90,10 +91,6 @@
 				var input = itemEl.querySelector( '.pl-item__input' );
 				if ( input ) { input.checked = true; }
 				state.exclusive[ layerType ] = { slug: slug, title: title, layerUrl: layerUrl };
-				// Notify layer system
-				if ( layerUrl && typeof AddPizzaTier === 'function' ) {
-					try { AddPizzaTier( layerType, slug, layerUrl, title ); } catch(e) {}
-				}
 			}
 
 			refreshSummary();
@@ -114,14 +111,14 @@
 				var input = itemEl.querySelector( '.pl-item__input' );
 				if ( input ) { input.checked = false; }
 				delete state.toppings[ slug ];
-				if ( typeof RemovePizzaTier === 'function' ) {
-					try { RemovePizzaTier( layerId, slug ); } catch(e) {}
-				}
+				plUpdateCoverageChip( itemEl, 'whole' );
 			} else {
 				// Check max
 				var currentCount = Object.keys( state.toppings ).length;
 				if ( currentCount >= cfg.maxToppings ) {
 					root.dispatchEvent( new CustomEvent( 'pizzatier:max_toppings', { bubbles: true, detail: { instanceId: instanceId } } ) );
+					/* Visible / announced feedback (nothing listened for the event). */
+					if ( window.PizzaTierNotice ) { window.PizzaTierNotice.maxToppings( root, cfg.maxToppings ); }
 					return;
 				}
 				// Add
@@ -131,9 +128,6 @@
 				if ( inp ) { inp.checked = true; }
 				state.toppings[ slug ] = { title: title, layerUrl: layerUrl, zindex: zindex, coverage: 'whole' };
 				plUpdateCoverageChip( itemEl, 'whole' );
-				if ( layerUrl && typeof AddPizzaTier === 'function' ) {
-					try { AddPizzaTier( 'topping', slug, layerUrl, title, zindex ); } catch(e) {}
-				}
 			}
 
 			// Update topping badge
@@ -162,13 +156,11 @@
 			state.exclusive = {};
 			state.toppings  = {};
 
+			qa( '.pl-item--topping' ).forEach( function( el ) { plUpdateCoverageChip( el, 'whole' ); } );
+
 			if ( toppingCount ) {
 				toppingCount.textContent = '0';
 				toppingCount.style.display = 'none';
-			}
-
-			if ( typeof ClearPizza === 'function' ) {
-				try { ClearPizza(); } catch(e) {}
 			}
 
 			refreshSummary();
@@ -198,9 +190,15 @@
 			} );
 
 			if ( newState.toppings && typeof newState.toppings === 'object' ) {
-				Object.keys( newState.toppings ).forEach( function( slug ) {
+				Object.keys( newState.toppings ).forEach( function( key ) {
+					var t    = newState.toppings[ key ];
+					var slug = ( t && typeof t === 'object' && t.slug ) ? t.slug : key;
 					var item = root.querySelector( '.pl-item[data-layer="toppings"][data-slug="' + slug + '"]' );
 					if ( item && ! item.classList.contains( 'pl-item--selected' ) ) { item.click(); }
+					/* Restore the saved coverage (cart edit / Pro defaults). */
+					if ( t && typeof t === 'object' && t.coverage && state.toppings[ slug ] ) {
+						plApplyCoverage( slug, t.coverage );
+					}
 				} );
 			}
 		}
@@ -355,25 +353,30 @@
 			}
 		}
 
+		/** Set a selected topping's coverage (state + chip + summary). */
+		function plApplyCoverage( slug, fraction ) {
+			if ( ! state.toppings[ slug ] ) { return; }
+			state.toppings[ slug ].coverage = fraction;
+
+			var itemEl = root.querySelector( '.pl-item--topping[data-slug="' + slug + '"]' );
+			plUpdateCoverageChip( itemEl, fraction );
+
+			/* Best-effort visual coverage: the base layer system styles toppings
+			   via tcg-* classes on #pizzatier-topping-{slug}. */
+			var layerEl = document.getElementById( 'pizzatier-topping-' + slug );
+			if ( layerEl ) {
+				layerEl.className = layerEl.className.replace( /\btcg-[a-z-]+\b/g, '' ).replace( /\s+/g, ' ' ).trim();
+				layerEl.classList.add( 'tcg-' + fraction );
+			}
+
+			refreshSummary();
+			dispatchChange();
+		}
+
 		/** Apply the chosen coverage to the active topping. */
 		function plChooseCoverage( fraction ) {
 			if ( activeCoverageSlug && state.toppings[ activeCoverageSlug ] ) {
-				var slug = activeCoverageSlug;
-				state.toppings[ slug ].coverage = fraction;
-
-				var itemEl = root.querySelector( '.pl-item--topping[data-slug="' + slug + '"]' );
-				plUpdateCoverageChip( itemEl, fraction );
-
-				/* Best-effort visual coverage: the base layer system styles toppings
-				   via tcg-* classes on #pizzatier-topping-{slug}. */
-				var layerEl = document.getElementById( 'pizzatier-topping-' + slug );
-				if ( layerEl ) {
-					layerEl.className = layerEl.className.replace( /\btcg-[a-z-]+\b/g, '' ).replace( /\s+/g, ' ' ).trim();
-					layerEl.classList.add( 'tcg-' + fraction );
-				}
-
-				refreshSummary();
-				dispatchChange();
+				plApplyCoverage( activeCoverageSlug, fraction );
 			}
 			plCloseCoverage();
 		}
@@ -467,8 +470,9 @@
 	window.PL = window.PL || {};
 	window.PL.createInstance = createInstance;
 
-	/* PizzaTierAPI — standard surface consumed by PizzaTier */
-	window.PizzaTierAPI = window.PizzaTierAPI || {
+	/* PizzaTierAPI — standard surface consumed by PizzaTier. Registered with
+	   the shared facade from pizzatier-main.js when it is present. */
+	var plApi = {
 		getState: function ( instanceId ) {
 			var inst = instances[ instanceId ];
 			return inst ? inst.getState() : null;
@@ -481,5 +485,11 @@
 			if ( inst && typeof inst.setState === 'function' ) { inst.setState( newState ); }
 		}
 	};
+	window.PL.API = plApi;
+	if ( window.PizzaTierAPI && typeof window.PizzaTierAPI.register === 'function' ) {
+		window.PizzaTierAPI.register( plApi );
+	} else {
+		window.PizzaTierAPI = window.PizzaTierAPI || plApi;
+	}
 
 }( window, document ) );

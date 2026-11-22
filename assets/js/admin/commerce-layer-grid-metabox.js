@@ -7,7 +7,13 @@
 			'use strict';
 
 			var DATA         = window.pizzatierLayerGridData || {};
-			var currency     = DATA.currency || '$';
+			// Decode once (WooCommerce sends entities such as '&#36;'); it is
+			// escaped again wherever it is written into markup.
+			var currency     = ( function ( raw ) {
+				var t = document.createElement( 'textarea' );
+				t.innerHTML = String( raw || '$' );
+				return t.value;
+			}( DATA.currency ) );
 			var i18n         = DATA.i18n || {};
 			var AJAX         = DATA.ajaxUrl || '';
 			var NONCE        = DATA.nonce || '';
@@ -58,13 +64,13 @@
 				td.setAttribute( 'data-fraction', fraction );
 				td.innerHTML =
 					'<div class="pztc-cell-wrap">' +
-					'<span class="pztc-cell-currency">' + currency + '</span>' +
+					'<span class="pztc-cell-currency">' + escHtml( currency ) + '</span>' +
 					'<input type="number"' +
-					' name="pizzatier_commerce_layer_grid[cells][' + key + ']"' +
-					' value="' + ( value || '' ) + '"' +
+					' name="pizzatier_commerce_layer_grid[cells][' + escAttr( key ) + ']"' +
+					' value="' + escAttr( value || '' ) + '"' +
 					' class="pztc-price-input"' +
 					' min="0" step="0.01" placeholder="' + escAttr( placeholderFor( key ) ) + '"' +
-					' data-key="' + key + '" />' +
+					' data-key="' + escAttr( key ) + '" />' +
 					'</div>';
 				return td;
 			}
@@ -250,14 +256,16 @@
 					btn = e.target.closest( '.pztc-remove-col' );
 					if ( btn ) {
 						if ( confirm( i18n.confirmRemoveCol || 'Remove this column?' ) ) {
-							var frac  = btn.getAttribute( 'data-fraction' );
+							// By position: rebuilt or renamed columns carry no
+							// (or a stale) data-fraction on their button.
+							var colTh = btn.closest( 'th' );
 							var table = document.getElementById( 'pztc-layer-grid-table' );
-							if ( ! table ) return;
-							var colTh = table.querySelector( 'th[data-fraction="' + frac + '"]' );
-							if ( colTh ) colTh.remove();
-							table.querySelectorAll( 'td[data-fraction="' + frac + '"]' ).forEach( function ( td ) {
-								td.remove();
+							if ( ! table || ! colTh ) return;
+							var idx = colTh.cellIndex;
+							table.querySelectorAll( 'tbody tr' ).forEach( function ( tr ) {
+								if ( tr.cells[ idx ] ) { tr.cells[ idx ].remove(); }
 							} );
+							colTh.remove();
 						}
 					}
 				} );

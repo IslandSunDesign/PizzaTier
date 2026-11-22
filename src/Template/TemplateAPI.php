@@ -22,6 +22,7 @@ class TemplateAPI {
 			'post_type'      => 'pizzatier_' . $type,
 			'posts_per_page' => -1,
 			'post_status'    => 'publish',
+			'has_password'   => false, // Password-protected layers are not on the public menu (2.4.3).
 			'orderby'        => 'menu_order title',
 			'order'          => 'ASC',
 		];
@@ -56,7 +57,7 @@ class TemplateAPI {
 
 		$image_types = [ 'toppings', 'crusts', 'sauces', 'cheeses', 'drizzles', 'cuts' ];
 		if ( in_array( $type, $image_types, true ) ) {
-			$ok = ( self::get_layer_image( $post_id, rtrim( $type, 's' ) ) !== '' );
+			$ok = ( self::get_layer_image( $post_id, (string) preg_replace( '/s$/', '', $type ) ) !== '' );
 		} elseif ( $type === 'sizes' ) {
 			$diameter = get_post_meta( $post_id, '_pizzatier_diameter_inches', true );
 			if ( $diameter === '' || $diameter === false ) {

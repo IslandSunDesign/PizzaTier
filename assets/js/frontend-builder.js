@@ -64,6 +64,11 @@
 		const LAYER_GRIDS   = CFG.layerGrids  || {};
 		// Slug → postId map for resolving layerPostId from a layer slug
 		const POST_ID_MAP   = CFG.layerPostIdMap || {};
+		// Site-wide per-type grids ('toppings', 'crusts', …) and legacy flat
+		// per-layer prices — consulted in the same order as the server.
+		const GLOBAL_GRIDS  = CFG.globalGrids   || {};
+		const LEGACY_PRICES = CFG.legacyPrices  || {};
+		const GLOBAL_TYPES  = ['toppings','crusts','sauces','cheeses','drizzles','cuts','sizes'];
 		// Layer types that use the fraction grid (cheese/sauce/drizzle);
 		// all others use the flat per-size grid.
 		// all others use the flat per-size grid.
@@ -400,7 +405,7 @@
 		}
 
 		// Layer state
-		function registerLayer( lid, frac, ld ) { if(lid) activeLayers[lid] = { fraction:frac, layerData:ld, postId: resolvePostId(lid) }; }
+		function registerLayer( lid, frac, ld ) { if(lid) activeLayers[lid] = { fraction:frac, layerData:ld, postId: resolvePostId(lid, ld && (ld.type||ld.layerType)) }; }
 		function removeLayer( lid )              { if(lid && Object.prototype.hasOwnProperty.call(activeLayers,lid)) delete activeLayers[lid]; }
 
 		// =====================================================================
@@ -410,12 +415,34 @@
 		const NON_TOPPING_TYPES = ['crust','sauce','cheese','drizzle','cut'];
 		function isNT(t) { return NON_TOPPING_TYPES.indexOf((t||'').toLowerCase()) > -1; }
 
+		/**
+		 * PHP round(): halves go away from zero, after removing floating-point
+		 * noise (33.475 is stored as 33.4749999…; PHP gives 33.48, while
+		 * Math.round / toFixed gave 33.47 — 2.4.1).
+		 */
+		function phpRound(v, dec) {
+			const f = Math.pow(10, dec || 0);
+			const x = parseFloat((Math.abs(v) * f).toFixed(9));
+			return (v < 0 ? -1 : 1) * Math.round(x) / f;
+		}
+
 		function applyRounding(v) {
 			const m = CFG.priceRounding||'';
-			if (m==='up')        return Math.ceil(v*100)/100;
-			if (m==='nearest5')  return Math.round(v/0.05)*0.05;
-			if (m==='nearest25') return Math.round(v/0.25)*0.25;
-			return parseFloat(v.toFixed(parseInt(CFG.decimals,10)||2));
+			if (m==='up')        return Math.ceil(parseFloat((v*100).toFixed(6)))/100;
+			if (m==='nearest5')  return phpRound(phpRound(v/0.05)*0.05, 2);
+			if (m==='nearest25') return phpRound(phpRound(v/0.25)*0.25, 2);
+			if (m==='nearest50') return phpRound(phpRound(v/0.50)*0.50, 2);
+			if (m==='nearest1')  return phpRound(v);
+			const dec=parseInt(CFG.decimals,10);
+			return phpRound(v, isNaN(dec)?2:dec);
+		}
+
+		/** Mirror of PriceCalculator::apply_topping_price_bounds(). */
+		function applyBounds(p) {
+			const mn = CFG.minToppingPrice, mx = CFG.maxToppingPrice;
+			if (mn !== null && mn !== undefined && parseFloat(mn) > 0) p = Math.max(p, parseFloat(mn));
+			if (mx !== null && mx !== undefined && parseFloat(mx) > 0) p = Math.min(p, parseFloat(mx));
+			return p;
 		}
 
 		function gridPrice(size,frac) {
@@ -426,26 +453,45 @@
 		/**
 		 * Unified price lookup for a single layer — mirrors PHP Grid::get_layer_price().
 		 *
-		 * Resolution order:
-		 *  1. Layer's own grid (LAYER_GRIDS[String(postId)])
-		 *  2. Product-level grid (GRID.cells)
+		 * Resolution order (identical to the server):
+		 *  1. The layer's own grid (LAYER_GRIDS[postId])
+		 *  2. The site-wide grid for the layer type (GLOBAL_GRIDS['toppings'] …)
+		 *  3. The product-level grid
+		 *  4. The legacy flat price stored on the layer post
 		 *
-		 * @param {number|string} postId  CPT post ID (0 = no custom grid).
+		 * @param {number|string} postId  CPT post ID (0 = none).
 		 * @param {string}        size    Size label, e.g. 'Large'.
 		 * @param {string}        frac    Coverage label, e.g. 'Half'.
-		 * @returns {number|null}  Price, or null if missing from both grids.
+		 * @param {string}        [type]  Layer type, e.g. 'topping'.
+		 * @returns {number|null}
 		 */
-		function getLayerPrice(postId, size, frac) {
+		function getLayerPrice(postId, size, frac, type) {
 			const key = size + '|' + frac;
 			if ( postId ) {
 				const lg = LAYER_GRIDS[ String(postId) ];
 				if ( lg && lg.cells && Object.prototype.hasOwnProperty.call(lg.cells, key) ) {
 					return parseFloat( lg.cells[key] );
 				}
-				// Layer has a grid but this cell is missing — fall through to product grid.
 			}
-			// Fall back to product-level grid.
-			return gridPrice(size, frac);
+			const gp = globalPrice( type, size, frac );
+			if ( gp !== null ) return gp;
+			const pp = gridPrice(size, frac);
+			if ( pp !== null ) return pp;
+			if ( postId && Object.prototype.hasOwnProperty.call( LEGACY_PRICES, String(postId) ) ) {
+				return parseFloat( LEGACY_PRICES[ String(postId) ] ) || 0;
+			}
+			return null;
+		}
+
+		/** Mirror of Grid::normalise_global_layer_type() + get_global_layer_price(). */
+		function globalPrice(type, size, frac) {
+			let t = String(type || '').toLowerCase().trim();
+			if ( ! t ) return null;
+			if ( GLOBAL_TYPES.indexOf(t) === -1 ) t = t + 's';
+			if ( GLOBAL_TYPES.indexOf(t) === -1 ) return null;
+			const g = GLOBAL_GRIDS[t];
+			const k = size + '|' + frac;
+			return ( g && g.cells && Object.prototype.hasOwnProperty.call(g.cells, k) ) ? parseFloat(g.cells[k]) : null;
 		}
 
 		/**
@@ -455,9 +501,14 @@
 		 * @param {string} slug  Layer slug, e.g. 'pepperoni'.
 		 * @returns {number}
 		 */
-		function resolvePostId(slug) {
+		function resolvePostId(slug, type) {
+			var t = String(type||'').toLowerCase().replace(/s$/,'');
+			if ( t === 'slicing' ) t = 'cut';
+			var typed = CFG.layerPostIdMapTyped || {};
+			if ( t && typed[t] && typed[t][slug] ) return parseInt( typed[t][slug], 10 ) || 0;
 			return parseInt( POST_ID_MAP[ slug ] || 0, 10 ) || 0;
 		}
+
 
 		/**
 		 * Normalise a template coverage string to the nearest grid fraction label.
@@ -485,12 +536,13 @@
 				if (fractions[i].toLowerCase() === lower) return fractions[i];
 			}
 
-			// 2. Prefix match: extract the base word ('whole','half','quarter','third').
-			var prefixes = ['whole','half','quarter','third','full'];
+			// 2. Same coverage word at the START of the label (mirrors the
+			//    server), so 'quarter' never matches 'Three-Quarter'.
+			var prefixes = ['whole','half','quarter','third'];
 			for (var p=0; p<prefixes.length; p++) {
-				if (lower.indexOf(prefixes[p]) !== -1) {
+				if (lower.indexOf(prefixes[p]) === 0) {
 					for (var j=0; j<fractions.length; j++) {
-						if (fractions[j].toLowerCase().indexOf(prefixes[p]) !== -1) {
+						if (fractions[j].toLowerCase().indexOf(prefixes[p]) === 0) {
 							return fractions[j];
 						}
 					}
@@ -565,40 +617,28 @@
 		}
 
 		function ntPrice(type,size,frac,postId) {
+			frac = 'Whole'; // The server prices every non-topping at full coverage.
 			const m=CFG.nonToppingPricing||'grid';
 			if (m==='free')  return 0;
 			if (m==='fixed') return parseFloat((CFG.fixedPrices||{})[(type||'').toLowerCase()])||0;
-			// 'grid' mode: fraction-capable types (cheese/sauce/drizzle) use the
-			// fraction grid; all others use the flat per-size grid.
-			// For both, check the per-layer grid first (getLayerPrice handles fallback).
+			// 'grid' mode — mirrors PriceCalculator::non_topping_price().
 			const ltype = (type||'').toLowerCase();
 			if (FRACTION_TYPES.indexOf(ltype) !== -1) {
-				const p = getLayerPrice(postId||0, size, frac);
+				const p = getLayerPrice(postId||0, size, frac, ltype);
 				return p !== null ? p : 0;
 			}
-			// Flat type: check per-layer grid first if it has a Whole entry for this size.
-			if ( postId ) {
-				const lg = LAYER_GRIDS[ String(postId) ];
-				if ( lg && lg.cells ) {
-					const wk = size + '|' + frac;
-					if ( Object.prototype.hasOwnProperty.call(lg.cells, wk) ) {
-						return parseFloat(lg.cells[wk]) || 0;
-					}
-					// Try first fraction column (usually Whole) as fallback within layer grid.
-					if ( lg.fractions && lg.fractions.length ) {
-						const wk2 = size + '|' + lg.fractions[0];
-						if ( Object.prototype.hasOwnProperty.call(lg.cells, wk2) ) {
-							return parseFloat(lg.cells[wk2]) || 0;
-						}
-					}
-				}
+			// Flat types (crust, cut, …): own grid → global type grid → flat
+			// product grid → product grid 'Whole'.
+			if ( postId && LAYER_GRIDS[ String(postId) ] ) {
+				const lp = getLayerPrice(postId, size, frac, ltype);
+				if ( lp !== null ) return lp;
 			}
-			// Flat lookup: key = "layerType|size"
+			const gp = globalPrice(ltype, size, frac);
+			if ( gp !== null ) return gp;
 			const fc = FLAT_GRID.cells || {};
 			const fk = ltype + '|' + size;
 			if (Object.prototype.hasOwnProperty.call(fc, fk)) return parseFloat(fc[fk])||0;
-			// Backward-compat fallback: try main grid Whole column
-			const fb=gridPrice(size, (GRID.fractions&&GRID.fractions[0])||'Whole');
+			const fb=gridPrice(size, 'Whole');
 			return fb!==null?fb:0;
 		}
 
@@ -625,6 +665,7 @@
 			// configured yet, and lets orders go through with the base price.
 			const hasAnyGrid = Object.keys(GRID.cells||{}).length > 0
 				|| Object.keys(LAYER_GRIDS||{}).length > 0
+				|| Object.keys(GLOBAL_GRIDS||{}).length > 0
 				|| Object.keys(FLAT_GRID.cells||{}).length > 0;
 			for(const lid in layers){
 				if(!Object.prototype.hasOwnProperty.call(layers,lid)) continue;
@@ -633,11 +674,12 @@
 				if(isNT(type)){p=ntPrice(type,size,fr,pid);}
 				else if(free>0){p=0;free--;}
 				else{
-					p=getLayerPrice(pid,size,fr);
+					p=getLayerPrice(pid,size,fr,type);
 					if(p===null){var _fc=FLAT_GRID.cells||{};var _fk='topping|'+size;p=Object.prototype.hasOwnProperty.call(_fc,_fk)?parseFloat(_fc[_fk]):null;}
 					if(p===null){
 						if(hasAnyGrid){miss=true;} else{p=0;} // no grid at all → $0 add-on, not blocked
 					}
+					if(p!==null)p=applyBounds(p);
 				}
 				if(p!==null)add+=p;
 				bd.push(mkE(lid,layerName(lid,ls),fr,type,p,''));
@@ -646,7 +688,12 @@
 		}
 
 		function engineFlat(size,layers) {
-			const fp=gridPrice(size,'Whole'),miss=fp===null&&Object.keys(layers).length>0;
+			// Mirrors PriceCalculator::engine_flat_per_size(): global topping
+			// grid → product grid; charged only when there are toppings.
+			let hasTop=false;
+			for(const k in layers){if(Object.prototype.hasOwnProperty.call(layers,k)&&!isNT(layerType(k,layers[k])))hasTop=true;}
+			const anyGrid=Object.keys(GRID.cells||{}).length>0||Object.keys(FLAT_GRID.cells||{}).length>0||Object.keys(GLOBAL_GRIDS||{}).length>0;
+			const fpRaw=hasTop?getLayerPrice(0,size,'Whole','topping'):0,miss=fpRaw===null&&hasTop&&anyGrid,fp=fpRaw===null?0:fpRaw;
 			let add=fp||0,bd=[];
 			for(const lid in layers){
 				if(!Object.prototype.hasOwnProperty.call(layers,lid)) continue;
@@ -664,7 +711,7 @@
 				if(!Object.prototype.hasOwnProperty.call(layers,lid)) continue;
 				const ls=layers[lid],fr=ls.fraction||'Whole',type=layerType(lid,ls),pid=ls.postId||0;
 				if(isNT(type)){const p=ntPrice(type,size,fr,pid);add+=p;bd.push(mkE(lid,layerName(lid,ls),fr,type,p,''));}
-				else{const p=getLayerPrice(pid,size,fr)||0;if(p>topP){topP=p;topId=lid;}bd.push(mkE(lid,layerName(lid,ls),fr,type,0,'Free (highest wins)'));}
+				else{const p=getLayerPrice(pid,size,fr,type)||0;if(p>topP){topP=p;topId=lid;}bd.push(mkE(lid,layerName(lid,ls),fr,type,0,'Free (highest wins)'));}
 			}
 			if(topId){add+=topP;for(let i=0;i<bd.length;i++){if(bd[i].layerId===topId){bd[i].price=topP;bd[i].note='Highest-priced layer';break;}}}
 			return {addOn:add,breakdown:bd,gridMiss:false};
@@ -673,10 +720,11 @@
 		function engineTiered(size,layers) {
 			let add=0,bd=[],miss=false,cnt=0;
 			for(const lid in layers){if(!Object.prototype.hasOwnProperty.call(layers,lid))continue;if(!isNT(layerType(lid,layers[lid])))cnt++;}
-			const ths=(CFG.tieredThresholds||[3,6]).slice().sort((a,b)=>a-b);
+			const ths=(CFG.tieredThresholds||[3,6]).map(Number).filter(function(t){return t>0;}).sort((a,b)=>a-b);
 			let tn=1;for(const t of ths){if(cnt>t)tn++;}
-			const tf='Tier'+tn,tp=gridPrice(size,tf);
-			if(tp===null&&cnt>0)miss=true; if(tp!==null)add+=tp;
+			const anyGrid=Object.keys(GRID.cells||{}).length>0||Object.keys(FLAT_GRID.cells||{}).length>0||Object.keys(GLOBAL_GRIDS||{}).length>0;
+			const tf='Tier'+tn,tp=cnt>0?getLayerPrice(0,size,tf,'topping'):0;
+			if(tp===null&&anyGrid)miss=true; if(tp!==null)add+=tp;
 			bd.push(mkE('_tier',tf+' — '+cnt+' toppings',tf,'',tp,''));
 			for(const lid in layers){
 				if(!Object.prototype.hasOwnProperty.call(layers,lid))continue;
@@ -695,7 +743,7 @@
 				let p,note='';
 				if(isNT(type)){p=ntPrice(type,size,fr,pid);}
 				else if(free>0){p=0;note='Free topping included';free--;}
-				else{p=getLayerPrice(pid,size,fr);if(p===null){var _fc2=FLAT_GRID.cells||{};var _fk2='topping|'+size;p=Object.prototype.hasOwnProperty.call(_fc2,_fk2)?parseFloat(_fc2[_fk2]):null;}if(p===null)miss=true;}
+				else{p=getLayerPrice(pid,size,fr,type);if(p===null){var _fc2=FLAT_GRID.cells||{};var _fk2='topping|'+size;p=Object.prototype.hasOwnProperty.call(_fc2,_fk2)?parseFloat(_fc2[_fk2]):null;}if(p===null)miss=true;else p=applyBounds(p);}
 				if(p!==null)add+=p;
 				bd.push(mkE(lid,layerName(lid,ls),fr,type,p,note));
 			}
@@ -735,7 +783,7 @@
 			let disc=0;
 			const dt=parseInt(CFG.discountThreshold,10)||0,dp=parseFloat(CFG.discountPercent)||0,dm=CFG.discountMaxAmount!=null?parseFloat(CFG.discountMaxAmount):null;
 			const tc=Object.keys(activeLayers).filter(function(id){return !isNT(layerType(id,activeLayers[id]));}).length;
-			if(dt>0&&dp>0&&tc>=dt){disc=addOn*(dp/100);if(dm!==null&&dm>0)disc=Math.min(disc,dm);}
+			if(dt>0&&dp>0&&tc>=dt){const dec=parseInt(CFG.decimals,10);disc=phpRound(addOn*(dp/100),isNaN(dec)?2:dec);if(dm!==null&&dm>0)disc=Math.min(disc,dm);}
 
 			const finalAdd=Math.max(0,addOn-disc);
 			const total=gridMiss?null:applyRounding(base+finalAdd);
@@ -768,7 +816,7 @@
 						activeLayers[ l.layerId ] = {
 							fraction:  l.fraction  || 'Whole',
 							layerData: { name: l.layerName || '', type: l.layerType || '', label: l.layerName || '' },
-							postId:    l.layerPostId || resolvePostId( l.layerId )
+							postId:    l.layerPostId || resolvePostId( l.layerId, l.layerType )
 						};
 					}
 				}
@@ -1025,7 +1073,7 @@
 		// =====================================================================
 
 		function formatPrice(v) {
-			const dec=parseInt(CFG.decimals,10)||2,ds=CFG.decimalSep!==undefined?CFG.decimalSep:'.',ts=CFG.thousandSep!==undefined?CFG.thousandSep:',';
+			const _d=parseInt(CFG.decimals,10),dec=isNaN(_d)?2:_d,ds=CFG.decimalSep!==undefined?CFG.decimalSep:'.',ts=CFG.thousandSep!==undefined?CFG.thousandSep:',';
 			const f=parseFloat(v).toFixed(dec),pts=f.split('.');
 			let int=pts[0];const d=pts[1]||'';
 			if(ts) int=int.replace(/\B(?=(\d{3})+(?!\d))/g,ts);
@@ -1222,7 +1270,7 @@
 						portion:      ld.portion      || '',
 						portionLabel: ld.portionLabel || '',
 						layerType:    ld.type || ld.layerType || resolveLayerType(lid, ld),
-						layerPostId:  ls.postId || resolvePostId(lid)
+						layerPostId:  ls.postId || resolvePostId(lid, ld.type || ld.layerType)
 					});
 				}
 				let orderNote = '';
@@ -1241,15 +1289,17 @@
 				if ( ! cfg ) return;
 				if ( cfg.s ) {
 					activeSize = cfg.s;
-					const $sel = $id( 'pztc-size-selector' );
-					if ( $sel ) {
-						$sel.querySelectorAll( '.pztc-size-radio' ).forEach( function ( radio ) {
-							const isMatch = radio.value === cfg.s;
-							radio.checked = isMatch;
-							const label = radio.closest( '.pztc-size-option' );
-							if ( label ) label.classList.toggle( 'pztc-size-option--active', isMatch );
-						} );
-					}
+					// Every size radio of this instance: the product page's own
+					// selector (when shown), the template's size step and bar chips.
+					document.querySelectorAll( 'input.pztc-size-radio[name="pizzatier_commerce_size_' + ( idx !== null ? idx : '1' ) + '"]' ).forEach( function ( radio ) {
+						const isMatch = radio.value === cfg.s;
+						radio.checked = isMatch;
+						const label = radio.closest( '.pztc-size-option, .pztc-bar-chip' );
+						if ( label ) {
+							label.classList.toggle( 'pztc-size-option--active', isMatch );
+							label.classList.toggle( 'pztc-bar-chip--active', isMatch );
+						}
+					} );
 				}
 				if ( cfg.n && CFG.orderNotesEnabled ) {
 					const $note = $id( 'pztc-order-note-input' );
@@ -1273,6 +1323,10 @@
 						},
 					} );
 					document.dispatchEvent( prefillEvent );
+					// Rebuild the pizza inside the template itself (cart edit /
+					// order again). No bundled template listens for the event
+					// above, so before 2.4.0 the selections were never restored.
+					restoreTemplateState( idx !== null ? 'pztc-' + idx : '', cfg.l );
 					cfg.l.forEach( function ( l ) {
 						if ( l.id ) {
 							var pp = resolvePortion( l.po || l.fr );
@@ -1288,24 +1342,95 @@
 
 
 	// =========================================================================
+	// Restore a saved pizza into the template (cart edit & order-again)
+	// =========================================================================
+
+	/**
+	 * Re-select a saved configuration in the template through its public
+	 * setState(), then apply each topping's coverage the way a customer would
+	 * (the card's coverage button, or the template's coverage dialog).
+	 *
+	 * @param {string} instanceId  Builder instance ('pztc-N'), or '' for the first.
+	 * @param {Array}  saved       [{ id, fr, po, lt }] from the cart payload.
+	 */
+	var SAFE_SLUG      = /^[a-z0-9_%-]{1,200}$/i;
+	var VALID_COVERAGE = [ 'whole', 'half-left', 'half-right', 'quarter-top-left', 'quarter-top-right', 'quarter-bottom-left', 'quarter-bottom-right' ];
+
+	function restoreTemplateState( instanceId, saved ) {
+		var BASE = [ 'crust', 'sauce', 'cheese', 'drizzle', 'cut' ];
+		var state = {}, toppings = {}, coverage = {};
+		( saved || [] ).forEach( function ( l ) {
+			var id = String( l.id || '' ), t = String( l.lt || '' ).toLowerCase();
+			// Slugs are sanitize_title() output; anything else is not a layer.
+			if ( ! id || ! SAFE_SLUG.test( id ) ) { return; }
+			if ( BASE.indexOf( t ) !== -1 ) { state[ t ] = { slug: id }; return; }
+			if ( toppings[ id ] ) { return; } // repeated = an extra portion
+			var cov = String( l.po || '' ) || ( /^half/i.test( l.fr || '' ) ? '' : 'whole' );
+			if ( cov && VALID_COVERAGE.indexOf( cov ) === -1 ) { cov = 'whole'; }
+			toppings[ id ] = { slug: id, coverage: cov || 'whole' };
+			if ( cov && cov !== 'whole' ) { coverage[ id ] = cov; }
+		} );
+		if ( Object.keys( toppings ).length ) { state.toppings = toppings; }
+		if ( ! Object.keys( state ).length ) { return; }
+
+		var tries = 0;
+		( function attempt() {
+			var api = window.PizzaTierAPI;
+			var root = instanceId ? document.getElementById( instanceId ) : null;
+			if ( ! api || typeof api.setState !== 'function' || ( instanceId && ! root ) ) {
+				if ( ++tries < 60 ) { setTimeout( attempt, 100 ); }
+				return;
+			}
+			if ( ! root ) {
+				root = document.querySelector( '.cb-root,.np-root,.mt-root,.rp-root,.pp-root,.pl-root,.sc-root,.cc-root' );
+				instanceId = root ? ( root.getAttribute( 'data-instance' ) || root.id ) : '';
+			}
+			try { api.setState( instanceId, state ); } catch ( e ) {
+				try { api.setState( state ); } catch ( e2 ) { return; }
+			}
+			setTimeout( function () { applyCoverage( root, coverage ); }, 250 );
+		}() );
+	}
+
+	function applyCoverage( root, coverage ) {
+		if ( ! root ) { return; }
+		Object.keys( coverage ).forEach( function ( slug ) {
+			var cov  = coverage[ slug ];
+			var card = null;
+			root.querySelectorAll( '[data-slug]' ).forEach( function ( el ) {
+				if ( ! card && el.getAttribute( 'data-slug' ) === slug && /-(card|chip|item)--topping/.test( el.className ) ) { card = el; }
+			} );
+			if ( ! card ) { return; }
+			var btn = card.querySelector( '[data-fraction="' + cov + '"]' );
+			if ( btn ) { btn.click(); return; }
+			var opener = card.querySelector( '[onclick*="penCoverage"], [class*="coverage__current"], .pl-item__coverage, [class*="btn--coverage"]' );
+			if ( ! opener ) { return; }
+			opener.click();
+			var modal = root.querySelector( '[class*="cov-modal"][aria-hidden="false"], [class*="cov-modal--open"]' );
+			var opt   = ( modal || root ).querySelector( '[class*="cov-opt"][data-fraction="' + cov + '"], [class*="cov-modal"] [data-fraction="' + cov + '"]' );
+			if ( opt ) { opt.click(); }
+		} );
+	}
+
+	// =========================================================================
 	// URL pre-fill (cart edit & order-again)
 	// =========================================================================
 
 	function applyUrlPrefill() {
-		const params  = new URLSearchParams( window.location.search );
-		const payload = params.get( 'pizzatier_commerce_cfg' );
-		if ( ! payload ) return;
-		let cfg;
-		try {
-			cfg = JSON.parse( atob( payload ) );
-		} catch ( e ) {
-			return;
+		const params = new URLSearchParams( window.location.search );
+		// The configuration is never read from the address bar here. The server
+		// checks the link's HMAC signature, sanitises the payload and hands it
+		// over as `prefill` in the localised config (2.4.3). Before that, any
+		// crafted ?pizzatier_commerce_cfg= link was trusted, which allowed DOM XSS.
+		const base = window.pizzatier_commerceFrontend || ( window.pizzatier_commerceFrontendInstances || [] )[0] || {};
+		const cfg  = base.prefill;
+		if ( cfg && typeof cfg === 'object' ) {
+			const api = window.PizzaTierBuilder || ( window.PizzaTierBuilderInstances || [] )[0];
+			if ( api && typeof api.prefill === 'function' ) {
+				setTimeout( function () { api.prefill( cfg ); }, 200 );
+			}
 		}
-		if ( ! cfg || typeof cfg !== 'object' ) return;
-		const api = window.PizzaTierBuilder || ( window.PizzaTierBuilderInstances || [] )[0];
-		if ( api && typeof api.prefill === 'function' ) {
-			setTimeout( function () { api.prefill( cfg ); }, 200 );
-		}
+		if ( ! params.has( 'pizzatier_commerce_cfg' ) ) return;
 		[ 'pizzatier_commerce_cfg', 'pizzatier_commerce_sig', 'pizzatier_commerce_reorder', 'pizzatier_commerce_edit_key', 'pizzatier_commerce_nonce' ].forEach( function ( k ) {
 			params.delete( k );
 		} );

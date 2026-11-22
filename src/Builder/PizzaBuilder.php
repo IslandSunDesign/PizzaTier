@@ -79,6 +79,23 @@ class PizzaBuilder {
 	}
 
 	/**
+	 * Whether a layer post may be shown to the current visitor: the exact
+	 * ingredient type, published and not password-protected. Staff who can
+	 * edit the post still see it, so editor previews keep working.
+	 *
+	 * @since 2.4.3
+	 */
+	public static function is_public_layer( $post, string $post_type ): bool {
+		if ( ! $post instanceof \WP_Post || $post->post_type !== $post_type ) {
+			return false;
+		}
+		if ( 'publish' === $post->post_status && '' === (string) $post->post_password ) {
+			return true;
+		}
+		return current_user_can( 'edit_post', $post->ID );
+	}
+
+	/**
 	 * Allowlist + normalize a layer type to its canonical singular form.
 	 * Accepts singular or plural input; returns '' for anything unrecognised
 	 * so callers never build a post-type name from arbitrary input.
@@ -106,8 +123,40 @@ class PizzaBuilder {
 	 */
 	public function get_id_by_slug( string $slug, string $type ): int {
 		if ( ! $slug ) { return 0; }
-		$post = get_page_by_path( $slug, OBJECT, 'pizzatier_' . $type );
-		return is_object( $post ) ? (int) $post->ID : 0;
+		$post_type = 'pizzatier_' . $type;
+		$post      = get_page_by_path( $slug, OBJECT, $post_type );
+		// get_page_by_path() ignores post status: without this check drafts,
+		// private, binned and password-protected layers rendered through the
+		// static shortcode and the public REST routes (2.4.3).
+		if ( $post instanceof \WP_Post && self::is_public_layer( $post, $post_type ) ) {
+			return (int) $post->ID;
+		}
+
+		// Fallback: before 2.4.0 the Settings default-layer picker and the
+		// Shortcode Generator built values from sanitize_title( post_title )
+		// rather than post_name. Those saved values differ from the post slug
+		// whenever a layer was renamed or its slug edited, so also accept a
+		// title-derived match to keep existing settings and shortcodes working.
+		static $title_maps = [];
+		if ( ! isset( $title_maps[ $post_type ] ) ) {
+			$title_maps[ $post_type ] = [];
+			$posts = get_posts( [
+				'post_type'        => $post_type,
+				'post_status'      => 'publish',
+				'posts_per_page'   => -1,
+				'orderby'          => 'ID',
+				'order'            => 'ASC',
+				'suppress_filters' => true,
+			] );
+			foreach ( $posts as $p ) {
+				if ( '' !== (string) $p->post_password ) { continue; }
+				$key = sanitize_title( $p->post_title );
+				if ( '' !== $key && ! isset( $title_maps[ $post_type ][ $key ] ) ) {
+					$title_maps[ $post_type ][ $key ] = (int) $p->ID;
+				}
+			}
+		}
+		return $title_maps[ $post_type ][ sanitize_title( $slug ) ] ?? 0;
 	}
 
 	/**
@@ -127,7 +176,29 @@ class PizzaBuilder {
 		$val = pzl_get_field( $field, $id );
 		// ACF may return an array (when return format = 'array') — unwrap to URL
 		if ( is_array( $val ) ) { $val = $val['url'] ?? ''; }
-		return (string) ( $val ?? '' );
+		// ACF/SCF with return format 'id' returns the attachment ID.
+		if ( is_numeric( $val ) && (int) $val > 0 ) {
+			$val = (string) wp_get_attachment_url( (int) $val );
+		}
+		$val = (string) ( $val ?? '' );
+		if ( '' !== $val ) {
+			return $val;
+		}
+
+		// Fallbacks for layers created before {type}_layer_image was written
+		// (e.g. by the Layer Builder Wizard prior to 2.4.0): the wizard's own
+		// attachment meta, then the featured image.
+		$att = (int) get_post_meta( $id, '_pizzatier_layer_image_id', true );
+		if ( ! $att ) {
+			$att = (int) get_post_thumbnail_id( $id );
+		}
+		if ( $att ) {
+			$url = wp_get_attachment_url( $att );
+			if ( $url ) {
+				return (string) $url;
+			}
+		}
+		return '';
 	}
 
 	// ──────────────────────────────────────────────────────────────────────

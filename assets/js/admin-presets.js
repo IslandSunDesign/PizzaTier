@@ -97,12 +97,22 @@
 			return;
 		}
 
-		rows.innerHTML = parts.map( function ( p ) {
-			return '<div class="pztc-preset-summary__item">'
-				+ '<span class="pztc-preset-summary__label">' + p.key + '</span>'
-				+ '<span class="pztc-preset-summary__value">' + p.val + '</span>'
-				+ '</div>';
-		} ).join( '' );
+		// Built with textContent: labels are ingredient titles (2.4.0 — they
+		// were inserted as HTML).
+		rows.textContent = '';
+		parts.forEach( function ( p ) {
+			var item = document.createElement( 'div' );
+			item.className = 'pztc-preset-summary__item';
+			var k = document.createElement( 'span' );
+			k.className = 'pztc-preset-summary__label';
+			k.textContent = String( p.key );
+			var v = document.createElement( 'span' );
+			v.className = 'pztc-preset-summary__value';
+			v.textContent = String( p.val );
+			item.appendChild( k );
+			item.appendChild( v );
+			rows.appendChild( item );
+		} );
 	}
 
 	// ── Public API (called from onclick in PHP HTML) ────────────────────────

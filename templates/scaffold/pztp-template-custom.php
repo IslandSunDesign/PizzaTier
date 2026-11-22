@@ -11,7 +11,7 @@ if ( ! function_exists( 'pzt_scaffold_menu_func' ) ) :
 function pzt_scaffold_menu_func( $atts = [] ) {
 
     $atts = shortcode_atts( [
-        'id'              => 'pizzabuilder-1',
+        'id'              => '', // empty → unique 'pizzabuilder-{n}' per shortcode (below)
         'max_toppings'    => '',
         'pizza_shape'     => '',
         'pizza_aspect'    => '',
