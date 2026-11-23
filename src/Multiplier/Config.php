@@ -272,7 +272,6 @@ final class Config {
 				'post_status'      => 'publish',
 				'posts_per_page'   => -1,
 				'no_found_rows'    => true,
-				'suppress_filters' => true,
 			]
 		);
 
@@ -449,9 +448,8 @@ final class Config {
 				'posts_per_page'   => -1,
 				'fields'           => 'ids',
 				'no_found_rows'    => true,
-				'suppress_filters' => true,
-				'meta_key'         => self::META_PORTION_ONLY, // phpcs:ignore WordPress.DB.SlowDBQuery.slow_query_meta_key -- Small CPT, admin-flagged rows only.
-				'meta_value'       => '1', // phpcs:ignore WordPress.DB.SlowDBQuery.slow_query_meta_value -- See above.
+				'meta_key'         => self::META_PORTION_ONLY, // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_key -- Small CPT, admin-flagged rows only.
+				'meta_value'       => '1', // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_value -- See above.
 			]
 		);
 		$ids = array_map( 'intval', $ids );
@@ -464,8 +462,7 @@ final class Config {
 					'posts_per_page'   => -1,
 					'fields'           => 'ids',
 					'no_found_rows'    => true,
-					'suppress_filters' => true,
-					'meta_key'         => self::META_LEVEL_LAYERS, // phpcs:ignore WordPress.DB.SlowDBQuery.slow_query_meta_key -- Small CPT.
+					'meta_key'         => self::META_LEVEL_LAYERS, // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_key -- Small CPT.
 				]
 			);
 			foreach ( $linked as $owner ) {

@@ -86,9 +86,18 @@ final class ToppingMetaBox {
 				'posts_per_page' => -1,
 				'orderby'        => 'title',
 				'order'          => 'ASC',
-				'exclude'        => [ (int) $post->ID ],
 				'no_found_rows'  => true,
 			]
+		);
+		// The topping being edited cannot be its own linked layer. Filtered
+		// here rather than with `exclude`, which Plugin Check flags.
+		$others = array_values(
+			array_filter(
+				$others,
+				static function ( $other ) use ( $post ) {
+					return (int) $other->ID !== (int) $post->ID;
+				}
+			)
 		);
 		$new_url       = admin_url( 'post-new.php?post_type=' . Config::TOPPING_CPT );
 		$default_max   = Config::default_max(); // 0 = no limit.

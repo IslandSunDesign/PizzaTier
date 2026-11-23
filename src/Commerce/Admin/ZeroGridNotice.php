@@ -68,8 +68,7 @@ final class ZeroGridNotice {
 				'posts_per_page'   => -1,
 				'fields'           => 'ids',
 				'no_found_rows'    => true,
-				'suppress_filters' => true,
-				'meta_key'         => Grid::LAYER_META_KEY, // phpcs:ignore WordPress.DB.SlowDBQuery.slow_query_meta_key -- Admin-only scan, cached.
+				'meta_key'         => Grid::LAYER_META_KEY, // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_key -- Admin-only scan, cached.
 			]
 		);
 		$zero = [];

@@ -289,7 +289,6 @@ final class LayerResolver {
 				'post_status'      => 'publish',
 				'posts_per_page'   => -1,
 				'no_found_rows'    => true,
-				'suppress_filters' => true,
 				'orderby'          => 'ID',
 				'order'            => 'ASC',
 			]

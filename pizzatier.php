@@ -3,11 +3,10 @@
  * Plugin Name: PizzaTier
  * Plugin URI:  https://pizzatier.com
  * Description: Pizza toppings customizer and visualizer.
- * Version:     2.4.3
+ * Version:     2.4.4
  * Author:      Island Sun Design
  * Author URI:  https://islandsundesign.com
  * Requires at least: 6.2
- * Tested up to:      7.1
  * Requires PHP:      7.4
  * License:     GPLv2 or later
  * Text Domain: pizzatier
@@ -51,7 +50,7 @@ spl_autoload_register( function ( $class ) {
 } );
 
 // Constants
-define( 'PIZZATIER_VERSION',       '2.4.3' );
+define( 'PIZZATIER_VERSION',       '2.4.4' );
 define( 'PIZZATIER_PLUGIN_FILE',   __FILE__ );
 define( 'PIZZATIER_PLUGIN_DIR',    plugin_dir_path( __FILE__ ) );
 define( 'PIZZATIER_PLUGIN_URL',    plugin_dir_url( __FILE__ ) );

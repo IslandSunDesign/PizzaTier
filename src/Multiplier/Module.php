@@ -128,15 +128,15 @@ final class Module {
 		}
 
 		foreach ( self::LEGACY_META_KEYS as $suffix ) {
-			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- One-off key rename during migration.
-			$wpdb->update( $wpdb->postmeta, [ 'meta_key' => '_pizzatier_mult_' . $suffix ], [ 'meta_key' => '_pztm_' . $suffix ] ); // phpcs:ignore WordPress.DB.SlowDBQuery.slow_query_meta_key -- One-off rename.
+			// One-off key rename during migration from the standalone add-on.
+			$wpdb->update( $wpdb->postmeta, [ 'meta_key' => '_pizzatier_mult_' . $suffix ], [ 'meta_key' => '_pztm_' . $suffix ] ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.SlowDBQuery.slow_db_query_meta_key -- One-off migration rename; there is no API for renaming meta keys in bulk.
 		}
 
 		$itemmeta = $wpdb->prefix . 'woocommerce_order_itemmeta';
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- Existence check for an optional WooCommerce table.
 		if ( $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $itemmeta ) ) === $itemmeta ) {
-			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- One-off key rename during migration.
-			$wpdb->update( $itemmeta, [ 'meta_key' => CartLabels::ORDER_META ], [ 'meta_key' => '_pztm_portions' ] ); // phpcs:ignore WordPress.DB.SlowDBQuery.slow_query_meta_key -- One-off rename.
+			// One-off key rename during migration from the standalone add-on.
+			$wpdb->update( $itemmeta, [ 'meta_key' => CartLabels::ORDER_META ], [ 'meta_key' => '_pztm_portions' ] ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.SlowDBQuery.slow_db_query_meta_key -- One-off migration rename; there is no API for renaming meta keys in bulk.
 		}
 
 		if ( false !== $legacy ) {

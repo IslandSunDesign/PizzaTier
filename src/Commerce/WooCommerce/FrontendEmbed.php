@@ -1236,7 +1236,6 @@ class FrontendEmbed {
 			'posts_per_page'   => -1,
 			'fields'           => 'ids',
 			'no_found_rows'    => true,
-			'suppress_filters' => true,
 		] );
 		if ( $layer_ids ) {
 			update_meta_cache( 'post', $layer_ids );

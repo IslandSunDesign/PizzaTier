@@ -172,7 +172,7 @@ namespace {
 			// WC_Product::is_purchasable() also requires a price; a pizza is
 			// purchasable with a $0 base. Store-hours / catalogue-mode plugins
 			// still apply through the standard filter.
-			return (bool) apply_filters( 'woocommerce_is_purchasable', 'publish' === $this->get_status() && $this->get_id() > 0, $this );
+			return (bool) apply_filters( 'woocommerce_is_purchasable', 'publish' === $this->get_status() && $this->get_id() > 0, $this ); // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- WooCommerce core filter, applied the same way WC_Product::is_purchasable() does so store-hours and catalogue plugins keep working.
 		}
 
 		public function is_in_stock(): bool {

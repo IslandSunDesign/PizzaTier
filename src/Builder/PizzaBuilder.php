@@ -146,7 +146,6 @@ class PizzaBuilder {
 				'posts_per_page'   => -1,
 				'orderby'          => 'ID',
 				'order'            => 'ASC',
-				'suppress_filters' => true,
 			] );
 			foreach ( $posts as $p ) {
 				if ( '' !== (string) $p->post_password ) { continue; }

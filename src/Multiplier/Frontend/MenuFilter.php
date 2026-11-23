@@ -45,7 +45,7 @@ final class MenuFilter {
 
 		if ( isset( $value['post_type'] ) ) {
 			$not_in                = isset( $value['post__not_in'] ) ? (array) $value['post__not_in'] : [];
-			$value['post__not_in'] = array_values( array_unique( array_merge( $not_in, $hidden ) ) );
+			$value['post__not_in'] = array_values( array_unique( array_merge( $not_in, $hidden ) ) ); // phpcs:ignore WordPressVIPMinimum.Performance.WPQueryParams.PostNotIn_post__not_in -- Hides the few portion-only layer posts from a small ingredient menu query that is not ours to restructure.
 			return $value;
 		}
 
